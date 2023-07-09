@@ -7,16 +7,23 @@ import com.example.h2ak.Fragments.ImageFragment;
 import com.example.h2ak.Fragments.InboxFragment;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -31,7 +38,10 @@ import java.util.Map;
 public class BaseMenuActivity extends AppCompatActivity {
     private ActivityBaseMenuBinding binding;
     private FirebaseAuth firebaseAuth;
+
     private Map<Integer, Class<? extends Fragment>> fragmentMap = new HashMap<>();
+    private Map<Integer, Map<String, Integer>> buttonMap = new HashMap<>();
+    private Map<String, Integer> buttonInfo = new HashMap<>();
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,19 +49,43 @@ public class BaseMenuActivity extends AppCompatActivity {
         binding = ActivityBaseMenuBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        fragmentMap.put(R.id.homeMenu, HomeFragment.class);
-        fragmentMap.put(R.id.discoverMenu, DiscoverFragment.class);
-        fragmentMap.put(R.id.createMenu, CreateFragment.class);
-        fragmentMap.put(R.id.imageMenu, ImageFragment.class);
-        fragmentMap.put(R.id.inboxMenu, InboxFragment.class);
+////        buttonMap.put(R.id.btnHome, buttonInfo.put("defaultImage", R.drawable.baseline_home_24));
+//        buttonInfo.put("defaultColor", R.color);
+//        buttonInfo.put("activeColor", R.id.textViewDiscover);
+//        buttonInfo.put("textViewId", R.id.textViewImage);
 
-        replaceFragment(R.id.homeMenu);
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-            replaceFragment(item.getItemId());
-            return true;
+
+        fragmentMap.put(R.id.btnHome, HomeFragment.class);
+        fragmentMap.put(R.id.btnDiscover, DiscoverFragment.class);
+        fragmentMap.put(R.id.btnCreate, CreateFragment.class);
+        fragmentMap.put(R.id.btnImage, ImageFragment.class);
+        fragmentMap.put(R.id.btnProfile, InboxFragment.class);
+        replaceFragment(R.id.btnHome);
+
+        binding.btnHome.setOnClickListener(view -> {
+            replaceFragment(R.id.btnHome);
+//                setActiveButton(R.id.btnHome, "baseline_home_24", "baseline_home_24_active");
         });
 
+        binding.btnDiscover.setOnClickListener(view -> {
+            replaceFragment(R.id.btnDiscover);
+        });
+
+        binding.btnCreate.setOnClickListener(view -> {
+            replaceFragment(R.id.btnCreate);
+        });
+
+        binding.btnImage.setOnClickListener(view -> {
+            replaceFragment(R.id.btnImage);
+        });
+
+        binding.btnProfile.setOnClickListener(view -> {
+            replaceFragment(R.id.btnProfile);
+        });
+
+
         firebaseAuth = FirebaseAuth.getInstance();
+
     }
 
     private void checkUserStatus() {
@@ -65,42 +99,36 @@ public class BaseMenuActivity extends AppCompatActivity {
         }
     }
 
-    private void showPopupMenu(View view) {
-        PopupMenu popupMenu = new PopupMenu(this, view);
-        MenuInflater inflater = popupMenu.getMenuInflater();
-        inflater.inflate(R.menu.log_out_menu, popupMenu.getMenu());
+//    private void setActiveButton(int idButton, String defaultImage, String activeImage) {
+//        if (idButton >= 0  && !defaultImage.isEmpty() && !activeImage.isEmpty()) {
+//            ImageButton btnActive = findViewById(idButton);
+//            TextView textViewActive = findViewById(btnTextViewMap.get(idButton));
+//            // Load default drawable
+//            int defaultDrawableResId = getResources().getIdentifier(defaultImage, "drawable", getPackageName());
+//            Drawable defaultDrawable = ContextCompat.getDrawable(this, defaultDrawableResId);
+//
+//            // Load active drawable
+//            int activeDrawableResId = getResources().getIdentifier(activeImage, "drawable", getPackageName());
+//            Drawable activeDrawable = ContextCompat.getDrawable(this, activeDrawableResId);
+//
+//            if (btnActive != null && textViewActive != null && defaultDrawable != null && activeDrawable != null) {
+//                btnActive.setImageDrawable(activeDrawable);
+//                textViewActive.setTextColor(ContextCompat.getColor(this, R.color.active));
+//                    for (int id: btnTextViewMap.keySet()) {
+//                        if (id != R.id.btnCreate && id != idButton) {
+//                            ImageButton btnDefault = findViewById(id);
+//                            TextView textDefault = findViewById(btnTextViewMap.get(id));
+//                            btnDefault.setImageDrawable(defaultDrawable);
+//                            textDefault.setTextColor(ContextCompat.getColor(this, R.color.not_active));
+//                        }
+//                    }
+//            }
+//        }
+//    }
 
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.actionLogout) {
-                // Handle logout menu item click
-                firebaseAuth.signOut();
-                checkUserStatus();
-                return true;
-            }
-            return false;
-        });
 
-        popupMenu.show();
-    }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.top_app_bar_menu, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.profileMenu) {
-            // Handle profileMenu click
-            View view = findViewById(R.id.profileMenu); // Replace with your profileMenu view id
-            showPopupMenu(view);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     @Override
     protected void onStart() {

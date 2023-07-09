@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <RelativeLayout
+        android:id="@+id/relativeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -12,8 +14,7 @@
             android:id="@+id/appBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            >
+            android:layout_alignParentTop="true">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -22,29 +23,138 @@
                 android:background="#80808080"
                 android:minHeight="?attr/actionBarSize"
                 android:theme="?attr/actionBarTheme"
+                app:menu="@menu/top_app_bar_menu"
                 app:navigationIcon="@drawable/baseline_android_24"
-                app:title="Mycompany"
-                app:menu="@menu/top_app_bar_menu"/>
+                app:title="Mycompany" />
         </com.google.android.material.appbar.AppBarLayout>
 
-            <!-- FrameLayout - Content -->
-            <FrameLayout
-                android:id="@+id/frameLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/appBar"
-                android:layout_above="@id/bottomNavigationView"
-                android:gravity="center">
-            </FrameLayout>
+        <!-- FrameLayout - Content -->
+        <FrameLayout
+            android:id="@+id/frameLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_below="@id/appBar"
+            android:layout_above="@id/linearLayoutFooter"
+            app:layout_anchorGravity="center" />
+
 
         <!-- Bottom Navigation View - Footer -->
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNavigationView"
+        <LinearLayout
+            android:id="@+id/linearLayoutFooter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:layout_gravity="bottom"
-            app:labelVisibilityMode="labeled"
-            app:menu="@menu/bottom_nav_menu" />
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:baselineAligned="false">
+
+            <!-- btnHome -->
+            <LinearLayout
+                android:id="@+id/linearLayoutHome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_home_24"
+                    android:contentDescription="btnHome"
+                    android:background="@android:color/transparent"/>
+                <TextView
+                    android:id="@+id/textViewHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Home" />
+            </LinearLayout>
+
+            <!--btnDiscover-->
+            <LinearLayout
+                android:id="@+id/linearLayoutDiscover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnDiscover"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_search_24"
+                    android:contentDescription="btnDiscover"
+                    android:background="@android:color/transparent"/>
+                <TextView
+                    android:id="@+id/textViewDiscover"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Discover" />
+            </LinearLayout>
+
+            <!--btnCreate-->
+            <LinearLayout
+                android:id="@+id/linearLayoutCreate"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+                <ImageButton
+                    android:id="@+id/btnCreate"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="btnCreate"
+                    android:src="@drawable/baseline_add_box_24" />
+            </LinearLayout>
+
+            <!--btnImage-->
+            <LinearLayout
+                android:id="@+id/linearLayoutImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_image_24"
+                    android:contentDescription="btnImage"
+                    android:background="@android:color/transparent"/>
+                <TextView
+                    android:id="@+id/textViewImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Images" />
+            </LinearLayout>
+
+            <!--btnProfile-->
+            <LinearLayout
+                android:id="@+id/linearLayoutProfile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnProfile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_person_24"
+                    android:contentDescription="btnProfile"
+                    android:background="@android:color/transparent"/>
+                <TextView
+                    android:id="@+id/textViewProfile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Profile" />
+            </LinearLayout>
+        </LinearLayout>
+
     </RelativeLayout>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
