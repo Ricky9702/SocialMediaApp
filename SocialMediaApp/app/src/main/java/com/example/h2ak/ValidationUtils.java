@@ -8,15 +8,17 @@ import android.widget.EditText;
 
 import com.google.android.material.textfield.TextInputLayout;
 
-public class ValidateUtils {
+public class ValidationUtils {
 
     private static boolean emailValid = false;
     private static boolean passwordValid = false;
 
     private static boolean emailFocused = false;
 
+    private static Button handlerButton;
 
-    public static void validateEmail(EditText editTextEmail, Button b) {
+
+    public static void validateEmail(EditText editTextEmail) {
         editTextEmail.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -36,12 +38,12 @@ public class ValidateUtils {
                     editTextEmail.setError(null);
                     emailValid = true;
                 }
-                enableRegisterButton(b);
+                enableHandlerButton(handlerButton);
             }
         });
     }
 
-    public static void validatePassword(EditText editTextPassword, Button b) {
+    public static void validatePassword(EditText editTextPassword) {
         editTextPassword.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -61,7 +63,7 @@ public class ValidateUtils {
                     editTextPassword.setError(null);
                     passwordValid = true;
                 }
-                enableRegisterButton(b);
+                enableHandlerButton(handlerButton);
             }
         });
     }
@@ -117,7 +119,7 @@ public class ValidateUtils {
         }
     }
 
-    public static void enableRegisterButton(Button b) {
+    public static void enableHandlerButton(Button b) {
         if (emailValid && passwordValid) {
             b.setEnabled(true);
         } else {
@@ -131,6 +133,10 @@ public class ValidateUtils {
 
     public static boolean isPasswordValid() {
         return passwordValid;
+    }
+
+    public static void sethanlderButton(Button b) {
+        handlerButton = b;
     }
 
 }

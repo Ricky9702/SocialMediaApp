@@ -12,7 +12,8 @@
             android:id="@+id/appBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true">
+            android:layout_alignParentTop="true"
+            >
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -21,7 +22,7 @@
                 android:background="#80808080"
                 android:minHeight="?attr/actionBarSize"
                 android:theme="?attr/actionBarTheme"
-                app:navigationIcon="@drawable/baseline_density_medium_24"
+                app:navigationIcon="@drawable/baseline_android_24"
                 app:title="Mycompany"
                 app:menu="@menu/top_app_bar_menu"/>
         </com.google.android.material.appbar.AppBarLayout>
