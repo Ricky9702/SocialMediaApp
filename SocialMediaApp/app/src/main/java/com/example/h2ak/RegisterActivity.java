@@ -12,9 +12,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.h2ak.database.FirebaseDatabaseHelper;
+import com.example.h2ak.pojo.User;
+import com.example.h2ak.utils.ValidationUtils;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -47,29 +53,32 @@ public class RegisterActivity extends AppCompatActivity {
         textViewGoToLogin = findViewById(R.id.textViewGoToLogin);
         progressBar = findViewById(R.id.progressBar);
         mAuth = FirebaseAuth.getInstance();
-        ValidationUtils.sethanlderButton(btnRegister);
 
         // methods
-        ValidationUtils.dynamicClearText(textLayoutEmail);
-        ValidationUtils.dynamicPasswordToggle(textLayoutPassword);
-        ValidationUtils.validateEmail(editTextEmail);
-        ValidationUtils.validatePassword(editTextPassword);
-        btnRegisterClick();
+        ValidationUtils validationUtils = new ValidationUtils();
+        validationUtils.dynamicClearText(textLayoutEmail);
+        validationUtils.dynamicPasswordToggle(textLayoutPassword);
+        validationUtils.validateEmail(editTextEmail);
+        validationUtils.validatePassword(editTextPassword);
+        validationUtils.setHandlerButton(btnRegister);
+        btnRegisterClick(validationUtils);
 
         toolbar.setNavigationOnClickListener(view -> {
             onBackPressed();
+            finish();
         });
 
         textViewGoToLogin.setOnClickListener(view -> {
             onBackPressed();
+            finish();
         });
     }
 
-    private void btnRegisterClick() {
+    private void btnRegisterClick(ValidationUtils validationUtils) {
             btnRegister.setOnClickListener(view -> {
                 String email = editTextEmail.getText().toString().trim();
                 String password = editTextPassword.getText().toString().trim();
-                if (ValidationUtils.isEmailValid() && ValidationUtils.isPasswordValid())
+                if (validationUtils.isEmailValid() && validationUtils.isPasswordValid())
                     register(email, password);
             });
     }
@@ -77,8 +86,20 @@ public class RegisterActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
+
                         // Registration success
                         FirebaseUser user = mAuth.getCurrentUser();
+
+                        String userEmail = user.getEmail();
+                        String userUid = user.getUid();
+
+                        User createdUser = new User(userUid, userEmail, "", "", "");
+                        FirebaseDatabaseHelper.getFirebaseDatabaseUser().child(userUid).setValue(createdUser);
+
+
+                        // Send email verification
+                        sendEmailVerification(user);
+
                         Toast.makeText(RegisterActivity.this, "Registration successful.", Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                         finish();
@@ -91,6 +112,21 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this, runnable.getMessage(), Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
         });
+    }
+
+    private void sendEmailVerification(FirebaseUser user) {
+        if (user != null) {
+            user.sendEmailVerification().addOnCompleteListener(this, task -> {
+                if (task.isSuccessful()) {
+                    Toast.makeText(RegisterActivity.this, "Verification email sent.", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(RegisterActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                }
+            }).addOnFailureListener(runnable -> {
+                Toast.makeText(RegisterActivity.this, runnable.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        }
     }
 
 }

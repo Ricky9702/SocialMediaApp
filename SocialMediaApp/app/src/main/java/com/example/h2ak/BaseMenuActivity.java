@@ -1,36 +1,24 @@
 package com.example.h2ak;
 
-import com.example.h2ak.Fragments.CreateFragment;
-import com.example.h2ak.Fragments.DiscoverFragment;
-import com.example.h2ak.Fragments.HomeFragment;
-import com.example.h2ak.Fragments.ImageFragment;
-import com.example.h2ak.Fragments.InboxFragment;
+import com.example.h2ak.databinding.ActivityBaseMenuBinding;
+import com.example.h2ak.fragments.CreateFragment;
+import com.example.h2ak.fragments.DiscoverFragment;
+import com.example.h2ak.fragments.HomeFragment;
+import com.example.h2ak.fragments.FriendFragment;
 
-import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.h2ak.databinding.ActivityBaseMenuBinding;
+import com.example.h2ak.fragments.ProfileFragment;
+import com.example.h2ak.utils.ValidationUtils;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,92 +27,80 @@ public class BaseMenuActivity extends AppCompatActivity {
     private ActivityBaseMenuBinding binding;
     private FirebaseAuth firebaseAuth;
 
-    private Map<Integer, Class<? extends Fragment>> fragmentMap = new HashMap<>();
     private Map<Integer, Map<String, Integer>> buttonMap = new HashMap<>();
-    private Map<String, Integer> buttonInfo = new HashMap<>();
+    private int previousButtonId = -1;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        init();
+    }
+        private void init () {
+            binding = ActivityBaseMenuBinding.inflate(getLayoutInflater());
+            setContentView(binding.getRoot());
 
-        binding = ActivityBaseMenuBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+            firebaseAuth = FirebaseAuth.getInstance();
 
-////        buttonMap.put(R.id.btnHome, buttonInfo.put("defaultImage", R.drawable.baseline_home_24));
-//        buttonInfo.put("defaultColor", R.color);
-//        buttonInfo.put("activeColor", R.id.textViewDiscover);
-//        buttonInfo.put("textViewId", R.id.textViewImage);
-
-
-        fragmentMap.put(R.id.btnHome, HomeFragment.class);
-        fragmentMap.put(R.id.btnDiscover, DiscoverFragment.class);
-        fragmentMap.put(R.id.btnCreate, CreateFragment.class);
-        fragmentMap.put(R.id.btnImage, ImageFragment.class);
-        fragmentMap.put(R.id.btnProfile, InboxFragment.class);
-        replaceFragment(R.id.btnHome);
-
-        binding.btnHome.setOnClickListener(view -> {
-            replaceFragment(R.id.btnHome);
-//                setActiveButton(R.id.btnHome, "baseline_home_24", "baseline_home_24_active");
-        });
-
-        binding.btnDiscover.setOnClickListener(view -> {
-            replaceFragment(R.id.btnDiscover);
-        });
-
-        binding.btnCreate.setOnClickListener(view -> {
-            replaceFragment(R.id.btnCreate);
-        });
-
-        binding.btnImage.setOnClickListener(view -> {
-            replaceFragment(R.id.btnImage);
-        });
-
-        binding.btnProfile.setOnClickListener(view -> {
-            replaceFragment(R.id.btnProfile);
-        });
+            addButtonInfo(R.id.btnHome, R.drawable.baseline_home_24, R.drawable.baseline_home_24_active, R.id.textViewHome);
+            addButtonInfo(R.id.btnDiscover, R.drawable.baseline_search_24, R.drawable.baseline_search_active, R.id.textViewDiscover);
+            addButtonInfo(R.id.btnFriend, R.drawable.baseline_group_24, R.drawable.baseline_group_24_active, R.id.textViewFriend);
+            addButtonInfo(R.id.btnProfile, R.drawable.baseline_person_24, R.drawable.baseline_person_24_active, R.id.textViewProfile);
 
 
-        firebaseAuth = FirebaseAuth.getInstance();
 
+            binding.btnHome.setOnClickListener(view -> {
+                replaceFragment(new HomeFragment());
+                setActiveButton(R.id.btnHome);
+            });
+
+            binding.btnDiscover.setOnClickListener(view -> {
+                replaceFragment(new DiscoverFragment());
+                setActiveButton(R.id.btnDiscover);
+            });
+
+            binding.btnCreate.setOnClickListener(view -> {
+                replaceFragment(new CreateFragment());
+            });
+
+            binding.btnFriend.setOnClickListener(view -> {
+                replaceFragment(new FriendFragment());
+                setActiveButton(R.id.btnFriend);
+            });
+
+            binding.btnProfile.setOnClickListener(view -> {
+                replaceFragment(new ProfileFragment());
+                setActiveButton(R.id.btnProfile);
+            });
+
+            binding.btnHome.performClick();
+        }
+
+    private void addButtonInfo(int buttonId, int defaultImageResId, int activeImageResId, int textViewId) {
+        Map<String, Integer> buttonInfo = new HashMap<>();
+        buttonInfo.put("defaultImage", defaultImageResId);
+        buttonInfo.put("activeImage", activeImageResId);
+        buttonInfo.put("textViewId", textViewId);
+        buttonMap.put(buttonId, buttonInfo);
     }
 
-    private void checkUserStatus() {
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        if (user != null) {
 
+    private void setActiveButton(int activeButtonId) {
+        if (previousButtonId != -1) {
+            ImageButton previousButton = findViewById(previousButtonId);
+            Map<String, Integer> previousButtonInfo = buttonMap.get(previousButtonId);
+            TextView textViewPrevious = findViewById(previousButtonInfo.get("textViewId"));
+
+            previousButton.setImageDrawable(getDrawable(previousButtonInfo.get("defaultImage")));
+            textViewPrevious.setTextColor(getColor(R.color.not_active));
         }
-        else {
-            startActivity(new Intent(BaseMenuActivity.this, LoginActivity.class));
-            finish();
-        }
+        ImageButton activeButton = findViewById(activeButtonId);
+        Map<String, Integer> activeButtonInfo= buttonMap.get(activeButtonId);
+        TextView textViewActive = findViewById(activeButtonInfo.get("textViewId"));
+
+        activeButton.setImageDrawable(getDrawable(activeButtonInfo.get("activeImage")));
+        textViewActive.setTextColor(getColor(R.color.active));
+
+        previousButtonId = activeButtonId;
     }
-
-//    private void setActiveButton(int idButton, String defaultImage, String activeImage) {
-//        if (idButton >= 0  && !defaultImage.isEmpty() && !activeImage.isEmpty()) {
-//            ImageButton btnActive = findViewById(idButton);
-//            TextView textViewActive = findViewById(btnTextViewMap.get(idButton));
-//            // Load default drawable
-//            int defaultDrawableResId = getResources().getIdentifier(defaultImage, "drawable", getPackageName());
-//            Drawable defaultDrawable = ContextCompat.getDrawable(this, defaultDrawableResId);
-//
-//            // Load active drawable
-//            int activeDrawableResId = getResources().getIdentifier(activeImage, "drawable", getPackageName());
-//            Drawable activeDrawable = ContextCompat.getDrawable(this, activeDrawableResId);
-//
-//            if (btnActive != null && textViewActive != null && defaultDrawable != null && activeDrawable != null) {
-//                btnActive.setImageDrawable(activeDrawable);
-//                textViewActive.setTextColor(ContextCompat.getColor(this, R.color.active));
-//                    for (int id: btnTextViewMap.keySet()) {
-//                        if (id != R.id.btnCreate && id != idButton) {
-//                            ImageButton btnDefault = findViewById(id);
-//                            TextView textDefault = findViewById(btnTextViewMap.get(id));
-//                            btnDefault.setImageDrawable(defaultDrawable);
-//                            textDefault.setTextColor(ContextCompat.getColor(this, R.color.not_active));
-//                        }
-//                    }
-//            }
-//        }
-//    }
 
 
 
@@ -132,20 +108,13 @@ public class BaseMenuActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        checkUserStatus();
         super.onStart();
     }
 
-    private void replaceFragment(int itemId) {
+    private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        try {
-            fragmentTransaction.replace(R.id.frameLayout, fragmentMap.get(itemId).newInstance());
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        fragmentTransaction.replace(R.id.frameLayout, fragment);
         fragmentTransaction.commit();
     }
 

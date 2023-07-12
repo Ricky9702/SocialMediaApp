@@ -1,26 +1,30 @@
 package com.example.h2ak;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.h2ak.utils.ValidationUtils;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
-
+    private TextView textViewResetPassword;
     private TextInputLayout textLayoutPassword, textLayoutEmail;
     private EditText editTextEmail, editTextPassword;
     private Button btnLogin, btnGoToRegister;
-    private Toolbar toolbar;
     private ProgressBar progressBar;
     private FirebaseAuth mAuth;
 
@@ -32,37 +36,42 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void init() {
+        textViewResetPassword = findViewById(R.id.textViewResetPassword);
         textLayoutEmail = findViewById(R.id.textLayoutEmail);
         textLayoutPassword = findViewById(R.id.textLayoutPassword);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
         btnLogin = findViewById(R.id.btnLogin);
+        btnLogin.setEnabled(false);
         btnGoToRegister = findViewById(R.id.btnGoToRegister);
-        toolbar = findViewById(R.id.toolbar);
         progressBar = findViewById(R.id.progressBar);
         mAuth = FirebaseAuth.getInstance();
 
         //methods
-        ValidationUtils.dynamicClearText(textLayoutEmail);
-        ValidationUtils.dynamicPasswordToggle(textLayoutPassword);
-        ValidationUtils.validateEmail(editTextEmail);
-        ValidationUtils.validatePassword(editTextPassword);
-        ValidationUtils.sethanlderButton(btnLogin);
-        btnLoginClick();
+        ValidationUtils validationUtils = new ValidationUtils();
+        validationUtils.dynamicClearText(textLayoutEmail);
+        validationUtils.dynamicPasswordToggle(textLayoutPassword);
+        validationUtils.validateEmail(editTextEmail);
+        validationUtils.validatePassword(editTextPassword);
+        validationUtils.setHandlerButton(btnLogin);
+        btnLoginClick(validationUtils);
 
 
         btnGoToRegister.setOnClickListener(view -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
         });
+
+        textViewResetPassword.setOnClickListener(view -> {
+            startActivity(new Intent(LoginActivity.this, ResetPasswordActivity.class));
+        });
+
     }
 
-    private void btnLoginClick() {
+    private void btnLoginClick(ValidationUtils validationUtils) {
         btnLogin.setOnClickListener(view -> {
             String email = editTextEmail.getText().toString().trim();
             String password = editTextPassword.getText().toString().trim();
-            if (email.isEmpty() && password.isEmpty())
-                editTextEmail.setFocusable(true);
-            else if (ValidationUtils.isEmailValid() && ValidationUtils.isPasswordValid())
+            if (validationUtils.isEmailValid() && validationUtils.isPasswordValid())
                 loginUser(email, password);
         });
     }
@@ -87,4 +96,5 @@ public class LoginActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                 });
     }
+
 }

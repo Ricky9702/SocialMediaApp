@@ -1,4 +1,4 @@
-package com.example.h2ak;
+package com.example.h2ak.utils;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -7,18 +7,34 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class ValidationUtils {
 
-    private static boolean emailValid = false;
-    private static boolean passwordValid = false;
+    private  boolean emailValid;
+    private  boolean passwordValid;
 
-    private static boolean emailFocused = false;
+    private  boolean emailFocused;
 
-    private static Button handlerButton;
+    private Button handlerButton;
+    private boolean isEnabled;
 
+    private static FirebaseAuth firebaseAuth;
 
-    public static void validateEmail(EditText editTextEmail) {
+    public static FirebaseUser userSignedIn() {
+        firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        return user;
+    }
+
+    public ValidationUtils() {
+        emailValid = false;
+        passwordValid = false;
+        emailFocused = false;
+    }
+
+    public  void validateEmail(EditText editTextEmail) {
         editTextEmail.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -31,19 +47,19 @@ public class ValidationUtils {
             @Override
             public void afterTextChanged(Editable editable) {
                 String email = editTextEmail.getText().toString().trim();
-                if (email.isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                     editTextEmail.setError("Invalid email format");
-                    emailValid = false;
+                    setEmailValid(false);
                 } else {
                     editTextEmail.setError(null);
-                    emailValid = true;
+                    setEmailValid(true);
                 }
                 enableHandlerButton(handlerButton);
             }
         });
     }
 
-    public static void validatePassword(EditText editTextPassword) {
+    public  void validatePassword(EditText editTextPassword) {
         editTextPassword.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -56,19 +72,19 @@ public class ValidationUtils {
             @Override
             public void afterTextChanged(Editable editable) {
                 String password = editTextPassword.getText().toString().trim();
-                if (password.length() < 9) {
-                    editTextPassword.setError("Password length should be at least 9 characters");
-                    passwordValid = false;
+                if (password.isEmpty() || password.length() < 6) {
+                    editTextPassword.setError("Password length should be at least 6 characters");
+                    setPasswordValid(false);
                 } else {
                     editTextPassword.setError(null);
-                    passwordValid = true;
+                    setPasswordValid(true);
                 }
                 enableHandlerButton(handlerButton);
             }
         });
     }
 
-    public static void dynamicPasswordToggle(TextInputLayout textLayoutPassword) {
+    public  void dynamicPasswordToggle(TextInputLayout textLayoutPassword) {
         textLayoutPassword.setEndIconMode(TextInputLayout.END_ICON_NONE);
         textLayoutPassword.getEditText().setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus)
@@ -78,9 +94,8 @@ public class ValidationUtils {
         });
     }
 
-    public static void dynamicClearText(TextInputLayout textLayoutEmail) {
+    public  void dynamicClearText(TextInputLayout textLayoutEmail) {
         textLayoutEmail.setEndIconMode(TextInputLayout.END_ICON_NONE);
-
 
         //Check if focus and update icon
         textLayoutEmail.getEditText().setOnFocusChangeListener((view, hasFocus) -> {
@@ -92,7 +107,6 @@ public class ValidationUtils {
                 textLayoutEmail.setEndIconMode(TextInputLayout.END_ICON_NONE);
             }
         });
-
 
         //Check if text length > 0 and update icon
         textLayoutEmail.getEditText().addTextChangedListener(new TextWatcher() {
@@ -111,7 +125,7 @@ public class ValidationUtils {
         });
     }
 
-    public static void updateClearTextIcon(TextInputLayout textLayoutEmail) {
+    public void updateClearTextIcon(TextInputLayout textLayoutEmail) {
         if (emailFocused && textLayoutEmail.getEditText().getText().length() > 0) {
             textLayoutEmail.setEndIconMode(TextInputLayout.END_ICON_CLEAR_TEXT);
         } else {
@@ -119,24 +133,28 @@ public class ValidationUtils {
         }
     }
 
-    public static void enableHandlerButton(Button b) {
-        if (emailValid && passwordValid) {
-            b.setEnabled(true);
-        } else {
-            b.setEnabled(false);
-        }
+    public void enableHandlerButton(Button b) {
+        isEnabled = isEmailValid() && isPasswordValid();
+        b.setEnabled(isEnabled);
     }
 
-    public static boolean isEmailValid() {
+    public boolean isEmailValid() {
         return emailValid;
     }
 
-    public static boolean isPasswordValid() {
+    public boolean isPasswordValid() {
         return passwordValid;
     }
 
-    public static void sethanlderButton(Button b) {
+    public void setHandlerButton(Button b) {
         handlerButton = b;
     }
 
+    public void setEmailValid(boolean emailValid) {
+        this.emailValid = emailValid;
+    }
+
+    public void setPasswordValid(boolean passwordValid) {
+        this.passwordValid = passwordValid;
+    }
 }
