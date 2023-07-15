@@ -1,7 +1,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
     <stroke
-        android:color="@color/black"
+        android:color="@color/white"
         android:width="2dp" /> <!-- Set the desired border width -->
-    <solid android:color="@android:color/transparent" /> <!-- Set the background color to transparent -->
+    <solid android:color="@color/not_active_icon" /> <!-- Set the background color to transparent -->
 </shape>

@@ -1,6 +1,7 @@
-package com.example.h2ak;
+package com.example.h2ak.view.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
 import android.view.View;
@@ -8,15 +9,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
+import com.example.h2ak.R;
 import com.example.h2ak.utils.ValidationUtils;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class ResetPasswordActivity extends AppCompatActivity {
-
-    private Toolbar toolbar;
     private EditText editTextEmailResetPassword;
     private TextInputLayout textLayoutEmail;
     private Button buttonResetPassword;
@@ -31,7 +30,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
     }
 
     private void init() {
-        toolbar = findViewById(R.id.toolBarRecoveryPassword);
+        //Get views
         editTextEmailResetPassword = findViewById(R.id.editTextEmailResetPassword);
         textLayoutEmail = findViewById(R.id.textLayoutEmail);
         buttonResetPassword = findViewById(R.id.btnResetPassword);
@@ -39,13 +38,21 @@ public class ResetPasswordActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         firebaseAuth = FirebaseAuth.getInstance();
 
+        //Edit toolBar
+        //Edit toolBar
+        Toolbar toolBar = findViewById(R.id.toolBar);
+        toolBar.setTitle("Recovery password");
+        toolBar.setTitleTextColor(getColor(R.color.black));
+        toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
+
+        //Get methods
         ValidationUtils validationUtils = new ValidationUtils();
         validationUtils.setPasswordValid(true);
         validationUtils.dynamicClearText(textLayoutEmail);
         validationUtils.validateEmail(editTextEmailResetPassword);
         validationUtils.setHandlerButton(buttonResetPassword);
 
-        toolbar.setNavigationOnClickListener(view -> {
+        toolBar.setNavigationOnClickListener(view -> {
             onBackPressed();
             finish();
         });

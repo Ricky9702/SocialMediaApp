@@ -1,4 +1,4 @@
-package com.example.h2ak;
+package com.example.h2ak.view.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -12,15 +12,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.h2ak.R;
 import com.example.h2ak.database.FirebaseDatabaseHelper;
 import com.example.h2ak.pojo.User;
 import com.example.h2ak.utils.ValidationUtils;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -43,18 +42,25 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void init()
     {
+        // Get views
         textLayoutEmail = findViewById(R.id.textLayoutEmail);
         textLayoutPassword = findViewById(R.id.textLayoutPassword);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
         btnRegister = findViewById(R.id.btnRegister);
         btnRegister.setEnabled(false);
-        toolbar = findViewById(R.id.toolBarRegister);
         textViewGoToLogin = findViewById(R.id.textViewGoToLogin);
         progressBar = findViewById(R.id.progressBar);
         mAuth = FirebaseAuth.getInstance();
 
-        // methods
+        // Edit appBar
+        toolbar = findViewById(R.id.toolBar);
+        toolbar.setTitle("Create account");
+        toolbar.setTitleTextColor(getColor(R.color.black));
+        toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
+
+
+        // Get methods
         ValidationUtils validationUtils = new ValidationUtils();
         validationUtils.dynamicClearText(textLayoutEmail);
         validationUtils.dynamicPasswordToggle(textLayoutPassword);

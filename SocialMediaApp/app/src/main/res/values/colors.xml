@@ -4,6 +4,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="purple">#663399</color>
     <color name="blue">#1877F2</color>
-    <color name="active">#5290d9</color>
-    <color name="not_active">#b3b3b3</color>
+    <color name="active_icon">#5290d9</color>
+    <color name="not_active_icon">#b3b3b3</color>
+    <color name="default_background_color_button">#eeeeee</color>
+    <color name="default_text_color">#1e1e1e</color>
 </resources>

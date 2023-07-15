@@ -11,6 +11,10 @@ public class User {
     private String avatar;
     private String phone;
 
+    public  User()
+    {
+
+    }
     public User(String id, String email, String username, String avatar, String phone) {
         this.id = id;
         this.email = email;

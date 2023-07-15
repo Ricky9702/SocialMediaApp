@@ -1,4 +1,4 @@
-package com.example.h2ak.fragments;
+package com.example.h2ak.view.fragments;
 
 import android.os.Bundle;
 

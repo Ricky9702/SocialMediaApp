@@ -20,12 +20,20 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#80808080"
-                android:minHeight="?attr/actionBarSize"
-                android:theme="?attr/actionBarTheme"
-                app:menu="@menu/top_app_bar_menu"
-                app:navigationIcon="@drawable/baseline_android_24"
-                app:title="Mycompany" />
+                app:title="Mycompany">
+                <com.mikhaellopez.circularimageview.CircularImageView
+                    android:id="@+id/imageViewProfileAvatar"
+                    android:layout_marginRight="10dp"
+                    android:layout_gravity="right"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:src="@drawable/baseline_person_24"
+                    app:civ_border_width="1dp"/>
+            </androidx.appcompat.widget.Toolbar>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/not_active_icon" />
         </com.google.android.material.appbar.AppBarLayout>
 
         <!-- FrameLayout - Content -->
@@ -45,125 +53,7 @@
             android:layout_height="1dp"
             android:background="#B3B3B3"
             android:layout_above="@id/linearLayoutFooter"/>
-
-        <LinearLayout
-            android:id="@+id/linearLayoutFooter"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="horizontal"
-            android:padding="10dp"
-            android:background="@color/white"
-            android:baselineAligned="false">
-
-            <!-- btnHome -->
-            <LinearLayout
-                android:id="@+id/linearLayoutHome"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnHome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/baseline_home_24"
-                    android:contentDescription="btnHome"
-                    android:background="@android:color/transparent"/>
-                <TextView
-                    android:id="@+id/textViewHome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Home" />
-            </LinearLayout>
-
-            <!--btnDiscover-->
-            <LinearLayout
-                android:id="@+id/linearLayoutDiscover"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnDiscover"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/baseline_search_24"
-                    android:contentDescription="btnDiscover"
-                    android:background="@android:color/transparent"/>
-                <TextView
-                    android:id="@+id/textViewDiscover"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Discover"
-                    android:textColor="@color/not_active"/>
-            </LinearLayout>
-
-            <!--btnCreate-->
-            <LinearLayout
-                android:id="@+id/linearLayoutCreate"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-                <ImageButton
-                    android:id="@+id/btnCreate"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@android:color/transparent"
-                    android:contentDescription="btnCreate"
-                    android:src="@drawable/baseline_add_box_24" />
-            </LinearLayout>
-
-            <!--btnFriend-->
-            <LinearLayout
-                android:id="@+id/linearLayoutFriend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnFriend"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/baseline_group_24"
-                    android:contentDescription="btnFiend"
-                    android:background="@android:color/transparent"/>
-                <TextView
-                    android:id="@+id/textViewFriend"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Friends"
-                    android:textColor="@color/not_active"/>
-            </LinearLayout>
-
-            <!--btnProfile-->
-            <LinearLayout
-                android:id="@+id/linearLayoutProfile"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnProfile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/baseline_person_24"
-                    android:contentDescription="btnProfile"
-                    android:background="@android:color/transparent"/>
-                <TextView
-                    android:id="@+id/textViewProfile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Profile"
-                    android:textColor="@color/not_active"/>
-            </LinearLayout>
-        </LinearLayout>
+        <include layout="@layout/footer_layout"/>
 
     </RelativeLayout>
 

@@ -1,8 +1,10 @@
-package com.example.h2ak;
+package com.example.h2ak.view.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.example.h2ak.R;
 
 public class MainActivity extends AppCompatActivity {
 

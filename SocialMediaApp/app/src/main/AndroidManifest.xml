@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,19 +20,16 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
         <activity
-            android:name=".ResetPasswordActivity"
-            android:exported="true">
-        </activity>
+            android:name=".view.activities.ProfileActivity"
+            android:exported="false" />
         <activity
-            android:name=".LoginActivity"
-            android:exported="true">
-        </activity>
+            android:name=".view.activities.EditProfileActivity"
+            android:exported="false" />
         <activity
-            android:name=".RegisterActivity"
-            android:exported="true">
-        </activity>
+            android:name=".view.activities.ResetPasswordActivity"
+            android:exported="true" />
         <activity
-            android:name=".BaseMenuActivity"
+            android:name=".view.activities.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,6 +37,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".view.activities.RegisterActivity"
+            android:exported="true" />
+        <activity
+            android:name=".view.activities.BaseMenuActivity"
+            android:exported="true" />
     </application>
 
 </manifest>
