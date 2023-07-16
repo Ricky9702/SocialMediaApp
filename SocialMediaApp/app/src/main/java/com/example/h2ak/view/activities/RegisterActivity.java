@@ -13,10 +13,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.h2ak.R;
-import com.example.h2ak.database.FirebaseDatabaseHelper;
+import com.example.h2ak.firebase.FirebaseHelper;
 import com.example.h2ak.pojo.User;
 import com.example.h2ak.utils.ValidationUtils;
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -100,7 +99,7 @@ public class RegisterActivity extends AppCompatActivity {
                         String userUid = user.getUid();
 
                         User createdUser = new User(userUid, userEmail, "", "", "");
-                        FirebaseDatabaseHelper.getFirebaseDatabaseUser().child(userUid).setValue(createdUser);
+                        FirebaseHelper.getFirebaseDatabaseUser().child(userUid).setValue(createdUser);
 
 
                         // Send email verification

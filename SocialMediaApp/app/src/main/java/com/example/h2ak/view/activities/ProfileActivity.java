@@ -1,6 +1,5 @@
 package com.example.h2ak.view.activities;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -8,46 +7,66 @@ import androidx.core.content.ContextCompat;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.h2ak.R;
-import com.example.h2ak.database.FirebaseDatabaseHelper;
+import com.example.h2ak.controllers.UserController;
+import com.example.h2ak.controllers.UserService;
 import com.example.h2ak.pojo.User;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
 
 import java.util.Date;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends AppCompatActivity{
     private Toolbar toolBar;
 
-    private Button buttonLogout;
+    private Button buttonLogout, btnEditProfile;
     private CircularImageView imageViewProfileAvatar;
     private TextView textViewProfileName;
+    private UserController userController;
     private FirebaseAuth firebaseAuth;
-    private DatabaseReference databaseReference;
+
+    {
+        userController = new UserController();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
         init();
+
+        userController.getUser(user -> {
+            if (user != null) {
+                //get data
+                String id = user.getId();
+                String email = user.getEmail();
+                String username = user.getName();
+                Date createdDate = user.getCreatedDate();
+                String avatar = user.getAvatar();
+                String phone = user.getPhone();
+                //set data
+                textViewProfileName.setText(email);
+                if (avatar != null && !avatar.isEmpty()) {
+                    Picasso.get().load(avatar).into(imageViewProfileAvatar);
+                } else {
+                    Drawable placeholderDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_person_24);
+                    Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(imageViewProfileAvatar);
+                }
+            }
+        });
+
     }
     private void init() {
         //Get views
+        btnEditProfile = findViewById(R.id.btnEditProfile);
         buttonLogout = findViewById(R.id.btnlogout);
         imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
         textViewProfileName = findViewById(R.id.textViewProfileName);
+        firebaseAuth = FirebaseAuth.getInstance();
 
 
         //Edit toolBar
@@ -57,7 +76,9 @@ public class ProfileActivity extends AppCompatActivity {
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
 
 
-        updateProfile();
+        btnEditProfile.setOnClickListener(view -> {
+            startActivity(new Intent(ProfileActivity.this, EditProfileActivity.class));
+        });
 
         buttonLogout.setOnClickListener(v -> {
             firebaseAuth.signOut();
@@ -71,44 +92,5 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
     }
-    public void updateProfile() {
-        firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        databaseReference = FirebaseDatabaseHelper.getFirebaseDatabaseUser();
-        if (databaseReference == null) {
-            throw new RuntimeException("Database not found");
-        }
 
-        if (user != null) {
-            Query query = databaseReference.child(user.getUid());
-            query.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        User user = snapshot.getValue(User.class);
-                        String id = user.getId();
-                        String email = user.getEmail();
-                        String username = user.getName();
-                        Date createdDate = user.getCreatedDate();
-                        String avatar = user.getAvatar();
-                        String phone = user.getPhone();
-
-                        // Use the retrieved user data as needed
-                        textViewProfileName.setText(email);
-                        Log.d("Hello sir", "length is " + avatar.length());
-                        if (avatar != null && !TextUtils.isEmpty(avatar)) {
-                            Picasso.get().load(avatar).into(imageViewProfileAvatar);
-                        } else {
-                            Drawable placeholderDrawable = ContextCompat.getDrawable(ProfileActivity.this, R.drawable.baseline_person_24);
-                            Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(imageViewProfileAvatar);
-                        }
-                    }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    // Handle error
-                }
-            });
-        }
-    }
 }

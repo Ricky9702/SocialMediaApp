@@ -1,10 +1,10 @@
-package com.example.h2ak.database;
+package com.example.h2ak.firebase;
 
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class FirebaseDatabaseHelper {
+public class FirebaseHelper {
+
 
     private static final FirebaseDatabase firebaseDatabase;
     private static DatabaseReference databaseReference;
