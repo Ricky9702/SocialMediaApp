@@ -11,7 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.h2ak.R;
-import com.example.h2ak.utils.ValidationUtils;
+import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -46,21 +46,11 @@ public class ResetPasswordActivity extends AppCompatActivity {
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
 
         //Get methods
-        ValidationUtils validationUtils = new ValidationUtils();
-        validationUtils.setPasswordValid(true);
-        validationUtils.dynamicClearText(textLayoutEmail);
-        validationUtils.validateEmail(editTextEmailResetPassword);
-        validationUtils.setHandlerButton(buttonResetPassword);
+        TextInputLayoutUtils.setDynamicClearText(textLayoutEmail);
 
         toolBar.setNavigationOnClickListener(view -> {
             onBackPressed();
             finish();
-        });
-
-        buttonResetPassword.setOnClickListener(view -> {
-            String email = editTextEmailResetPassword.getText().toString().trim();
-            if (!email.isEmpty() && validationUtils.isEmailValid())
-                resetPassword(email);
         });
     }
 

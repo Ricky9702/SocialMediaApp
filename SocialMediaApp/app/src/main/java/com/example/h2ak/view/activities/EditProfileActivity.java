@@ -1,53 +1,62 @@
 package com.example.h2ak.view.activities;
 
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 
-import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.h2ak.R;
-import com.example.h2ak.controllers.UserController;
+import com.example.h2ak.adapter.SpinnerGenderAdapter;
+import com.example.h2ak.contract.EditProfileActivityContract;
+import com.example.h2ak.database.FirebaseHelper;
+import com.example.h2ak.model.User;
+import com.example.h2ak.presenter.BaseMenuPresenter;
+import com.example.h2ak.presenter.EditProfileActivityPresenter;
+import com.example.h2ak.utils.CameraUtils;
+import com.example.h2ak.utils.GalleryUtils;
 import com.example.h2ak.utils.PermissionUtils;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
 
-import java.security.Permission;
-import java.util.Date;
+import java.util.Arrays;
 
-public class EditProfileActivity extends AppCompatActivity {
-    private UserController userController;
+public class EditProfileActivity extends AppCompatActivity implements EditProfileActivityContract.View {
+    TextView textViewEditProfilePicture, textViewEditCoverPhoto, textViewEditProfileInfo, textViewEditPersonalPrivacy;
+    TextInputEditText editTextName, editTextBio, editTextGender, editTextBirthday, editTextPassword;
+    CircularImageView imageViewProfileAvatar;
+    ImageView imageViewCoverPhoto;
+
     private ActivityResultLauncher<Uri> cameraActivityResultLauncher;
     private ActivityResultLauncher<Intent> galleryActivityResultLauncher;
-
-
+    private CameraUtils cameraUtils;
+    private GalleryUtils galleryUtils;
+    private boolean isChangingProfilePicture = false;
     private boolean isChanged = false;
-
-    {
-        userController = new UserController();
-    }
+    private EditProfileActivityContract.Presenter presenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,21 +64,25 @@ public class EditProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit_profile);
         init();
 
-
+        cameraUtils = new CameraUtils(this);
+        galleryUtils = new GalleryUtils();
+        presenter = new EditProfileActivityPresenter(this);
+        presenter.getUser();
     }
 
     private void init() {
 
         //Get view
-        TextView textViewEditProfilePicture = findViewById(R.id.textViewEditProfilePicture);
-        TextView textViewEditCoverPhoto = findViewById(R.id.textViewEditCoverPhoto);
-        TextView textViewEditProfileInfo = findViewById(R.id.textViewEditProfileInfo);
-        TextInputLayout textLayoutName = findViewById(R.id.textLayoutName);
-        TextInputLayout textLayoutBio = findViewById(R.id.textLayoutBio);
-        TextInputLayout textLayoutEmai = findViewById(R.id.textLayoutEmail);
-        TextInputLayout textLayoutPhone = findViewById(R.id.textLayoutPhone);
-        CircularImageView imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
-        ImageView imageViewCoverPhoto = findViewById(R.id.imageViewCoverPhoto);
+        textViewEditProfilePicture = findViewById(R.id.textViewEditProfilePicture);
+        textViewEditCoverPhoto = findViewById(R.id.textViewEditCoverPhoto);
+        textViewEditProfileInfo = findViewById(R.id.textViewEditProfileInfo);
+        editTextName = findViewById(R.id.editTextName);
+        editTextBio = findViewById(R.id.editTextBio);
+        editTextGender = findViewById(R.id.editTextGender);
+        editTextBirthday = findViewById(R.id.editTextBirthday);
+        editTextPassword = findViewById(R.id.editTextPassword);
+        imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
+        imageViewCoverPhoto = findViewById(R.id.imageViewCoverPhoto);
 
 
         //Set EditText focusable true
@@ -77,12 +90,10 @@ public class EditProfileActivity extends AppCompatActivity {
         TextWatcher textWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // This method is called before the text is changed
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // This method is called when the text is being changed
             }
 
             @Override
@@ -90,26 +101,18 @@ public class EditProfileActivity extends AppCompatActivity {
                 setIsChanged(true);
             }
         };
-        textLayoutName.getEditText().addTextChangedListener(textWatcher);
-        textLayoutBio.getEditText().addTextChangedListener(textWatcher);
-        textLayoutEmai.getEditText().addTextChangedListener(textWatcher);
-        textLayoutPhone.getEditText().addTextChangedListener(textWatcher);
+
+        editTextName.addTextChangedListener(textWatcher);
+        editTextBio.addTextChangedListener(textWatcher);
+        editTextGender.addTextChangedListener(textWatcher);
+        editTextBirthday.addTextChangedListener(textWatcher);
 
         textViewEditProfileInfo.setOnClickListener(view -> {
-            textLayoutName.getEditText().setFocusable(true);
-            textLayoutName.getEditText().setFocusableInTouchMode(true);
-            textLayoutName.getEditText().requestFocus();
-
-            textLayoutBio.getEditText().setFocusable(true);
-            textLayoutBio.getEditText().setFocusableInTouchMode(true);
-
-            textLayoutEmai.getEditText().setFocusable(true);
-            textLayoutEmai.getEditText().setFocusableInTouchMode(true);
-
-            textLayoutPhone.getEditText().setFocusable(true);
-            textLayoutPhone.getEditText().setFocusableInTouchMode(true);
+            editTextName.setEnabled(true);
+            editTextBio.setEnabled(true);
+            editTextGender.setEnabled(true);
+            editTextBirthday.setEnabled(true);
         });
-
 
         //Edit toolBar
         Toolbar toolbar = findViewById(R.id.toolBar);
@@ -119,104 +122,70 @@ public class EditProfileActivity extends AppCompatActivity {
         toolbar.inflateMenu(R.menu.edit_profile_menu_app_bar);
 
         toolbar.setOnMenuItemClickListener(view -> {
-            onBackPressed();
+            startActivity(new Intent(this, ProfileActivity.class));
             finish();
             return true;
         });
 
         toolbar.setNavigationOnClickListener(item -> {
             if (!isChanged) {
-                onBackPressed();
+                startActivity(new Intent(this, ProfileActivity.class));
                 finish();
             } else {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Unsaved changes");
-                builder.setMessage("You have unsaved changes. Are you sure you want to cancel?");
-
-                builder.setPositiveButton("YES", (dialogInterface, i) -> {
-                    onBackPressed();
-                    finish();
-                });
-
-                builder.setNegativeButton("NO", (dialogInterface, i) -> {
-                    // Close the dialog without performing any action
-                });
-
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
+                showUnsavedChangeDialog();
             }
         });
 
 
+        textViewEditProfilePicture.setOnClickListener(view -> {
+            isChangingProfilePicture = true;
+            showImagePickDialog();
+        });
+
+        textViewEditCoverPhoto.setOnClickListener(view -> {
+            isChangingProfilePicture = false;
+            showImagePickDialog();
+        });
+
         cameraActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.TakePicture(), result -> {
-           if (result) {
-               requestCameraPermission();
-               requestStoragePermission();
-           }
+
+            if (result) {
+                if (cameraUtils.getCapturedImageUri() != null) {
+                    Uri imageUri = cameraUtils.getCapturedImageUri();
+                    if (isChangingProfilePicture)
+                        Picasso.get().load(imageUri).into(imageViewProfileAvatar);
+                    else
+                        Picasso.get().load(imageUri).into(imageViewCoverPhoto);
+
+                }
+            }
         });
 
         galleryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        // Handle the gallery activity result here
-                        if (result.getData() != null) {
-                            // Retrieve the selected image from the result.getData() if necessary
-                            // For example, you can get the image URI using result.getData().getData()
-                        }
+            if (result.getResultCode() == RESULT_OK) {
+                if (result.getData() != null) {
+                    Uri imageUri = result.getData().getData();
+                    if (imageUri != null) {
+                        if (isChangingProfilePicture)
+                            Picasso.get().load(imageUri).into(imageViewProfileAvatar);
+                        else
+                            Picasso.get().load(imageUri).into(imageViewCoverPhoto);
                     }
                 }
-        );
-
-        textViewEditProfilePicture.setOnClickListener(view -> {
-            selectFromGallery();
-        });
-
-
-        userController.getUser(user -> {
-            if (user != null) {
-                //get data
-                String id = user.getId();
-                String email = user.getEmail();
-                String name = user.getName();
-                Date createdDate = user.getCreatedDate();
-                String avatar = user.getAvatar();
-                String phone = user.getPhone();
-                //set data
-                textLayoutName.getEditText().setText(name);
-                textLayoutEmai.getEditText().setText(email);
-                textLayoutPhone.getEditText().setText(phone);
-
-                if (avatar != null && !avatar.isEmpty()) {
-                    textViewEditProfilePicture.setText("Edit");
-                    Picasso.get().load(avatar).into(imageViewProfileAvatar);
-
-                } else {
-                    textViewEditProfilePicture.setText("Add");
-                    Drawable placeholderDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_person_24);
-                    Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(imageViewProfileAvatar);
-                }
-                setIsChanged(false);
             }
         });
 
-    }
 
-    private void requestStoragePermission() {
-        PermissionUtils.requestStoragePermission(this);
     }
-
-    private void requestCameraPermission() {
-        PermissionUtils.requestCameraPermission(this);
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
 
         switch (requestCode) {
+
             case PermissionUtils.CAMERA_REQUEST_CODE -> {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    //Permission granted
-                    selectFromCamera();
+                if (PermissionUtils.checkCameraPermission(this)) {
+                    cameraUtils.openCamera(cameraActivityResultLauncher);
                 } else {
                     //Permission denied
                     Toast.makeText(this, "Please enable camera and storage permissions", Toast.LENGTH_SHORT).show();
@@ -224,9 +193,9 @@ public class EditProfileActivity extends AppCompatActivity {
             }
 
             case PermissionUtils.STORAGE_REQUEST_CODE -> {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (PermissionUtils.checkStoragePermission(this)) {
                     //Permission granted
-                    selectFromGallery();
+                    galleryUtils.openGallery(galleryActivityResultLauncher);
                 } else {
                     //Permission denied
                     Toast.makeText(this, "Please enable storage permissions", Toast.LENGTH_SHORT).show();
@@ -238,43 +207,180 @@ public class EditProfileActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    private void selectFromGallery() {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK);
-        galleryIntent.setType("image/*");
-        galleryActivityResultLauncher.launch(galleryIntent);
+    private void showUnsavedChangeDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Unsaved changes");
+        builder.setMessage("You have unsaved changes. Are you sure you want to cancel?");
+
+        builder.setPositiveButton("YES", (dialogInterface, i) -> {
+            onBackPressed();
+            finish();
+        });
+
+        builder.setNegativeButton("NO", (dialogInterface, i) -> {
+           dialogInterface.dismiss();
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
-    private void selectFromCamera() {
-        //provide metadata for image
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MediaStore.Images.Media.TITLE, "Temp pic");
-        contentValues.put(MediaStore.Images.Media.DESCRIPTION, "Temp Description");
-        //Insert image to media store
-        Uri imageUri = this.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
-        //Create intent, using camera app
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+    private void showImagePickDialog() {
+        // Build dialog for choosing camera or gallery
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        cameraActivityResultLauncher.launch(imageUri);
+        builder.setTitle("Choose your image");
+        builder.setItems(new String[]{"Camera", "Gallery"}, (dialogInterface, i) -> {
+            if (i == 0) {
+                PermissionUtils.requestCameraPermission(this);
+            } else
+                PermissionUtils.requestStoragePermission(this);
+        });
+
+        builder.setNegativeButton("Cancel", (dialogInterface, i) -> {
+            dialogInterface.dismiss();
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (resultCode == RESULT_OK) {
-            if (resultCode == PermissionUtils.IMAGE_PICK_CAMERA_CODE) {
+    private void showEditFieldDialog(String title, View view, String fieldValue) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
 
-            }
+        if (view == null) {
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
 
-            if (resultCode == PermissionUtils.IMAGE_PICK_GALLERY_CODE) {
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(55, 0, 55, 0);
 
-            }
+            EditText editText = new EditText(this);
+            editText.setText(fieldValue);
+
+            layout.addView(editText, params);
+            view = layout;
         }
-        super.onActivityResult(requestCode, resultCode, data);
+        builder.setView(view);
+
+        builder.setPositiveButton("CHANGE", (dialogInterface, i) -> {
+            switch (fieldValue) {
+                case "name" -> { editTextName.setText();}
+                case "bio" -> {}
+                case "gender" -> {}
+                case "birthday" -> {}
+                case "password" -> {}
+                default -> {}
+            }
+        });
+
+        builder.setNegativeButton("CANCEL", (dialogInterface, i) -> {
+            // Close the dialog without performing any action
+            dialogInterface.dismiss();
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
+
+
 
 
     public void setIsChanged(boolean changed) {
         this.isChanged = changed;
     }
 
+    @Override
+    public void loadingInfomationUser(User user) {
+            if (user != null) {
+
+                //get data
+                String name = user.getName();
+                String bio = user.getBio();
+                String gender = user.getGender();
+                String birthday = user.getBirthday();
+                String avatar = user.getImageAvatar();
+                String cover = user.getImageCover();
+
+                //set data
+                editTextName.setText(name);
+                editTextGender.setText(gender);
+                editTextBirthday.setText(birthday);
+                editTextBio.setText(bio == null || bio.isEmpty() ? " " : bio);
+                editTextPassword.setText(user.getPassword());
+
+                if (avatar != null && !avatar.isEmpty()) {
+                    textViewEditProfilePicture.setText("Edit");
+                    Picasso.get().load(avatar).into(imageViewProfileAvatar);
+
+                } else {
+                    textViewEditProfilePicture.setText("Add");
+                    imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
+                }
+
+                if (cover != null && !cover.isEmpty()) {
+                    textViewEditCoverPhoto.setText("Edit");
+                    Picasso.get().load(cover).into(imageViewCoverPhoto);
+
+                } else {
+                    textViewEditCoverPhoto.setText("Add");
+                    imageViewCoverPhoto.setImageResource(R.color.not_active_icon);
+                }
+
+                setIsChanged(false);
+
+                //Create dialogue for each field
+                editTextName.setOnClickListener(view -> {
+                    showEditFieldDialog("Edit Name", null, name);
+                });
+
+                editTextBio.setOnClickListener(view -> {
+                    showEditFieldDialog("Edit Bio", null, bio);
+                });
+
+                editTextGender.setOnClickListener(view -> {
+
+                    //Create linearLayout
+                    LinearLayout linearLayout = new LinearLayout(this);
+
+                    //Set params
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT);
+                    params.setMargins(55, 0, 55, 0);
+
+                    //Create adpater spinner
+                    String[] options = new String[]{"Male", "Female", "Other"};
+                    SpinnerGenderAdapter adapter = new SpinnerGenderAdapter(this,
+                            androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, options);
+                    adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
+
+                    //Create spinner
+                    Spinner spinner = new Spinner(this);
+                    spinner.setAdapter(adapter);
+                    int selectedIndex = Arrays.asList(options).indexOf(gender);
+                    //Set the selection default as gender of user
+                    spinner.setSelection(selectedIndex);
+                    linearLayout.addView(spinner, params);
+                    showEditFieldDialog("Edit gender", linearLayout, gender);
+                });
+
+            }
+    }
+
+    @Override
+    public void showProgressbar() {
+
+    }
+
+    @Override
+    public void onImageUploadSuccess(String imageUrl) {
+
+    }
+
+    @Override
+    public void onImageUploadFail(String errorMsg) {
+        Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
+    }
 }

@@ -4,7 +4,9 @@ package com.example.h2ak.utils;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.provider.MediaStore;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -12,8 +14,6 @@ import androidx.core.content.ContextCompat;
 public class PermissionUtils {
     public static final int CAMERA_REQUEST_CODE = 1;
     public static final int STORAGE_REQUEST_CODE = 2;
-    public static final int IMAGE_PICK_GALLERY_CODE = 3;
-    public static final int IMAGE_PICK_CAMERA_CODE = 4;
     public static String[] cameraPermissions;
     public static String[] storagePermissions;
 

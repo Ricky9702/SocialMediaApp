@@ -6,31 +6,32 @@ import androidx.appcompat.widget.Toolbar;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.h2ak.R;
-import com.example.h2ak.firebase.FirebaseHelper;
-import com.example.h2ak.pojo.User;
-import com.example.h2ak.utils.ValidationUtils;
+import com.example.h2ak.adapter.SpinnerGenderAdapter;
+import com.example.h2ak.contract.RegisterActivityContract;
+import com.example.h2ak.model.User;
+import com.example.h2ak.presenter.RegisterActivityPresenter;
+import com.example.h2ak.utils.TextInputLayoutUtils;
+import com.example.h2ak.view.fragments.DatePickerFragment;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
-public class RegisterActivity extends AppCompatActivity {
-
-    private TextInputLayout textLayoutPassword, textLayoutEmail;
-    private EditText editTextEmail, editTextPassword;
-    private Button btnRegister;
-    private Toolbar toolbar;
-
-    private TextView textViewGoToLogin;
-    private ProgressBar progressBar;
-    private FirebaseAuth mAuth;
-
+public class RegisterActivity extends AppCompatActivity implements RegisterActivityContract.View {
+    TextInputLayout textLayoutPassword, textLayoutConfirmPassword, textLayoutEmail, textLayoutName;
+    TextInputEditText editTextName, editTextEmail, editTextPassword, editTextConfirmPassword, editTextGender, editTextBirthday;
+    Button btnRegister;
+    Toolbar toolbar;
+    TextView textViewGoToLogin;
+    ProgressBar progressBar;
+    Spinner spinnerGender;
+    private RegisterActivityPresenter registerActivityPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,18 +40,22 @@ public class RegisterActivity extends AppCompatActivity {
         init();
     }
 
-    private void init()
-    {
+    private void init() {
         // Get views
+        textLayoutName = findViewById(R.id.textLayoutName);
         textLayoutEmail = findViewById(R.id.textLayoutEmail);
         textLayoutPassword = findViewById(R.id.textLayoutPassword);
+        textLayoutConfirmPassword = findViewById(R.id.textLayoutConfirmPassword);
+        editTextName = findViewById(R.id.editTextName);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
+        editTextConfirmPassword = findViewById(R.id.editTextConfirmPassword);
+        editTextGender = findViewById(R.id.editTextGender);
+        editTextBirthday = findViewById(R.id.editTextBirthday);
         btnRegister = findViewById(R.id.btnRegister);
-        btnRegister.setEnabled(false);
         textViewGoToLogin = findViewById(R.id.textViewGoToLogin);
         progressBar = findViewById(R.id.progressBar);
-        mAuth = FirebaseAuth.getInstance();
+        spinnerGender = findViewById(R.id.spinnerGender);
 
         // Edit appBar
         toolbar = findViewById(R.id.toolBar);
@@ -58,15 +63,50 @@ public class RegisterActivity extends AppCompatActivity {
         toolbar.setTitleTextColor(getColor(R.color.black));
         toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
 
+        //set event click on edit text birthday
+        DatePickerFragment datePickerFragment = new DatePickerFragment();
+        datePickerFragment.setTextInputEditText(editTextBirthday);
+        editTextBirthday.setOnClickListener(view -> {
+            datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+        });
 
-        // Get methods
-        ValidationUtils validationUtils = new ValidationUtils();
-        validationUtils.dynamicClearText(textLayoutEmail);
-        validationUtils.dynamicPasswordToggle(textLayoutPassword);
-        validationUtils.validateEmail(editTextEmail);
-        validationUtils.validatePassword(editTextPassword);
-        validationUtils.setHandlerButton(btnRegister);
-        btnRegisterClick(validationUtils);
+
+        //set event click on edit text gender
+        editTextGender.setOnClickListener(view -> {
+            spinnerGender.performClick();
+        });
+
+        //Fill data for spinner
+        spinnerGender = findViewById(R.id.spinnerGender);
+
+        SpinnerGenderAdapter adapter = new SpinnerGenderAdapter(this,
+                androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,
+                new String[]{"Male", "Female", "Other", ""});
+        adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
+        adapter.setCount(adapter.getCount() - 1);
+
+        spinnerGender.setAdapter(adapter);
+        spinnerGender.setSelection(adapter.getCount());
+
+        spinnerGender.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String gender = (String) adapterView.getItemAtPosition(i);
+                editTextGender.setText(gender);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                editTextGender.setText("");
+            }
+        });
+
+
+//         Get methods
+        TextInputLayoutUtils.setDynamicClearText(textLayoutName);
+        TextInputLayoutUtils.setDynamicClearText(textLayoutEmail);
+        TextInputLayoutUtils.setDynamicPasswordToggle(textLayoutPassword);
+        TextInputLayoutUtils.setDynamicPasswordToggle(textLayoutConfirmPassword);
 
         toolbar.setNavigationOnClickListener(view -> {
             onBackPressed();
@@ -77,61 +117,40 @@ public class RegisterActivity extends AppCompatActivity {
             onBackPressed();
             finish();
         });
-    }
 
-    private void btnRegisterClick(ValidationUtils validationUtils) {
-            btnRegister.setOnClickListener(view -> {
-                String email = editTextEmail.getText().toString().trim();
-                String password = editTextPassword.getText().toString().trim();
-                if (validationUtils.isEmailValid() && validationUtils.isPasswordValid())
-                    register(email, password);
-            });
-    }
-    private void register(String email, String password) {
-        progressBar.setVisibility(View.VISIBLE);
-        mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
+        registerActivityPresenter = new RegisterActivityPresenter(this);
 
-                        // Registration success
-                        FirebaseUser user = mAuth.getCurrentUser();
+        btnRegister.setOnClickListener(view -> {
+            String name = editTextName.getText().toString().trim();
+            String birthday = editTextBirthday.getText().toString().trim();
+            String gender = editTextGender.getText().toString().trim();
+            String email = editTextEmail.getText().toString().trim();
+            String password = editTextPassword.getText().toString().trim();
+            String confirmPassword = editTextConfirmPassword.getText().toString().trim();
 
-                        String userEmail = user.getEmail();
-                        String userUid = user.getUid();
-
-                        User createdUser = new User(userUid, userEmail, "", "", "");
-                        FirebaseHelper.getFirebaseDatabaseUser().child(userUid).setValue(createdUser);
-
-
-                        // Send email verification
-                        sendEmailVerification(user);
-
-                        Toast.makeText(RegisterActivity.this, "Registration successful.", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
-                        finish();
-                    } else {
-                        // Registration failed
-                        Toast.makeText(RegisterActivity.this, "Registration failed.", Toast.LENGTH_SHORT).show();
-                    }
-                    progressBar.setVisibility(View.GONE);
-                }).addOnFailureListener(runnable -> {
-                    Toast.makeText(RegisterActivity.this, runnable.getMessage(), Toast.LENGTH_SHORT).show();
-                    progressBar.setVisibility(View.GONE);
+            User createdUser = registerActivityPresenter.createUser(name, birthday, gender, email, password, confirmPassword);
+            if (createdUser != null)
+                registerActivityPresenter.register(createdUser);
         });
+
     }
 
-    private void sendEmailVerification(FirebaseUser user) {
-        if (user != null) {
-            user.sendEmailVerification().addOnCompleteListener(this, task -> {
-                if (task.isSuccessful()) {
-                    Toast.makeText(RegisterActivity.this, "Verification email sent.", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    Toast.makeText(RegisterActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
-                }
-            }).addOnFailureListener(runnable -> {
-                Toast.makeText(RegisterActivity.this, runnable.getMessage(), Toast.LENGTH_SHORT).show();
-            });
-        }
+    @Override
+    public void showProgressBar(boolean flag) {
+        if (flag)
+            progressBar.setVisibility(View.VISIBLE);
+        else
+            progressBar.setVisibility(View.GONE);
     }
 
+    @Override
+    public void showError(String errorMessage) {
+        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onRegisterSuccess() {
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
+    }
 }

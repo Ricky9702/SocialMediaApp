@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,18 +13,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.h2ak.R;
-import com.example.h2ak.utils.ValidationUtils;
+import com.example.h2ak.contract.LoginActivityContract;
+import com.example.h2ak.presenter.LoginActivtyPresenter;
+import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements LoginActivityContract.View {
     private TextView textViewResetPassword;
     private TextInputLayout textLayoutPassword, textLayoutEmail;
     private EditText editTextEmail, editTextPassword;
     private Button btnLogin, btnGoToRegister;
     private ProgressBar progressBar;
-    private FirebaseAuth mAuth;
+    private LoginActivtyPresenter loginActivtyPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,11 +34,9 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         init();
 
-        FirebaseUser user = mAuth.getCurrentUser();
-
-//        if (user != null)
-//            startActivity(new Intent(LoginActivity.this, BaseMenuActivity.class));
-
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.isEmailVerified())
+            startActivity(new Intent(LoginActivity.this, BaseMenuActivity.class));
     }
 
     private void init() {
@@ -45,20 +46,12 @@ public class LoginActivity extends AppCompatActivity {
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnLogin.setEnabled(false);
         btnGoToRegister = findViewById(R.id.btnGoToRegister);
         progressBar = findViewById(R.id.progressBar);
-        mAuth = FirebaseAuth.getInstance();
 
         //methods
-        ValidationUtils validationUtils = new ValidationUtils();
-        validationUtils.dynamicClearText(textLayoutEmail);
-        validationUtils.dynamicPasswordToggle(textLayoutPassword);
-        validationUtils.validateEmail(editTextEmail);
-        validationUtils.validatePassword(editTextPassword);
-        validationUtils.setHandlerButton(btnLogin);
-        btnLoginClick(validationUtils);
-
+        TextInputLayoutUtils.setDynamicClearText(textLayoutEmail);
+        TextInputLayoutUtils.setDynamicPasswordToggle(textLayoutPassword);
 
         btnGoToRegister.setOnClickListener(view -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
@@ -68,36 +61,50 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(new Intent(LoginActivity.this, ResetPasswordActivity.class));
         });
 
-    }
 
-    private void btnLoginClick(ValidationUtils validationUtils) {
+        loginActivtyPresenter = new LoginActivtyPresenter(this);
+
         btnLogin.setOnClickListener(view -> {
             String email = editTextEmail.getText().toString().trim();
             String password = editTextPassword.getText().toString().trim();
-            if (validationUtils.isEmailValid() && validationUtils.isPasswordValid())
-                loginUser(email, password);
+
+            // Set the FirebaseAuthListener in the presenter
+            loginActivtyPresenter.setFirebaseAuthListener(isVerified -> {
+                Log.d("LoginActivity", "onEmailVerified: " + isVerified);
+                if (isVerified) {
+                    loginActivtyPresenter.updateUserActive(email, true);
+                }
+            });
+
+            // Perform the login process
+            loginActivtyPresenter.login(email, password);
         });
+
+
     }
 
-    private void loginUser(String email, String password) {
-        progressBar.setVisibility(View.VISIBLE);
-        mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        // Sign in success
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        startActivity(new Intent(LoginActivity.this, BaseMenuActivity.class));
-                        finish();
-                    } else {
-                        //Sign in fails
-                        Toast.makeText(LoginActivity.this, "Authentication failed.",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                    progressBar.setVisibility(View.GONE);
-                }).addOnFailureListener(runnable -> {
-                    Toast.makeText(LoginActivity.this, runnable.getMessage(), Toast.LENGTH_SHORT).show();
-                    progressBar.setVisibility(View.GONE);
-                });
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        loginActivtyPresenter.setFirebaseAuthListener(null);
     }
 
+    @Override
+    public void showProgressbar(boolean flag) {
+        if (flag)
+            progressBar.setVisibility(View.VISIBLE);
+        else
+            progressBar.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onLoginSuccess() {
+        startActivity(new Intent(LoginActivity.this, BaseMenuActivity.class));
+        finish();
+    }
+
+    @Override
+    public void onLoginFailure(String errorMessage) {
+        Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+    }
 }

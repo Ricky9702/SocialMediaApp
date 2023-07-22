@@ -7,31 +7,29 @@ import androidx.core.content.ContextCompat;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.h2ak.R;
-import com.example.h2ak.controllers.UserController;
-import com.example.h2ak.controllers.UserService;
-import com.example.h2ak.pojo.User;
+import com.example.h2ak.contract.ProfileActivityContract;
+import com.example.h2ak.model.User;
+import com.example.h2ak.presenter.BaseMenuPresenter;
+import com.example.h2ak.presenter.ProfileActivityPresenter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
 
-import java.util.Date;
+public class ProfileActivity extends AppCompatActivity implements ProfileActivityContract.View {
+    Toolbar toolBar;
 
-public class ProfileActivity extends AppCompatActivity{
-    private Toolbar toolBar;
-
-    private Button buttonLogout, btnEditProfile;
-    private CircularImageView imageViewProfileAvatar;
-    private TextView textViewProfileName;
-    private UserController userController;
-    private FirebaseAuth firebaseAuth;
-
-    {
-        userController = new UserController();
-    }
+    Button buttonLogout, btnEditProfile;
+    CircularImageView imageViewProfileAvatar;
+    ImageView imageViewProfileBackground;
+    TextView textViewProfileName, textViewProfileBio;
+    FirebaseAuth firebaseAuth;
+    private ProfileActivityContract.Presenter presenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,33 +37,19 @@ public class ProfileActivity extends AppCompatActivity{
         setContentView(R.layout.activity_profile);
         init();
 
-        userController.getUser(user -> {
-            if (user != null) {
-                //get data
-                String id = user.getId();
-                String email = user.getEmail();
-                String username = user.getName();
-                Date createdDate = user.getCreatedDate();
-                String avatar = user.getAvatar();
-                String phone = user.getPhone();
-                //set data
-                textViewProfileName.setText(email);
-                if (avatar != null && !avatar.isEmpty()) {
-                    Picasso.get().load(avatar).into(imageViewProfileAvatar);
-                } else {
-                    Drawable placeholderDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_person_24);
-                    Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(imageViewProfileAvatar);
-                }
-            }
-        });
-
+        presenter = new ProfileActivityPresenter(this);
+        presenter.getUser();
     }
+
     private void init() {
+
         //Get views
         btnEditProfile = findViewById(R.id.btnEditProfile);
         buttonLogout = findViewById(R.id.btnlogout);
+        imageViewProfileBackground = findViewById(R.id.imageViewProfileBackground);
         imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
         textViewProfileName = findViewById(R.id.textViewProfileName);
+        textViewProfileBio = findViewById(R.id.textViewProfileBio);
         firebaseAuth = FirebaseAuth.getInstance();
 
 
@@ -87,10 +71,45 @@ public class ProfileActivity extends AppCompatActivity{
         });
 
         toolBar.setNavigationOnClickListener(view -> {
-            onBackPressed();
+            startActivity(new Intent(this, BaseMenuActivity.class));
             finish();
         });
 
     }
 
+    @Override
+    public void loadUserInformation(User user) {
+        if (user != null) {
+
+            String name = user.getName();
+            String bio = user.getBio();
+            String avatar = user.getImageAvatar();
+            String cover = user.getImageCover();
+
+            //Load the name
+            textViewProfileName.setText(name);
+
+            //Load the bio
+            if (bio != null && !bio.isEmpty()) {
+                textViewProfileBio.setVisibility(View.VISIBLE);
+                user.setBio(bio);
+            } else {
+                textViewProfileBio.setVisibility(View.GONE);
+            }
+
+            // Load the avatar image
+            if (avatar != null && !avatar.isEmpty()) {
+                Picasso.get().load(avatar).into(imageViewProfileAvatar);
+            } else {
+                imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
+            }
+
+            // Load the cover image
+            if (cover != null && !cover.isEmpty()) {
+                Picasso.get().load(cover).into(imageViewProfileBackground);
+            } else {
+                imageViewProfileBackground.setImageResource(R.color.not_active_icon);
+            }
+        }
+    }
 }

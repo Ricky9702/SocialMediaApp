@@ -1,10 +1,10 @@
 package com.example.h2ak.view.activities;
 
 import com.example.h2ak.R;
-import com.example.h2ak.controllers.UserController;
-import com.example.h2ak.controllers.UserService;
+import com.example.h2ak.contract.BaseMenuContract;
 import com.example.h2ak.databinding.ActivityBaseMenuBinding;
-import com.example.h2ak.pojo.User;
+import com.example.h2ak.model.User;
+import com.example.h2ak.presenter.BaseMenuPresenter;
 import com.example.h2ak.view.fragments.CreateFragment;
 import com.example.h2ak.view.fragments.DiscoverFragment;
 import com.example.h2ak.view.fragments.HomeFragment;
@@ -32,37 +32,17 @@ import com.squareup.picasso.Picasso;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BaseMenuActivity extends AppCompatActivity {
+public class BaseMenuActivity extends AppCompatActivity implements BaseMenuContract.View {
     private ActivityBaseMenuBinding binding;
-    private FirebaseAuth firebaseAuth;
-    private UserController userController;
+    private BaseMenuPresenter baseMenuPresenter;
+    CircularImageView imageViewProfileAvatar;
 
     private Map<Integer, Map<String, Integer>> buttonInfoMap = new HashMap<>();
     private int previousButtonId = -1;
-
-    {
-        userController = new UserController();
-
-    }
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         init();
-
-
-        //Change user avatar
-        userController.getUser(user -> {
-            if (user != null) {
-                String avatar = user.getAvatar();
-                if (avatar != null && !avatar.isEmpty()) {
-                    Picasso.get().load(avatar).into(binding.imageViewProfileAvatar);
-                } else {
-                    Drawable placeholderDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_person_24);
-                    Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(binding.imageViewProfileAvatar);
-                }
-            }
-        });
 
     }
 
@@ -82,6 +62,7 @@ public class BaseMenuActivity extends AppCompatActivity {
         ImageButton btnCreate = findViewById(R.id.btnCreate);
         ImageButton btnFriend = findViewById(R.id.btnFriend);
         ImageButton btnInbox = findViewById(R.id.btnInbox);
+        imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
 
         //Set bottom nav button fields
         addButtonInfo(R.id.btnHome, R.drawable.baseline_home_24, R.drawable.baseline_home_24_active, R.id.textViewHome);
@@ -118,6 +99,9 @@ public class BaseMenuActivity extends AppCompatActivity {
         });
 
         btnHome.performClick();
+
+        baseMenuPresenter = new BaseMenuPresenter(this);
+        baseMenuPresenter.getUser();
     }
 
     private void addButtonInfo(int buttonId, int defaultImageResId, int activeImageResId, int textViewId) {
@@ -164,10 +148,34 @@ public class BaseMenuActivity extends AppCompatActivity {
     }
 
     private void replaceFragment(Fragment fragment) {
-        //replace FrameLayout to others fragment
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.frameLayout, fragment);
         fragmentTransaction.commit();
     }
+
+    @Override
+    public void changeProfileAvatar(User user) {
+        if (user != null) {
+            String avatar = user.getImageAvatar();
+            if (avatar != null && !avatar.isEmpty()) {
+                Picasso.get().load(avatar).into(imageViewProfileAvatar);
+            } else {
+                imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
+            }
+        }
+    }
+
+//    @Override
+//    public void changeProfileAvatar(User user) {
+//        if (user != null) {
+//            String avatar = user.getAvatar();
+//            if (avatar != null && !avatar.isEmpty()) {
+//                Picasso.get().load(avatar).into(binding.imageViewProfileAvatar);
+//            } else {
+//                Drawable placeholderDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_person_24);
+//                Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(binding.imageViewProfileAvatar);
+//            }
+//        }
+//    }
 }
