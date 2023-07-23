@@ -1,6 +1,5 @@
 package com.example.h2ak.view.activities;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -10,53 +9,56 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.SpinnerGenderAdapter;
 import com.example.h2ak.contract.EditProfileActivityContract;
-import com.example.h2ak.database.FirebaseHelper;
 import com.example.h2ak.model.User;
-import com.example.h2ak.presenter.BaseMenuPresenter;
 import com.example.h2ak.presenter.EditProfileActivityPresenter;
 import com.example.h2ak.utils.CameraUtils;
 import com.example.h2ak.utils.GalleryUtils;
+import com.example.h2ak.utils.ImageSizeValidationUtils;
+import com.example.h2ak.utils.PasswordHashing;
 import com.example.h2ak.utils.PermissionUtils;
-import com.google.android.gms.tasks.Task;
+import com.example.h2ak.view.fragments.DatePickerFragment;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
-
 import java.util.Arrays;
 
+
 public class EditProfileActivity extends AppCompatActivity implements EditProfileActivityContract.View {
-    TextView textViewEditProfilePicture, textViewEditCoverPhoto, textViewEditProfileInfo, textViewEditPersonalPrivacy;
+    TextView textViewEditProfilePicture, textViewEditCoverPhoto;
     TextInputEditText editTextName, editTextBio, editTextGender, editTextBirthday, editTextPassword;
     CircularImageView imageViewProfileAvatar;
     ImageView imageViewCoverPhoto;
+    ProgressBar progressBar;
+    Toolbar toolBar;
 
     private ActivityResultLauncher<Uri> cameraActivityResultLauncher;
     private ActivityResultLauncher<Intent> galleryActivityResultLauncher;
     private CameraUtils cameraUtils;
     private GalleryUtils galleryUtils;
-    private boolean isChangingProfilePicture = false;
+    private boolean isChangingProfileAvatar = false;
     private boolean isChanged = false;
     private EditProfileActivityContract.Presenter presenter;
+    private Uri avatarUri, coverUri;
+    private String password = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +70,37 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         galleryUtils = new GalleryUtils();
         presenter = new EditProfileActivityPresenter(this);
         presenter.getUser();
+
+        toolBar.setOnMenuItemClickListener(item -> {
+
+            if (avatarUri != null) {
+                presenter.uploadImageToFirebaseCloud(avatarUri, "avatar");
+            }
+
+            if (coverUri != null) {
+                presenter.uploadImageToFirebaseCloud(coverUri, "cover");
+            }
+
+            User user = new User();
+
+            user.setName(editTextName.getText().toString().trim());
+            user.setBio(editTextBio.getText().toString().trim());
+            user.setGender(editTextGender.getText().toString().trim());
+            user.setBirthday(editTextBirthday.getText().toString().trim());
+            user.setPassword(password);
+
+
+            Log.d("BEFORE SUCCESS", password+"");
+            Log.d("TEST 999", user.getPassword()+"");
+
+            presenter.updateUser(user);
+
+            startActivity(new Intent(this, ProfileActivity.class));
+            finish();
+
+            return true;
+        });
+
     }
 
     private void init() {
@@ -75,7 +108,6 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         //Get view
         textViewEditProfilePicture = findViewById(R.id.textViewEditProfilePicture);
         textViewEditCoverPhoto = findViewById(R.id.textViewEditCoverPhoto);
-        textViewEditProfileInfo = findViewById(R.id.textViewEditProfileInfo);
         editTextName = findViewById(R.id.editTextName);
         editTextBio = findViewById(R.id.editTextBio);
         editTextGender = findViewById(R.id.editTextGender);
@@ -83,6 +115,8 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         editTextPassword = findViewById(R.id.editTextPassword);
         imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
         imageViewCoverPhoto = findViewById(R.id.imageViewCoverPhoto);
+        progressBar = findViewById(R.id.progressBar);
+        toolBar = findViewById(R.id.toolBar);
 
 
         //Set EditText focusable true
@@ -107,27 +141,14 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         editTextGender.addTextChangedListener(textWatcher);
         editTextBirthday.addTextChangedListener(textWatcher);
 
-        textViewEditProfileInfo.setOnClickListener(view -> {
-            editTextName.setEnabled(true);
-            editTextBio.setEnabled(true);
-            editTextGender.setEnabled(true);
-            editTextBirthday.setEnabled(true);
-        });
 
         //Edit toolBar
-        Toolbar toolbar = findViewById(R.id.toolBar);
-        toolbar.setTitle("Edit profile");
-        toolbar.setTitleTextColor(getColor(R.color.black));
-        toolbar.setNavigationIcon(getDrawable(R.drawable.baseline_close_24));
-        toolbar.inflateMenu(R.menu.edit_profile_menu_app_bar);
+        toolBar.setTitle("Edit profile");
+        toolBar.setTitleTextColor(getColor(R.color.black));
+        toolBar.setNavigationIcon(getDrawable(R.drawable.baseline_close_24));
+        toolBar.inflateMenu(R.menu.edit_profile_menu_app_bar);
 
-        toolbar.setOnMenuItemClickListener(view -> {
-            startActivity(new Intent(this, ProfileActivity.class));
-            finish();
-            return true;
-        });
-
-        toolbar.setNavigationOnClickListener(item -> {
+        toolBar.setNavigationOnClickListener(item -> {
             if (!isChanged) {
                 startActivity(new Intent(this, ProfileActivity.class));
                 finish();
@@ -138,12 +159,12 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
 
 
         textViewEditProfilePicture.setOnClickListener(view -> {
-            isChangingProfilePicture = true;
+            isChangingProfileAvatar = true;
             showImagePickDialog();
         });
 
         textViewEditCoverPhoto.setOnClickListener(view -> {
-            isChangingProfilePicture = false;
+            isChangingProfileAvatar = false;
             showImagePickDialog();
         });
 
@@ -152,11 +173,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
             if (result) {
                 if (cameraUtils.getCapturedImageUri() != null) {
                     Uri imageUri = cameraUtils.getCapturedImageUri();
-                    if (isChangingProfilePicture)
-                        Picasso.get().load(imageUri).into(imageViewProfileAvatar);
-                    else
-                        Picasso.get().load(imageUri).into(imageViewCoverPhoto);
-
+                    if (imageUri != null) handleImageResult(imageUri);
                 }
             }
         });
@@ -165,26 +182,21 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
             if (result.getResultCode() == RESULT_OK) {
                 if (result.getData() != null) {
                     Uri imageUri = result.getData().getData();
-                    if (imageUri != null) {
-                        if (isChangingProfilePicture)
-                            Picasso.get().load(imageUri).into(imageViewProfileAvatar);
-                        else
-                            Picasso.get().load(imageUri).into(imageViewCoverPhoto);
-                    }
+                    if (imageUri != null) handleImageResult(imageUri);
                 }
             }
         });
 
 
     }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         switch (requestCode) {
 
             case PermissionUtils.CAMERA_REQUEST_CODE -> {
-                if (PermissionUtils.checkCameraPermission(this)) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     cameraUtils.openCamera(cameraActivityResultLauncher);
                 } else {
                     //Permission denied
@@ -193,7 +205,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
             }
 
             case PermissionUtils.STORAGE_REQUEST_CODE -> {
-                if (PermissionUtils.checkStoragePermission(this)) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //Permission granted
                     galleryUtils.openGallery(galleryActivityResultLauncher);
                 } else {
@@ -207,6 +219,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+
     private void showUnsavedChangeDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Unsaved changes");
@@ -218,7 +231,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         });
 
         builder.setNegativeButton("NO", (dialogInterface, i) -> {
-           dialogInterface.dismiss();
+            dialogInterface.dismiss();
         });
 
         AlertDialog alertDialog = builder.create();
@@ -226,15 +239,42 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
     }
 
     private void showImagePickDialog() {
+        // Check if camera and storage permissions are granted
+        boolean hasCameraPermission = PermissionUtils.checkCameraPermission(this);
+        boolean hasStoragePermission = PermissionUtils.checkStoragePermission(this);
+
         // Build dialog for choosing camera or gallery
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
         builder.setTitle("Choose your image");
-        builder.setItems(new String[]{"Camera", "Gallery"}, (dialogInterface, i) -> {
+
+        // Set the dialog items based on permissions
+        String[] dialogItems;
+        if (hasCameraPermission && hasStoragePermission) {
+            dialogItems = new String[]{"Camera", "Gallery"};
+        } else if (hasCameraPermission) {
+            dialogItems = new String[]{"Camera"};
+        } else if (hasStoragePermission) {
+            dialogItems = new String[]{"Gallery"};
+        } else {
+            // Both permissions are missing
+            Toast.makeText(this, "Please enable camera and storage permissions", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        builder.setItems(dialogItems, (dialogInterface, i) -> {
             if (i == 0) {
-                PermissionUtils.requestCameraPermission(this);
-            } else
-                PermissionUtils.requestStoragePermission(this);
+                if (hasCameraPermission) {
+                    cameraUtils.openCamera(cameraActivityResultLauncher);
+                } else {
+                    PermissionUtils.requestCameraPermission(this);
+                }
+            } else {
+                if (hasStoragePermission) {
+                    galleryUtils.openGallery(galleryActivityResultLauncher);
+                } else {
+                    PermissionUtils.requestStoragePermission(this);
+                }
+            }
         });
 
         builder.setNegativeButton("Cancel", (dialogInterface, i) -> {
@@ -245,35 +285,31 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         alertDialog.show();
     }
 
-    private void showEditFieldDialog(String title, View view, String fieldValue) {
+
+    private void showEditFieldDialog(String title, View view, OnEditChangeListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);
 
-        if (view == null) {
-            LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
 
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            params.setMargins(55, 0, 55, 0);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(55, 0, 55, 0);
 
-            EditText editText = new EditText(this);
-            editText.setText(fieldValue);
+        layout.addView(view, params);
 
-            layout.addView(editText, params);
-            view = layout;
-        }
-        builder.setView(view);
+        builder.setView(layout);
 
         builder.setPositiveButton("CHANGE", (dialogInterface, i) -> {
-            switch (fieldValue) {
-                case "name" -> { editTextName.setText();}
-                case "bio" -> {}
-                case "gender" -> {}
-                case "birthday" -> {}
-                case "password" -> {}
-                default -> {}
+
+            if (view instanceof EditText) {
+                EditText editText = (EditText) view;
+                listener.onTextChanged(editText.getText().toString().trim());
+            } else if (view instanceof Spinner) {
+                Spinner spinner = (Spinner) view;
+                listener.onTextChanged(spinner.getSelectedItem().toString());
             }
+
         });
 
         builder.setNegativeButton("CANCEL", (dialogInterface, i) -> {
@@ -285,102 +321,207 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         alertDialog.show();
     }
 
+    interface OnEditChangeListener {
+        void onTextChanged(String text);
 
-
+    }
+    private void handleImageResult(Uri imageUri) {
+        if (isChangingProfileAvatar) {
+            if (ImageSizeValidationUtils.checkImageSize(this, imageUri, ImageSizeValidationUtils.ImageType.AVATAR)) {
+                avatarUri = imageUri;
+                Picasso.get().load(imageUri).into(imageViewProfileAvatar);
+            } else {
+                Toast.makeText(this, "Image too small, please choose a larger image!!", Toast.LENGTH_SHORT).show();
+            }
+        }
+        else {
+            if (ImageSizeValidationUtils.checkImageSize(this, imageUri, ImageSizeValidationUtils.ImageType.COVER)) {
+                coverUri = imageUri;
+                Picasso.get().load(imageUri).into(imageViewCoverPhoto);
+            } else {
+                Toast.makeText(this, "Image too small, please choose a larger image!!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     public void setIsChanged(boolean changed) {
         this.isChanged = changed;
     }
 
+
     @Override
-    public void loadingInfomationUser(User user) {
-            if (user != null) {
-
-                //get data
-                String name = user.getName();
-                String bio = user.getBio();
-                String gender = user.getGender();
-                String birthday = user.getBirthday();
-                String avatar = user.getImageAvatar();
-                String cover = user.getImageCover();
-
-                //set data
-                editTextName.setText(name);
-                editTextGender.setText(gender);
-                editTextBirthday.setText(birthday);
-                editTextBio.setText(bio == null || bio.isEmpty() ? " " : bio);
-                editTextPassword.setText(user.getPassword());
-
-                if (avatar != null && !avatar.isEmpty()) {
-                    textViewEditProfilePicture.setText("Edit");
-                    Picasso.get().load(avatar).into(imageViewProfileAvatar);
-
-                } else {
-                    textViewEditProfilePicture.setText("Add");
-                    imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
-                }
-
-                if (cover != null && !cover.isEmpty()) {
-                    textViewEditCoverPhoto.setText("Edit");
-                    Picasso.get().load(cover).into(imageViewCoverPhoto);
-
-                } else {
-                    textViewEditCoverPhoto.setText("Add");
-                    imageViewCoverPhoto.setImageResource(R.color.not_active_icon);
-                }
-
-                setIsChanged(false);
-
-                //Create dialogue for each field
-                editTextName.setOnClickListener(view -> {
-                    showEditFieldDialog("Edit Name", null, name);
-                });
-
-                editTextBio.setOnClickListener(view -> {
-                    showEditFieldDialog("Edit Bio", null, bio);
-                });
-
-                editTextGender.setOnClickListener(view -> {
-
-                    //Create linearLayout
-                    LinearLayout linearLayout = new LinearLayout(this);
-
-                    //Set params
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT);
-                    params.setMargins(55, 0, 55, 0);
-
-                    //Create adpater spinner
-                    String[] options = new String[]{"Male", "Female", "Other"};
-                    SpinnerGenderAdapter adapter = new SpinnerGenderAdapter(this,
-                            androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, options);
-                    adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
-
-                    //Create spinner
-                    Spinner spinner = new Spinner(this);
-                    spinner.setAdapter(adapter);
-                    int selectedIndex = Arrays.asList(options).indexOf(gender);
-                    //Set the selection default as gender of user
-                    spinner.setSelection(selectedIndex);
-                    linearLayout.addView(spinner, params);
-                    showEditFieldDialog("Edit gender", linearLayout, gender);
-                });
-
-            }
+    public void showMessage(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void showProgressbar() {
-
+    public void showProgressbar(boolean flag) {
+        if (flag)
+            progressBar.setVisibility(View.VISIBLE);
+        else
+            progressBar.setVisibility(View.GONE);
     }
 
     @Override
-    public void onImageUploadSuccess(String imageUrl) {
-
+    public void onImageUploadSuccess(String imageUrl, String type) {
+        User user = new User();
+        if (type.equals("avatar")) {
+            user.setImageAvatar(imageUrl);
+        }
+        else {
+            user.setImageCover(imageUrl);
+        }
+        presenter.updateUser(user);
     }
 
     @Override
     public void onImageUploadFail(String errorMsg) {
         Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onConfirmPasswordFail(String errorMsg) {
+        Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onConfirmPasswordSuccessful(String password) {
+        if (password != null && !password.isEmpty()) {
+            this.password = password;
+            editTextPassword.setText(PasswordHashing.hashPassword(password));
+        }
+    }
+    @Override
+    public void loadingInformationUser(User user) {
+        if (user != null) {
+
+            //get data
+            String name = user.getName();
+            String bio = user.getBio();
+            String gender = user.getGender();
+            String birthday = user.getBirthday();
+            String avatar = user.getImageAvatar();
+            String cover = user.getImageCover();
+
+            Log.d("TEST", avatar+"");
+            Log.d("TEST", cover+"");
+
+            //set data
+            editTextName.setText(name);
+            editTextGender.setText(gender);
+            editTextBirthday.setText(birthday);
+            editTextBio.setText(bio == null || bio.isEmpty() ? " " : bio);
+            editTextPassword.setText(user.getPassword());
+
+            if (avatar != null && !avatar.isEmpty()) {
+                textViewEditProfilePicture.setText("Edit");
+                Picasso.get().load(avatar).into(imageViewProfileAvatar);
+
+            } else {
+                textViewEditProfilePicture.setText("Add");
+                imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
+            }
+
+            if (cover != null && !cover.isEmpty()) {
+                textViewEditCoverPhoto.setText("Edit");
+                Picasso.get().load(cover).into(imageViewCoverPhoto);
+
+            } else {
+                textViewEditCoverPhoto.setText("Add");
+                imageViewCoverPhoto.setImageResource(R.color.not_active_icon);
+            }
+
+            //Create dialogue for each field
+            editTextName.setOnClickListener(view -> {
+                EditText editText = new EditText(this);
+                editText.setText(editTextName.getText().toString().trim());
+                showEditFieldDialog("Edit Name", editText, text -> {
+                        if (text != null && !text.isEmpty()) {
+                            editTextName.setText(text);
+                        } else {
+                            Toast.makeText(EditProfileActivity.this, "Name can be not empty!!", Toast.LENGTH_SHORT).show();
+                        }
+                });
+            });
+
+            editTextBio.setOnClickListener(view -> {
+                EditText editText = new EditText(this);
+                editText.setText(editTextBio.getText().toString().trim());
+                showEditFieldDialog("Edit Bio", editText, text -> {
+                    if (text != null && !text.isEmpty()) {
+                        editTextBio.setText(text);
+                    }
+                    else {
+                        editTextBio.setText("   ");
+                    }
+                });
+            });
+
+            editTextGender.setOnClickListener(view -> {
+                //Create adpater spinner
+                String[] options = new String[]{"Male", "Female", "Other"};
+                SpinnerGenderAdapter adapter = new SpinnerGenderAdapter(this, options);
+
+                //Create spinner
+                Spinner spinner = new Spinner(this);
+                spinner.setAdapter(adapter);
+                int selectedIndex = Arrays.asList(options).indexOf(editTextGender.getText().toString().trim());
+
+                //Set the selection default as gender of user
+                spinner.setSelection(selectedIndex);
+
+                showEditFieldDialog("Edit gender", spinner, text -> editTextGender.setText(text));
+            });
+
+            DatePickerFragment datePickerFragment = new DatePickerFragment();
+            datePickerFragment.setTextInputEditText(editTextBirthday);
+            editTextBirthday.setOnClickListener(view -> {
+                datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+            });
+            datePickerFragment.setValidateAge(true);
+            datePickerFragment.setListener(new DatePickerFragment.onDateRecieveListener() {
+                @Override
+                public void onDateValidation(String date) {
+                    editTextBirthday.setText(date);
+                }
+
+                @Override
+                public void onDateNotValidation(String errorMsg) {
+                    Toast.makeText(EditProfileActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            editTextPassword.setOnClickListener(view -> {
+
+                View customLayout = getLayoutInflater().inflate(R.layout.custom_layout_edit_password, null);
+
+                EditText editTextCurrentPassword = customLayout.findViewById(R.id.editTextCurrentPassword);
+                EditText editTextNewPassword = customLayout.findViewById(R.id.editTextNewPassword);
+                EditText editTextConfirmPassword = customLayout.findViewById(R.id.editTextConfirmPassword);
+
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Edit password");
+                builder.setView(customLayout);
+
+                builder.setPositiveButton("CHANGE", (dialogInterface, i) -> {
+                    String currentPassword = editTextCurrentPassword.getText().toString().trim();
+                    String newPassword = editTextNewPassword.getText().toString().trim();
+                    String confirmPassword = editTextConfirmPassword.getText().toString().trim();
+
+                    presenter.confirmPasswordChange(currentPassword, newPassword, confirmPassword);
+                });
+
+                builder.setNegativeButton("CANCEL", (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                });
+
+                builder.create().show();
+
+            });
+
+            // init is changed when on load info
+            setIsChanged(false);
+        }
     }
 }

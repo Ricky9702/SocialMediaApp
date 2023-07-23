@@ -34,11 +34,9 @@ public class ResetPasswordActivity extends AppCompatActivity {
         editTextEmailResetPassword = findViewById(R.id.editTextEmailResetPassword);
         textLayoutEmail = findViewById(R.id.textLayoutEmail);
         buttonResetPassword = findViewById(R.id.btnResetPassword);
-        buttonResetPassword.setEnabled(false);
         progressBar = findViewById(R.id.progressBar);
         firebaseAuth = FirebaseAuth.getInstance();
 
-        //Edit toolBar
         //Edit toolBar
         Toolbar toolBar = findViewById(R.id.toolBar);
         toolBar.setTitle("Recovery password");

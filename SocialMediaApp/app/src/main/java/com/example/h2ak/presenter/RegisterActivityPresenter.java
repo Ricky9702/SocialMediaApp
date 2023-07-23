@@ -8,6 +8,8 @@ import com.example.h2ak.contract.RegisterActivityContract;
 import com.example.h2ak.datasource.UserDataSource;
 import com.example.h2ak.datasource.datasourceImpl.UserDataSourceImpl;
 import com.example.h2ak.model.User;
+import com.example.h2ak.utils.PasswordHashing;
+import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -53,20 +55,6 @@ public class RegisterActivityPresenter implements RegisterActivityContract.Prese
         } else if (!password.equals(confirmPassword)) {
             view.showError("Passwords do not match!!");
         } else {
-            //Verify user age
-            SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy");
-            try {
-
-                Date birthDate = f.parse(birthday);
-                Calendar calendar = Calendar.getInstance();
-                int currentYear = calendar.get(Calendar.YEAR);
-                calendar.setTime(birthDate);
-                int birthYear = calendar.get(Calendar.YEAR);
-                int age = currentYear - birthYear;
-
-                if (age < 10 || age > 70)
-                    view.showError("Age must be between 10 and 70!!");
-                else {
                     user = new User();
                     user.setName(name);
                     user.setGender(gender);
@@ -74,11 +62,6 @@ public class RegisterActivityPresenter implements RegisterActivityContract.Prese
                     user.setEmail(email);
                     user.setPassword(password);
                     user.setActive(false);
-                }
-            }catch (ParseException ex) {
-                view.showError("Invalid birthday format!!");
-            }
-
         }
         return user;
     }

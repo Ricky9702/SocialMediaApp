@@ -92,7 +92,7 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
             //Load the bio
             if (bio != null && !bio.isEmpty()) {
                 textViewProfileBio.setVisibility(View.VISIBLE);
-                user.setBio(bio);
+                textViewProfileBio.setText(bio);
             } else {
                 textViewProfileBio.setVisibility(View.GONE);
             }

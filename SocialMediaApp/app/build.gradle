@@ -51,14 +51,9 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.8'
     implementation 'com.google.android.gms:play-services-auth:20.6.0'
 
-    //camera
-    implementation 'androidx.camera:camera-core:1.2.3'
-    implementation 'androidx.camera:camera-camera2:1.2.3'
-    implementation 'androidx.camera:camera-lifecycle:1.2.3'
-    implementation 'androidx.camera:camera-view:1.2.3'
 
     // hash password
-    implementation 'com.lambdaworks:scrypt:1.4.0'
+    implementation group: 'at.favre.lib', name: 'bcrypt', version: '0.10.2'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

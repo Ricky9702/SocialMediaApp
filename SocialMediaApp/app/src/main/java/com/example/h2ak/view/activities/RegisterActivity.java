@@ -13,6 +13,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.SpinnerGenderAdapter;
 import com.example.h2ak.contract.RegisterActivityContract;
@@ -65,11 +66,20 @@ public class RegisterActivity extends AppCompatActivity implements RegisterActiv
 
         //set event click on edit text birthday
         DatePickerFragment datePickerFragment = new DatePickerFragment();
-        datePickerFragment.setTextInputEditText(editTextBirthday);
-        editTextBirthday.setOnClickListener(view -> {
-            datePickerFragment.show(getSupportFragmentManager(), "datePicker");
-        });
+        editTextBirthday.setOnClickListener(view -> datePickerFragment.show(getSupportFragmentManager(), "datePicker"));
+        datePickerFragment.setValidateAge(true);
+        datePickerFragment.setListener(new DatePickerFragment.onDateRecieveListener() {
+            @Override
+            public void onDateValidation(String date) {
+                datePickerFragment.setTextInputEditText(editTextBirthday);
+                editTextBirthday.setText(date);
+            }
 
+            @Override
+            public void onDateNotValidation(String errorMsg) {
+                Toast.makeText(RegisterActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         //set event click on edit text gender
         editTextGender.setOnClickListener(view -> {
@@ -80,9 +90,7 @@ public class RegisterActivity extends AppCompatActivity implements RegisterActiv
         spinnerGender = findViewById(R.id.spinnerGender);
 
         SpinnerGenderAdapter adapter = new SpinnerGenderAdapter(this,
-                androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,
                 new String[]{"Male", "Female", "Other", ""});
-        adapter.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
         adapter.setCount(adapter.getCount() - 1);
 
         spinnerGender.setAdapter(adapter);

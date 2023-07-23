@@ -1,17 +1,17 @@
 package com.example.h2ak.datasource.datasourceImpl;
 
-import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
+import android.util.Log;
 
 import com.example.h2ak.database.DatabaseManager;
 import com.example.h2ak.database.MySQLiteHelper;
 import com.example.h2ak.datasource.UserDataSource;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.PasswordHashing;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
@@ -36,15 +36,18 @@ public class UserDataSourceImpl implements UserDataSource {
 
     @Override
     public User addUser(User user) {
+
+        String password = PasswordHashing.hashPassword(user.getPassword().trim());
+
         ContentValues values = new ContentValues();
         values.put(MySQLiteHelper.COLUMN_NAME, user.getName());
         values.put(MySQLiteHelper.COLUMN_GENDER, user.getGender());
         values.put(MySQLiteHelper.COLUMN_BIRTHDAY, user.getBirthday());
-        values.put(MySQLiteHelper.COLUMN_PASSWORD, user.getPassword());
+        values.put(MySQLiteHelper.COLUMN_PASSWORD, password);
         values.put(MySQLiteHelper.COLUMN_EMAIL, user.getEmail());
-        values.put(MySQLiteHelper.BIO, user.getBio());
-        values.put(MySQLiteHelper.IMAGE_AVATAR, user.getImageAvatar());
-        values.put(MySQLiteHelper.IMAGE_COVER, user.getImageCover());
+        values.put(MySQLiteHelper.BIO, user.getBio() != null ? user.getBio() : "");
+        values.put(MySQLiteHelper.IMAGE_AVATAR, user.getImageAvatar() != null ? user.getImageAvatar() : "");
+        values.put(MySQLiteHelper.IMAGE_COVER, user.getImageCover() != null ? user.getImageCover() : "");
         values.put(MySQLiteHelper.CREATED_DATE, user.getCreatedDate());
         values.put(MySQLiteHelper.COLUMN_IS_ACTIVE, user.isActive());
 
@@ -146,32 +149,57 @@ public class UserDataSourceImpl implements UserDataSource {
 
     @Override
     public boolean updateUser(User user) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MySQLiteHelper.IMAGE_AVATAR, user.getImageAvatar());
-        contentValues.put(MySQLiteHelper.IMAGE_COVER, user.getImageCover());
-        contentValues.put(MySQLiteHelper.BIO, user.getBio());
-        contentValues.put(MySQLiteHelper.COLUMN_NAME, user.getName());
-        contentValues.put(MySQLiteHelper.COLUMN_BIRTHDAY, user.getBirthday());
-        contentValues.put(MySQLiteHelper.COLUMN_GENDER, user.getGender());
-//        contentValues.put(MySQLiteHelper.COLUMN_EMAIL, user.getEmail());
-        contentValues.put(MySQLiteHelper.COLUMN_PASSWORD, PasswordHashing.hashPassword(user.getPassword()));
+        User currentUser = this.getUserByEmail(FirebaseAuth.getInstance().getCurrentUser().getEmail());
 
-        int result = db.update(MySQLiteHelper.TABLE_USER, contentValues, MySQLiteHelper.COLUMN_ID_USER + "= ?",
-                new String[]{String.valueOf(user.getId())});
+        if (currentUser != null && user != null) {
 
-        return result > 0;
+            ContentValues contentValues = new ContentValues();
+
+            if (!currentUser.getName().equals(user.getName())) {
+                contentValues.put(MySQLiteHelper.COLUMN_NAME, user.getName());
+            }
+
+            if (user.getBio() != null && !user.getBio().equals(currentUser.getBio())) {
+                contentValues.put(MySQLiteHelper.BIO, user.getBio());
+            }
+
+            Log.d("TEST 100000", user.getImageAvatar() != null ? "YES SIR" : "NOR SIR");
+            if (user.getImageAvatar() != null) {
+                contentValues.put(MySQLiteHelper.IMAGE_AVATAR, user.getImageAvatar());
+            }
+
+            if (user.getImageCover() != null) {
+                contentValues.put(MySQLiteHelper.IMAGE_COVER, user.getImageCover());
+            }
+
+            if (user.getBirthday() != null && !currentUser.getBirthday().equals(user.getBirthday())) {
+                contentValues.put(MySQLiteHelper.COLUMN_BIRTHDAY, user.getBirthday());
+            }
+
+            if (user.getGender() != null && !currentUser.getGender().equals(user.getGender())) {
+                contentValues.put(MySQLiteHelper.COLUMN_GENDER, user.getGender());
+            }
+
+            Log.d("Verification user", user.getPassword()+"");
+            Log.d("Verification currentUser", currentUser.getPassword()+"");
+            Log.d("Verification 1", !user.getPassword().equals(currentUser.getPassword())+"");
+            Log.d("Verification 2", !PasswordHashing.verifyPassword(user.getPassword(), currentUser.getPassword())+"");
+            if (!user.getPassword().equals(currentUser.getPassword()) && !PasswordHashing.verifyPassword(user.getPassword(), currentUser.getPassword())) {
+                contentValues.put(MySQLiteHelper.COLUMN_PASSWORD, PasswordHashing.hashPassword(user.getPassword()));
+            }
+
+            if (user.isActive() != currentUser.isActive()) {
+                contentValues.put(MySQLiteHelper.COLUMN_IS_ACTIVE, user.isActive());
+            }
+
+            int result = db.update(MySQLiteHelper.TABLE_USER, contentValues, MySQLiteHelper.COLUMN_ID_USER + "= ?",
+                    new String[]{String.valueOf(user.getId())});
+
+            return result > 0;
+        }
+
+        return false;
     }
-
-    @Override
-    public boolean updateActiveUser(User user) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MySQLiteHelper.COLUMN_IS_ACTIVE, user.isActive());
-
-        int result = db.update(MySQLiteHelper.TABLE_USER, contentValues, MySQLiteHelper.COLUMN_ID_USER + "= ?",
-                new String[]{String.valueOf(user.getId())});
-        return result > 0;
-    }
-
 
     @Override
     public void deleteUser(int userId) {

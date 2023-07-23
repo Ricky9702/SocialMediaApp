@@ -10,14 +10,14 @@ import androidx.annotation.Nullable;
 
 public class SpinnerGenderAdapter extends ArrayAdapter {
     private int count;
-    public SpinnerGenderAdapter(@NonNull Context context, int resource, @NonNull Object[] objects) {
-        super(context, resource, objects);
+    public SpinnerGenderAdapter(@NonNull Context context, @NonNull Object[] objects) {
+        super(context, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, objects);
         count = objects.length;
     }
 
     @Override
     public void setDropDownViewResource(int resource) {
-        super.setDropDownViewResource(resource);
+        super.setDropDownViewResource(androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
     }
 
     @NonNull

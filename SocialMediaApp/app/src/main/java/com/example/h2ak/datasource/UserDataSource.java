@@ -14,7 +14,6 @@ public interface UserDataSource {
     List<User> getAllUsers();
     //Update User by id
     boolean updateUser(User user);
-    boolean updateActiveUser(User user);
     //Delete User by id
     void deleteUser(int userId);
 

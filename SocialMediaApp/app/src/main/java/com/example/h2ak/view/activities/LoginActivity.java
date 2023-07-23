@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,7 +17,6 @@ import com.example.h2ak.presenter.LoginActivtyPresenter;
 import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity implements LoginActivityContract.View {
     private TextView textViewResetPassword;
@@ -34,9 +32,12 @@ public class LoginActivity extends AppCompatActivity implements LoginActivityCon
         setContentView(R.layout.activity_login);
         init();
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null && user.isEmailVerified())
-            startActivity(new Intent(LoginActivity.this, BaseMenuActivity.class));
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null && FirebaseAuth.getInstance().getCurrentUser().isEmailVerified()) {
+            startActivity(new Intent(this, BaseMenuActivity.class));
+            finish();
+        }
+
     }
 
     private void init() {
@@ -67,26 +68,14 @@ public class LoginActivity extends AppCompatActivity implements LoginActivityCon
         btnLogin.setOnClickListener(view -> {
             String email = editTextEmail.getText().toString().trim();
             String password = editTextPassword.getText().toString().trim();
-
             // Set the FirebaseAuthListener in the presenter
-            loginActivtyPresenter.setFirebaseAuthListener(isVerified -> {
-                Log.d("LoginActivity", "onEmailVerified: " + isVerified);
-                if (isVerified) {
-                    loginActivtyPresenter.updateUserActive(email, true);
-                }
+            loginActivtyPresenter.login(email, password, isVerified -> {
+                if (isVerified)
+                    loginActivtyPresenter.updateUserWithEmailVerified(isVerified);
             });
-
-            // Perform the login process
-            loginActivtyPresenter.login(email, password);
         });
 
 
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        loginActivtyPresenter.setFirebaseAuthListener(null);
     }
 
     @Override
