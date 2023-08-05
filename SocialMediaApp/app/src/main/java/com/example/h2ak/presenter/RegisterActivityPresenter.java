@@ -1,37 +1,33 @@
 package com.example.h2ak.presenter;
 
+import android.content.Context;
 import android.util.Patterns;
 import android.widget.Toast;
 
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebaseUserDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseUserDataSource;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.contract.RegisterActivityContract;
-import com.example.h2ak.datasource.UserDataSource;
-import com.example.h2ak.datasource.datasourceImpl.UserDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.PasswordHashing;
-import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 
 public class RegisterActivityPresenter implements RegisterActivityContract.Presenter {
 
     private RegisterActivityContract.View view;
-
     private FirebaseAuth firebaseAuth;
     private UserDataSource userDataSource;
+    private FirebaseUserDataSource firebaseUserDataSource;
 
 
-    public RegisterActivityPresenter(RegisterActivityContract.View view) {
+    public RegisterActivityPresenter(Context context, RegisterActivityContract.View view) {
         this.view = view;
+        userDataSource = UserDataSourceImpl.getInstance(context);
+        firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
-        userDataSource = new UserDataSourceImpl(MyApp.getInstance());
-        FirebaseUser user = firebaseAuth.getCurrentUser();
     }
 
 
@@ -54,14 +50,21 @@ public class RegisterActivityPresenter implements RegisterActivityContract.Prese
             view.showError("Please check your email pattern, ex: abc@mail.com");
         } else if (!password.equals(confirmPassword)) {
             view.showError("Passwords do not match!!");
+        } else if (password.length() < 6){
+            view.showError("Password length should be greater than 6");
         } else {
-                    user = new User();
-                    user.setName(name);
-                    user.setGender(gender);
-                    user.setBirthday(birthday);
-                    user.setEmail(email);
-                    user.setPassword(password);
-                    user.setActive(false);
+            user = new User();
+            user.setName(name);
+            user.setGender(gender);
+            user.setBirthday(birthday);
+            user.setEmail(email);
+            user.setPassword(password);
+            user.setBio("");
+            user.setImageAvatar("");
+            user.setImageCover("");
+            user.setActive(false);
+            user.setUserRole(User.UserRole.ROLE_USER);
+            user.setOnline(false);
         }
         return user;
     }
@@ -71,24 +74,33 @@ public class RegisterActivityPresenter implements RegisterActivityContract.Prese
         view.showProgressBar(true);
         firebaseAuth.createUserWithEmailAndPassword(user.getEmail(), user.getPassword()).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-                addNonverifiedUser(user);
-                firebaseUser.sendEmailVerification().addOnSuccessListener(task1 -> {
+
+                //Add user
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                user.setPassword(PasswordHashing.hashPassword(user.getPassword()));
+                user.setId(currentUser.getUid());
+                addUnverifiedUser(user);
+                firebaseUserDataSource.createUser(user);
+
+                //Send email
+                currentUser.sendEmailVerification().addOnSuccessListener(task1 -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(MyApp.getInstance(), "Verification email sent.", Toast.LENGTH_LONG).show();
                         view.onRegisterSuccess();
                     }
-                }).addOnFailureListener(runnable -> {Toast.makeText(MyApp.getInstance(), "Failed to send verification email.", Toast.LENGTH_LONG).show();});
+                }).addOnFailureListener(runnable -> {
+                    Toast.makeText(MyApp.getInstance(), "Failed to send verification email.", Toast.LENGTH_LONG).show();
+                });
             }
             view.showProgressBar(false);
         }).addOnFailureListener(task -> {
-            Toast.makeText(MyApp.getInstance(), "Email is already exists", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MyApp.getInstance(), task.getMessage(), Toast.LENGTH_SHORT).show();
             view.showProgressBar(false);
         });
     }
 
     @Override
-    public void addNonverifiedUser(User user) {
-        userDataSource.addUser(user);
+    public void addUnverifiedUser(User user) {
+        userDataSource.createUser(user);
     }
 }

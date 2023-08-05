@@ -20,7 +20,12 @@ public interface EditProfileActivityContract {
         void getUser();
         void updateUser(User user);
         void uploadImageToFirebaseCloud(Uri imageUri, String type);
+        void setUpdatedProfileListener(EditProfileActivityContract.UpdatedProfileListener listener);
         void confirmPasswordChange(String currentPassword, String newPassword, String confirmPassword);
+    }
+
+     interface UpdatedProfileListener {
+        void onProfileUpdated();
     }
 
 }

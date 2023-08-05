@@ -1,29 +1,31 @@
 package com.example.h2ak.presenter;
 
-import android.os.Handler;
+import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.example.h2ak.MyApp;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebaseUserDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseUserDataSource;
 import com.example.h2ak.contract.LoginActivityContract;
-import com.example.h2ak.datasource.UserDataSource;
-import com.example.h2ak.datasource.datasourceImpl.UserDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.model.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class LoginActivtyPresenter implements LoginActivityContract.Presenter {
+public class LoginActivtyPresenter implements LoginActivityContract.Presenter{
 
     private FirebaseAuth firebaseAuth;
     private UserDataSource userDataSource;
     private LoginActivityContract.View view;
+    private FirebaseUserDataSource firebaseUserDataSource;
 
 
-    public LoginActivtyPresenter(LoginActivityContract.View view) {
+    public LoginActivtyPresenter(Context context, LoginActivityContract.View view) {
         this.view = view;
         firebaseAuth = FirebaseAuth.getInstance();
-        userDataSource = new UserDataSourceImpl(MyApp.getInstance());
-
+        firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
+        userDataSource = UserDataSourceImpl.getInstance(context);
     }
 
 
@@ -41,9 +43,10 @@ public class LoginActivtyPresenter implements LoginActivityContract.Presenter {
         firebaseAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-                User user = userDataSource.getUserByEmail(firebaseUser.getEmail());
+                Log.d("USER NOT FOUND??2", firebaseUser.getUid());
+                User user = userDataSource.getUserById(firebaseUser.getUid());
                 listener.onEmailVerified(firebaseUser.isEmailVerified());
-                if (firebaseUser != null && user != null) {
+                if (firebaseUser != null) {
                     if (firebaseUser.isEmailVerified()) {
                         // User is active, notify success
                         view.onLoginSuccess();
@@ -67,13 +70,16 @@ public class LoginActivtyPresenter implements LoginActivityContract.Presenter {
 
 
     public void updateUserWithEmailVerified(boolean isActive) {
-        User user = userDataSource.getUserByEmail(firebaseAuth.getCurrentUser().getEmail());
-        if (user != null && !user.isActive()) {
-            user.setActive(isActive);
-            boolean success = userDataSource.updateUser(user);
-            Log.d("TAG", "Update success: " + success);
+        User user = userDataSource.getUserById(firebaseAuth.getCurrentUser().getUid());
+
+        if (user != null) {
+            if (!user.isActive()) {
+                user.setActive(isActive);
+                boolean success = userDataSource.updateCurrentUser(user);
+                firebaseUserDataSource.updateUser(user);
+                Log.d("TAG", "Update success: " + success);
+                Log.d("FirebaseUpdateUser", "udapte email");
+            }
         }
     }
-
-
 }

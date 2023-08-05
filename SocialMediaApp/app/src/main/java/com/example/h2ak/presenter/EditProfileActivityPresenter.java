@@ -1,38 +1,46 @@
 package com.example.h2ak.presenter;
 
+import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
-import com.example.h2ak.MyApp;
 import com.example.h2ak.contract.EditProfileActivityContract;
-import com.example.h2ak.database.FirebaseHelper;
-import com.example.h2ak.datasource.UserDataSource;
-import com.example.h2ak.datasource.datasourceImpl.UserDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseHelper;
+import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.PasswordHashing;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.StorageReference;
 
-public class EditProfileActivityPresenter implements EditProfileActivityContract.Presenter {
+public class EditProfileActivityPresenter implements EditProfileActivityContract.Presenter{
 
 
     private EditProfileActivityContract.View view;
     private UserDataSource userDataSource;
     private FirebaseAuth firebaseAuth;
     private User currentUser;
+    private Context context;
+    private EditProfileActivityContract.UpdatedProfileListener listener;
 
-    public EditProfileActivityPresenter(EditProfileActivityContract.View view) {
+    public EditProfileActivityPresenter(EditProfileActivityContract.View view, Context context) {
+        this.context = context;
         this.view = view;
-        userDataSource = new UserDataSourceImpl(MyApp.getInstance());
+        userDataSource = UserDataSourceImpl.getInstance(context);
         firebaseAuth = FirebaseAuth.getInstance();
-        this.currentUser = userDataSource.getUserByEmail(firebaseAuth.getCurrentUser().getEmail());
     }
+
+    public void setUpdatedProfileListener(EditProfileActivityContract.UpdatedProfileListener listener) {
+        this.listener = listener;
+    }
+
 
     @Override
     public void getUser() {
         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-        User user = userDataSource.getUserByEmail(firebaseUser.getEmail());
+        User user = userDataSource.getUserById(firebaseUser.getUid());
+        this.currentUser = user;
         view.loadingInformationUser(user);
     }
 
@@ -59,19 +67,18 @@ public class EditProfileActivityPresenter implements EditProfileActivityContract
         }
         if (user.getPassword() != null && !user.getPassword().isEmpty() && !currentUser.getPassword().equals(user.getPassword())) {
             currentUser.setPassword(user.getPassword().trim());
-            firebaseAuth.getCurrentUser().updatePassword(user.getPassword()).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Log.d("AFTER SUCCESS FUL ", user.getPassword());
-                }
+            firebaseAuth.getCurrentUser().updatePassword(user.getPassword()).addOnSuccessListener(task -> {
             }).addOnFailureListener(runnable -> {
+                Log.d("Update firebase password", runnable.getMessage());
                 view.showMessage(runnable.getMessage());
             });
         }
 
-        if (userDataSource.updateUser(currentUser)) {
-            view.showMessage("Edit profile successfully!!");
+        if (userDataSource.updateCurrentUser(currentUser)) {
+            Log.d("Listener is null?", listener == null ? "NULL" : "NOT NULL");
+            if (listener != null)
+                listener.onProfileUpdated();
         } else {
-            view.showMessage("There is some errors while editing");
         }
         view.showProgressbar(false);
     }
@@ -86,29 +93,21 @@ public class EditProfileActivityPresenter implements EditProfileActivityContract
     public void uploadImageToFirebaseCloud(Uri imageUri, String type) {
 
         //Validate if the user do not change image
-        String currentImageUrl = null;
-        String newImageUrl = imageUri.toString();
 
         StorageReference storageReference = null;
         switch (type) {
             case "avatar" -> {
-                currentImageUrl = currentUser.getImageAvatar();
                 storageReference = FirebaseHelper.getImageAvatarStorageRef();
-
             }
             case "cover" -> {
-                currentImageUrl = currentUser.getImageCover();
                 storageReference = FirebaseHelper.getImageCoverStorageRef();
             }
         }
 
-        if (currentImageUrl != null && currentImageUrl.equals(newImageUrl)) {
-            return;
-        }
-
-        FirebaseHelper.uploadImageToFirebaseCloud(imageUri, storageReference, new FirebaseHelper.OnImageUploadListener() {
+        FirebaseHelper.uploadImageToFirebaseCloud(context, imageUri, storageReference, new FirebaseHelper.OnImageUploadListener() {
             @Override
             public void onImageUploadSuccess(String imageUrl) {
+                Log.d("TEST IMAGE URL", imageUrl);
                 view.onImageUploadSuccess(imageUrl, type);
             }
 
@@ -140,4 +139,5 @@ public class EditProfileActivityPresenter implements EditProfileActivityContract
             view.onConfirmPasswordSuccessful(confirmPassword);
         }
     }
+
 }

@@ -6,13 +6,13 @@
         android:name="android.hardware.camera"
         android:required="true" />
 
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".MyApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,16 +21,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication"
-        android:name=".MyApp"
         tools:targetApi="31">
+        <activity
+            android:name=".view.activities.UserProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.activities.DisplayImageActivity"
+            android:exported="false" />
         <activity
             android:name=".view.activities.ProfileActivity"
             android:exported="false" />
         <activity
             android:name=".view.activities.EditProfileActivity"
-            android:exported="true" >
-        </activity>
-
+            android:exported="true" />
         <activity
             android:name=".view.activities.ResetPasswordActivity"
             android:exported="true" />
@@ -48,9 +51,17 @@
             android:exported="true" />
         <activity
             android:name=".view.activities.BaseMenuActivity"
-            android:exported="true">
-        </activity>
+            android:exported="true" />
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="social.media.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -126,7 +126,7 @@ public class RegisterActivity extends AppCompatActivity implements RegisterActiv
             finish();
         });
 
-        registerActivityPresenter = new RegisterActivityPresenter(this);
+        registerActivityPresenter = new RegisterActivityPresenter(this, this);
 
         btnRegister.setOnClickListener(view -> {
             String name = editTextName.getText().toString().trim();
@@ -160,5 +160,17 @@ public class RegisterActivity extends AppCompatActivity implements RegisterActiv
     public void onRegisterSuccess() {
         startActivity(new Intent(this, LoginActivity.class));
         finish();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        MyApp.getInstance().setCurrentActivity(this);
+    }
+
+    @Override
+    protected void onResume() {
+        MyApp.getInstance().setCurrentActivity(this);
+        super.onResume();
     }
 }

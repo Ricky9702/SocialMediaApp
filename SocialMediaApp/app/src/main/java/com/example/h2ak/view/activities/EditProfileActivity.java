@@ -10,6 +10,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -24,7 +25,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.h2ak.MyApp;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.SpinnerGenderAdapter;
 import com.example.h2ak.contract.EditProfileActivityContract;
@@ -39,10 +41,15 @@ import com.example.h2ak.view.fragments.DatePickerFragment;
 import com.google.android.material.textfield.TextInputEditText;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 
-public class EditProfileActivity extends AppCompatActivity implements EditProfileActivityContract.View {
+public class EditProfileActivity extends AppCompatActivity
+        implements EditProfileActivityContract.View {
+
     TextView textViewEditProfilePicture, textViewEditCoverPhoto;
     TextInputEditText editTextName, editTextBio, editTextGender, editTextBirthday, editTextPassword;
     CircularImageView imageViewProfileAvatar;
@@ -65,39 +72,45 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
         init();
-
         cameraUtils = new CameraUtils(this);
         galleryUtils = new GalleryUtils();
-        presenter = new EditProfileActivityPresenter(this);
+        presenter = new EditProfileActivityPresenter(this, this);
         presenter.getUser();
 
-        toolBar.setOnMenuItemClickListener(item -> {
-
-            if (avatarUri != null) {
-                presenter.uploadImageToFirebaseCloud(avatarUri, "avatar");
-            }
-
-            if (coverUri != null) {
-                presenter.uploadImageToFirebaseCloud(coverUri, "cover");
-            }
-
-            User user = new User();
-
-            user.setName(editTextName.getText().toString().trim());
-            user.setBio(editTextBio.getText().toString().trim());
-            user.setGender(editTextGender.getText().toString().trim());
-            user.setBirthday(editTextBirthday.getText().toString().trim());
-            user.setPassword(password);
-
-
-            Log.d("BEFORE SUCCESS", password+"");
-            Log.d("TEST 999", user.getPassword()+"");
-
-            presenter.updateUser(user);
-
-            startActivity(new Intent(this, ProfileActivity.class));
+        presenter.setUpdatedProfileListener(() -> {
+            Intent resultIntent = new Intent();
+            if (avatarUri != null)
+                resultIntent.putExtra("UPDATED_HAS_AVATAR", avatarUri.toString());
+            if (coverUri != null) resultIntent.putExtra("UPDATED_HAS_COVER", coverUri.toString());
+            resultIntent.putExtra("UPDATED_DONE", true);
+            setResult(RESULT_OK, resultIntent);
             finish();
+        });
 
+        toolBar.setOnMenuItemClickListener(item -> {
+            if (isChanged) {
+                if (avatarUri != null) {
+                    presenter.uploadImageToFirebaseCloud(avatarUri, "avatar");
+                }
+
+                if (coverUri != null) {
+                    presenter.uploadImageToFirebaseCloud(coverUri, "cover");
+                }
+
+                User user = new User();
+
+                user.setName(editTextName.getText().toString().trim());
+                user.setBio(editTextBio.getText().toString().trim());
+                user.setGender(editTextGender.getText().toString().trim());
+                user.setBirthday(editTextBirthday.getText().toString().trim());
+                user.setPassword(password);
+
+                presenter.updateUser(user);
+
+                Toast.makeText(this, "Update profile successfully!!", Toast.LENGTH_SHORT).show();
+            }
+            onBackPressed();
+            finish();
             return true;
         });
 
@@ -150,7 +163,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
 
         toolBar.setNavigationOnClickListener(item -> {
             if (!isChanged) {
-                startActivity(new Intent(this, ProfileActivity.class));
+                onBackPressed();
                 finish();
             } else {
                 showUnsavedChangeDialog();
@@ -172,6 +185,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
 
             if (result) {
                 if (cameraUtils.getCapturedImageUri() != null) {
+                    isChanged = true;
                     Uri imageUri = cameraUtils.getCapturedImageUri();
                     if (imageUri != null) handleImageResult(imageUri);
                 }
@@ -181,6 +195,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         galleryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK) {
                 if (result.getData() != null) {
+                    isChanged = true;
                     Uri imageUri = result.getData().getData();
                     if (imageUri != null) handleImageResult(imageUri);
                 }
@@ -257,18 +272,20 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
             dialogItems = new String[]{"Gallery"};
         } else {
             // Both permissions are missing
-            Toast.makeText(this, "Please enable camera and storage permissions", Toast.LENGTH_SHORT).show();
+            PermissionUtils.requestCameraPermission(this);
+            PermissionUtils.requestStoragePermission(this);
             return;
         }
 
         builder.setItems(dialogItems, (dialogInterface, i) -> {
-            if (i == 0) {
+            String selectedItem = dialogItems[i];
+            if (selectedItem.equals("Camera")) {
                 if (hasCameraPermission) {
                     cameraUtils.openCamera(cameraActivityResultLauncher);
                 } else {
                     PermissionUtils.requestCameraPermission(this);
                 }
-            } else {
+            } else if (selectedItem.equals("Gallery")) {
                 if (hasStoragePermission) {
                     galleryUtils.openGallery(galleryActivityResultLauncher);
                 } else {
@@ -321,23 +338,36 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         alertDialog.show();
     }
 
+
     interface OnEditChangeListener {
         void onTextChanged(String text);
 
     }
+
+
     private void handleImageResult(Uri imageUri) {
+        Log.d("TEST IMAGE", imageUri + "");
         if (isChangingProfileAvatar) {
             if (ImageSizeValidationUtils.checkImageSize(this, imageUri, ImageSizeValidationUtils.ImageType.AVATAR)) {
                 avatarUri = imageUri;
-                Picasso.get().load(imageUri).into(imageViewProfileAvatar);
+                Glide.with(this)
+                        .load((avatarUri))
+                        .diskCacheStrategy(DiskCacheStrategy.NONE) // Disable caching to reload the image
+                        .skipMemoryCache(true)
+                        .placeholder(R.color.not_active_icon)// Disable memory caching to reload the image
+                        .into(imageViewProfileAvatar);
             } else {
                 Toast.makeText(this, "Image too small, please choose a larger image!!", Toast.LENGTH_SHORT).show();
             }
-        }
-        else {
+        } else {
             if (ImageSizeValidationUtils.checkImageSize(this, imageUri, ImageSizeValidationUtils.ImageType.COVER)) {
                 coverUri = imageUri;
-                Picasso.get().load(imageUri).into(imageViewCoverPhoto);
+                Glide.with(this)
+                        .load((coverUri))
+                        .diskCacheStrategy(DiskCacheStrategy.NONE) // Disable caching to reload the image
+                        .skipMemoryCache(true)
+                        .placeholder(R.color.not_active_icon)// Disable memory caching to reload the image
+                        .into(imageViewCoverPhoto);
             } else {
                 Toast.makeText(this, "Image too small, please choose a larger image!!", Toast.LENGTH_SHORT).show();
             }
@@ -367,8 +397,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
         User user = new User();
         if (type.equals("avatar")) {
             user.setImageAvatar(imageUrl);
-        }
-        else {
+        } else {
             user.setImageCover(imageUrl);
         }
         presenter.updateUser(user);
@@ -391,6 +420,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
             editTextPassword.setText(PasswordHashing.hashPassword(password));
         }
     }
+
     @Override
     public void loadingInformationUser(User user) {
         if (user != null) {
@@ -403,8 +433,6 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
             String avatar = user.getImageAvatar();
             String cover = user.getImageCover();
 
-            Log.d("TEST", avatar+"");
-            Log.d("TEST", cover+"");
 
             //set data
             editTextName.setText(name);
@@ -415,7 +443,11 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
 
             if (avatar != null && !avatar.isEmpty()) {
                 textViewEditProfilePicture.setText("Edit");
-                Picasso.get().load(avatar).into(imageViewProfileAvatar);
+                Glide.with(this)
+                        .load(avatar)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.color.not_active_icon)// Disable memory caching to reload the image
+                        .into(imageViewProfileAvatar);
 
             } else {
                 textViewEditProfilePicture.setText("Add");
@@ -424,7 +456,11 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
 
             if (cover != null && !cover.isEmpty()) {
                 textViewEditCoverPhoto.setText("Edit");
-                Picasso.get().load(cover).into(imageViewCoverPhoto);
+                Glide.with(this)
+                        .load(cover)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.color.not_active_icon)// Disable memory caching to reload the image
+                        .into(imageViewCoverPhoto);
 
             } else {
                 textViewEditCoverPhoto.setText("Add");
@@ -436,11 +472,11 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
                 EditText editText = new EditText(this);
                 editText.setText(editTextName.getText().toString().trim());
                 showEditFieldDialog("Edit Name", editText, text -> {
-                        if (text != null && !text.isEmpty()) {
-                            editTextName.setText(text);
-                        } else {
-                            Toast.makeText(EditProfileActivity.this, "Name can be not empty!!", Toast.LENGTH_SHORT).show();
-                        }
+                    if (text != null && !text.isEmpty()) {
+                        editTextName.setText(text);
+                    } else {
+                        Toast.makeText(EditProfileActivity.this, "Name can be not empty!!", Toast.LENGTH_SHORT).show();
+                    }
                 });
             });
 
@@ -450,8 +486,7 @@ public class EditProfileActivity extends AppCompatActivity implements EditProfil
                 showEditFieldDialog("Edit Bio", editText, text -> {
                     if (text != null && !text.isEmpty()) {
                         editTextBio.setText(text);
-                    }
-                    else {
+                    } else {
                         editTextBio.setText("   ");
                     }
                 });

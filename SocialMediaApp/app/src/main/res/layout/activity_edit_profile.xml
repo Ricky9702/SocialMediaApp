@@ -47,17 +47,13 @@
                         android:text="Edit"
                         android:textColor="@color/active_icon"
                         android:textSize="20dp" />
-
                     <com.mikhaellopez.circularimageview.CircularImageView
                         android:id="@+id/imageViewProfileAvatar"
                         android:layout_width="150dp"
                         android:layout_height="150dp"
+                        android:layout_marginTop="40dp"
                         android:layout_centerHorizontal="true"
-                        android:layout_marginTop="15dp"
-                        android:src="@drawable/baseline_face_2_24"
-                        android:adjustViewBounds="true"
-                        app:civ_border_color="@color/white"
-                        app:civ_border_width="5dp" />
+                        android:adjustViewBounds="true"/>
                 </RelativeLayout>
 
                 <!--                Cover Photo-->
@@ -82,17 +78,14 @@
                         android:textColor="@color/active_icon"
                         android:textSize="20dp" />
 
-                    <ImageView
-                        android:id="@+id/imageViewCoverPhoto"
-                        android:layout_width="400dp"
-                        android:layout_height="200dp"
-                        android:layout_centerHorizontal="true"
-                        android:layout_marginHorizontal="15dp"
-                        android:layout_marginTop="50dp"
-                        android:src="@color/not_active_icon"
-                        android:adjustViewBounds="true"
-                        android:scaleType="centerCrop" />
-
+                        <ImageView
+                            android:id="@+id/imageViewCoverPhoto"
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:layout_marginTop="50dp"
+                            android:src="@color/not_active_icon"
+                            android:scaleType="centerCrop"
+                            android:adjustViewBounds="true" />
                 </RelativeLayout>
 
                 <!-- Profile infomation-->

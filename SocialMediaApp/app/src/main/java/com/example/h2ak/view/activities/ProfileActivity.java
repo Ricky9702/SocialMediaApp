@@ -1,35 +1,62 @@
 package com.example.h2ak.view.activities;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.h2ak.R;
+import com.example.h2ak.adapter.ProfileAdapter;
 import com.example.h2ak.contract.ProfileActivityContract;
 import com.example.h2ak.model.User;
-import com.example.h2ak.presenter.BaseMenuPresenter;
 import com.example.h2ak.presenter.ProfileActivityPresenter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.mikhaellopez.circularimageview.CircularImageView;
-import com.squareup.picasso.Picasso;
 
 public class ProfileActivity extends AppCompatActivity implements ProfileActivityContract.View {
     Toolbar toolBar;
 
-    Button buttonLogout, btnEditProfile;
+    private Button buttonLogout;
+    Button btnEditProfile;
     CircularImageView imageViewProfileAvatar;
     ImageView imageViewProfileBackground;
     TextView textViewProfileName, textViewProfileBio;
     FirebaseAuth firebaseAuth;
+    RecyclerView recyclerViewProfile;
+    ProfileAdapter profileAdapter;
     private ProfileActivityContract.Presenter presenter;
+    private ActivityResultLauncher<Intent> editProfileLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    String avatarUri = result.getData().getStringExtra("UPDATED_HAS_AVATAR");
+                    String coverUri = result.getData().getStringExtra("UPDATED_HAS_COVER");
+                    boolean updatedDone = result.getData() != null && result.getData().getBooleanExtra("UPDATED_DONE", true);
+                    Log.d("Test avatarUri", avatarUri + "");
+                    Log.d("Test coverUri", coverUri + "");
+
+                    if (avatarUri != null && !avatarUri.isEmpty()) {
+                        profileAdapter.setAvatarUri(avatarUri);
+                    }
+                    if (coverUri != null && !coverUri.isEmpty()) {
+                        Log.d("TEST coverUri222", coverUri);
+                        profileAdapter.setCoverUri(coverUri);
+                    }
+                    if (updatedDone) {
+                        profileAdapter.onReload();
+                    }
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +64,7 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
         setContentView(R.layout.activity_profile);
         init();
 
-        presenter = new ProfileActivityPresenter(this);
+        presenter = new ProfileActivityPresenter(this, this);
         presenter.getUser();
     }
 
@@ -46,11 +73,11 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
         //Get views
         btnEditProfile = findViewById(R.id.btnEditProfile);
         buttonLogout = findViewById(R.id.btnlogout);
-        imageViewProfileBackground = findViewById(R.id.imageViewProfileBackground);
-        imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
-        textViewProfileName = findViewById(R.id.textViewProfileName);
-        textViewProfileBio = findViewById(R.id.textViewProfileBio);
+        recyclerViewProfile = findViewById(R.id.recyclerViewProfile);
+        recyclerViewProfile.setLayoutManager(new LinearLayoutManager(this));
         firebaseAuth = FirebaseAuth.getInstance();
+        profileAdapter = new ProfileAdapter(this);
+        recyclerViewProfile.setAdapter(profileAdapter);
 
 
         //Edit toolBar
@@ -61,55 +88,44 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
 
 
         btnEditProfile.setOnClickListener(view -> {
-            startActivity(new Intent(ProfileActivity.this, EditProfileActivity.class));
+            Intent intent = new Intent(ProfileActivity.this, EditProfileActivity.class);
+            editProfileLauncher.launch(intent);
         });
 
-        buttonLogout.setOnClickListener(v -> {
-            firebaseAuth.signOut();
+        getButtonLogout().setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
             startActivity(new Intent(ProfileActivity.this, LoginActivity.class));
             finish();
         });
 
         toolBar.setNavigationOnClickListener(view -> {
-            startActivity(new Intent(this, BaseMenuActivity.class));
+            onBackPressed();
             finish();
         });
 
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        profileAdapter.onReload();
+    }
+
+    @Override
+    protected void onDestroy() {
+        profileAdapter.setCoverUri(null);
+        profileAdapter.setAvatarUri(null);
+        super.onDestroy();
+    }
+
+    @Override
     public void loadUserInformation(User user) {
         if (user != null) {
-
-            String name = user.getName();
-            String bio = user.getBio();
-            String avatar = user.getImageAvatar();
-            String cover = user.getImageCover();
-
-            //Load the name
-            textViewProfileName.setText(name);
-
-            //Load the bio
-            if (bio != null && !bio.isEmpty()) {
-                textViewProfileBio.setVisibility(View.VISIBLE);
-                textViewProfileBio.setText(bio);
-            } else {
-                textViewProfileBio.setVisibility(View.GONE);
-            }
-
-            // Load the avatar image
-            if (avatar != null && !avatar.isEmpty()) {
-                Picasso.get().load(avatar).into(imageViewProfileAvatar);
-            } else {
-                imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
-            }
-
-            // Load the cover image
-            if (cover != null && !cover.isEmpty()) {
-                Picasso.get().load(cover).into(imageViewProfileBackground);
-            } else {
-                imageViewProfileBackground.setImageResource(R.color.not_active_icon);
-            }
+            profileAdapter.setCurrentUser(user);
         }
+    }
+
+    public Button getButtonLogout() {
+        return buttonLogout;
     }
 }

@@ -2,13 +2,32 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.h2ak.view.fragments.HomeFragment">
+    tools:context="com.example.h2ak.view.fragments.HomeFragment"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="home"
-        android:textSize="150dp" />
+        android:layout_height="wrap_content">
 
+        <include layout="@layout/app_bar_layout"/>
+        <com.mikhaellopez.circularimageview.CircularImageView
+            android:id="@+id/imageViewProfileAvatar"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="5dp"
+            android:src="@drawable/baseline_person_24"
+            android:adjustViewBounds="true" />
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/appBar">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="home"
+                android:textSize="150dp" />
+        </ScrollView>
+    </RelativeLayout>
 </FrameLayout>

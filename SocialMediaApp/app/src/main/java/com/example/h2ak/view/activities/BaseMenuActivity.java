@@ -1,44 +1,37 @@
 package com.example.h2ak.view.activities;
 
 import com.example.h2ak.R;
-import com.example.h2ak.contract.BaseMenuContract;
+import com.example.h2ak.contract.BaseMenuActivityContract;
 import com.example.h2ak.databinding.ActivityBaseMenuBinding;
-import com.example.h2ak.model.User;
-import com.example.h2ak.presenter.BaseMenuPresenter;
+import com.example.h2ak.presenter.BaseMenuActivityPresenter;
 import com.example.h2ak.view.fragments.CreateFragment;
 import com.example.h2ak.view.fragments.DiscoverFragment;
 import com.example.h2ak.view.fragments.HomeFragment;
 import com.example.h2ak.view.fragments.FriendFragment;
 
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.h2ak.view.fragments.InboxFragment;
-import com.google.firebase.auth.FirebaseAuth;
-import com.mikhaellopez.circularimageview.CircularImageView;
-import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class BaseMenuActivity extends AppCompatActivity implements BaseMenuContract.View {
-    private ActivityBaseMenuBinding binding;
-    private BaseMenuPresenter baseMenuPresenter;
-    CircularImageView imageViewProfileAvatar;
+public class BaseMenuActivity extends AppCompatActivity implements BaseMenuActivityContract.View {
+    TextView textViewInboxCounts;
 
+    private ActivityBaseMenuBinding binding;
     private Map<Integer, Map<String, Integer>> buttonInfoMap = new HashMap<>();
     private int previousButtonId = -1;
+    private BaseMenuActivityContract.Presenter presenter;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,18 +44,22 @@ public class BaseMenuActivity extends AppCompatActivity implements BaseMenuContr
         binding = ActivityBaseMenuBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        //Edit toolBar
-        Toolbar toolbar = findViewById(R.id.toolBar);
-        toolbar.setTitle("MyCompany");
-        toolbar.setTitleTextColor(getColor(R.color.black));
-
         //Get views
         ImageButton btnHome = findViewById(R.id.btnHome);
         ImageButton btnDiscover = findViewById(R.id.btnDiscover);
         ImageButton btnCreate = findViewById(R.id.btnCreate);
         ImageButton btnFriend = findViewById(R.id.btnFriend);
         ImageButton btnInbox = findViewById(R.id.btnInbox);
-        imageViewProfileAvatar = findViewById(R.id.imageViewProfileAvatar);
+
+
+        View linearLayoutHome = findViewById(R.id.linearLayoutHome);
+        View linearLayoutDiscover = findViewById(R.id.linearLayoutDiscover);
+        View linearLayoutCreate = findViewById(R.id.linearLayoutCreate);
+        View linearLayoutFriend = findViewById(R.id.linearLayoutFriend);
+        View linearLayoutInbox = findViewById(R.id.linearLayoutInbox);
+
+        // textView friend count
+        textViewInboxCounts = findViewById(R.id.textViewInboxCounts);
 
         //Set bottom nav button fields
         addButtonInfo(R.id.btnHome, R.drawable.baseline_home_24, R.drawable.baseline_home_24_active, R.id.textViewHome);
@@ -70,38 +67,36 @@ public class BaseMenuActivity extends AppCompatActivity implements BaseMenuContr
         addButtonInfo(R.id.btnFriend, R.drawable.baseline_group_24, R.drawable.baseline_group_24_active, R.id.textViewFriend);
         addButtonInfo(R.id.btnInbox, R.drawable.baseline_notifications_none_24, R.drawable.baseline_notifications_none_24_active, R.id.textViewInbox);
 
-        btnHome.setOnClickListener(view -> {
+        linearLayoutHome.setOnClickListener(view -> {
             replaceFragment(new HomeFragment());
             setActiveButton(R.id.btnHome);
         });
 
-        btnDiscover.setOnClickListener(view -> {
+        linearLayoutDiscover.setOnClickListener(view -> {
             replaceFragment(new DiscoverFragment());
             setActiveButton(R.id.btnDiscover);
         });
 
-        btnCreate.setOnClickListener(view -> {
+        linearLayoutCreate.setOnClickListener(view -> {
             replaceFragment(new CreateFragment());
         });
 
-        btnFriend.setOnClickListener(view -> {
+        linearLayoutFriend.setOnClickListener(view -> {
             replaceFragment(new FriendFragment());
             setActiveButton(R.id.btnFriend);
         });
 
-        btnInbox.setOnClickListener(view -> {
+        linearLayoutInbox.setOnClickListener(view -> {
             replaceFragment(new InboxFragment());
             setActiveButton(R.id.btnInbox);
+            textViewInboxCounts.setVisibility(View.GONE);
         });
 
-        binding.imageViewProfileAvatar.setOnClickListener(view -> {
-            startActivity(new Intent(BaseMenuActivity.this, ProfileActivity.class));
-        });
+        linearLayoutHome.performClick();
 
-        btnHome.performClick();
+        setPresenter(new BaseMenuActivityPresenter(this, this));
+        getPresenter().loadingListInboxUnRead();
 
-        baseMenuPresenter = new BaseMenuPresenter(this);
-        baseMenuPresenter.getUser();
     }
 
     private void addButtonInfo(int buttonId, int defaultImageResId, int activeImageResId, int textViewId) {
@@ -155,27 +150,25 @@ public class BaseMenuActivity extends AppCompatActivity implements BaseMenuContr
     }
 
     @Override
-    public void changeProfileAvatar(User user) {
-        if (user != null) {
-            String avatar = user.getImageAvatar();
-            if (avatar != null && !avatar.isEmpty()) {
-                Picasso.get().load(avatar).into(imageViewProfileAvatar);
-            } else {
-                imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
-            }
+    public void onCountListUnReadInbox(long count) {
+        if (count > 0) {
+            textViewInboxCounts.setText(String.valueOf(count));
+            textViewInboxCounts.setVisibility(View.VISIBLE);
         }
+        else textViewInboxCounts.setVisibility(View.GONE);
     }
 
-//    @Override
-//    public void changeProfileAvatar(User user) {
-//        if (user != null) {
-//            String avatar = user.getAvatar();
-//            if (avatar != null && !avatar.isEmpty()) {
-//                Picasso.get().load(avatar).into(binding.imageViewProfileAvatar);
-//            } else {
-//                Drawable placeholderDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_person_24);
-//                Picasso.get().load(R.drawable.baseline_person_24).placeholder(placeholderDrawable).into(binding.imageViewProfileAvatar);
-//            }
-//        }
-//    }
+    @Override
+    protected void onStart() {
+        getPresenter().loadingListInboxUnRead();
+        super.onStart();
+    }
+
+    public BaseMenuActivityContract.Presenter getPresenter() {
+        return presenter;
+    }
+
+    public void setPresenter(BaseMenuActivityContract.Presenter presenter) {
+        this.presenter = presenter;
+    }
 }

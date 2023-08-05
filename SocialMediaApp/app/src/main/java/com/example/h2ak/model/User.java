@@ -2,36 +2,43 @@ package com.example.h2ak.model;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 public class User {
-    private int id;
+    private String id;
     private String name;
     private String email;
     private String gender;
     private String birthday;
     private String password;
-    private String imageAvatar;
-    private String imageCover;
-    private String bio;
+    private String imageAvatar = "";
+    private String imageCover = "";
+    private String bio = "";
     private String createdDate;
     String dateFormat;
+    private boolean isActive;
+    private UserRole userRole;
+    private String role;
+    private boolean isOnline;
 
     {
         Date date = new Date();
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
     }
 
-    private boolean isActive;
 
     public User() {
         this.createdDate = dateFormat;
+        this.userRole = UserRole.ROLE_USER;
+        this.role = userRole.getRole();
+        this.isOnline = false;
     }
 
-    public User(int id, String name, String email, String gender, String birthday, String password, String imageAvatar, String imageCover, String bio, String createdDate, String dateFormat, boolean isActive) {
+    public User(String id, String name, String email, String gender, String birthday, String password, String imageAvatar, String imageCover, String bio, String createdDate, String dateFormat, boolean isActive) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -53,11 +60,65 @@ public class User {
                 this.id, this.name, this.email, this.password, this.isActive, this.imageAvatar, this.imageCover, this.bio, this.createdDate);
     }
 
-    public int getId() {
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return isActive == user.isActive &&  isOnline == user.isOnline && id.equals(user.id) && name.equals(user.name) && email.equals(user.email) && gender.equals(user.gender) && birthday.equals(user.birthday) && imageAvatar.equals(user.imageAvatar) && imageCover.equals(user.imageCover) && bio.equals(user.bio) && createdDate.equals(user.createdDate) && dateFormat.equals(user.dateFormat) && role.equals(user.role);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        return result;
+    }
+
+    public UserRole getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(UserRole userRole) {
+        this.userRole = userRole;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public boolean isOnline() {
+        return isOnline;
+    }
+
+    public void setOnline(boolean online) {
+        isOnline = online;
+    }
+
+    public enum UserRole {
+        ROLE_ADMIN("ADMIN"),
+        ROLE_USER("USER");
+
+        private String role;
+
+        UserRole(String role) {
+            this.role = role;
+        }
+
+        public String getRole() {
+            return role;
+        }
+    }
+
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -9,30 +9,16 @@
         android:layout_height="match_parent">
 
         <!-- Toolbar - Header -->
-        <include layout="@layout/app_bar_layout"/>
-
-        <com.mikhaellopez.circularimageview.CircularImageView
-            android:id="@+id/imageViewProfileAvatar"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_alignParentRight="true"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="10dp"
-            android:src="@drawable/baseline_person_24"
-            android:adjustViewBounds="true"
-            app:civ_border_color="@color/not_active_icon"
-            app:civ_border_width="1dp" />
-
         <!-- FrameLayout - Content -->
         <FrameLayout
             android:id="@+id/frameLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_above="@id/linearLayoutFooter"
             android:layout_below="@id/appBar"
             android:gravity="center"
-            app:layout_anchorGravity="center" />
+            app:layout_anchorGravity="center">
+        </FrameLayout>
 
 
         <!-- Bottom Navigation View - Footer -->
@@ -40,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_above="@id/linearLayoutFooter"
-            android:background="#B3B3B3" />
+            android:background="@color/not_active_icon" />
 
         <include layout="@layout/footer_layout" />
 

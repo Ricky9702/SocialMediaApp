@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:id="@+id/linearLayoutParent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:orientation="horizontal"
+        android:padding="5dp">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <com.mikhaellopez.circularimageview.CircularImageView
+                android:id="@+id/imageViewFriendAvatar"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:adjustViewBounds="true"
+                android:clickable="false"
+                android:src="@drawable/baseline_face_2_24" />
+            <com.mikhaellopez.circularimageview.CircularImageView
+                android:id="@+id/imageViewFriendStatus"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginLeft="55dp"
+                android:layout_gravity="bottom"
+                android:adjustViewBounds="true"
+                android:clickable="false"
+                android:src="@drawable/baseline_avatar_not_active_24"
+                app:civ_border="true" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="40dp"
+            android:clickable="false"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/textViewFriendname"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:text="Username"
+                android:textColor="@color/black"
+                android:textSize="17dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</RelativeLayout>

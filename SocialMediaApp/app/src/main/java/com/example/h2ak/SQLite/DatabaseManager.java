@@ -1,4 +1,4 @@
-package com.example.h2ak.database;
+package com.example.h2ak.SQLite;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,10 +7,11 @@ import android.database.sqlite.SQLiteDatabase;
 public class DatabaseManager {
     private static DatabaseManager databaseManager;
     private SQLiteDatabase db;
+    MySQLiteHelper helper;
 
     private DatabaseManager(Context context) {
-        MySQLiteHelper helper = new MySQLiteHelper(context);
-        db = helper.getReadableDatabase();
+        helper = new MySQLiteHelper(context);
+        db = helper.getWritableDatabase();
     }
 
     public static synchronized DatabaseManager getInstance(Context context) {
@@ -26,8 +27,6 @@ public class DatabaseManager {
     }
 
     public synchronized void closeDatabase() {
-        if (db != null && db.isOpen()) {
-            db.close();
-        }
+        helper.close();
     }
 }

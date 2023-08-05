@@ -13,6 +13,6 @@ public interface RegisterActivityContract {
     interface Presenter {
         User createUser(String name, String birthday, String gender, String email, String password, String confirmPassword);
         void register(User user);
-        void addNonverifiedUser(User user);
+        void addUnverifiedUser(User user);
     }
 }

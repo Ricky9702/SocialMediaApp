@@ -11,17 +11,20 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.contract.LoginActivityContract;
 import com.example.h2ak.presenter.LoginActivtyPresenter;
 import com.example.h2ak.utils.TextInputLayoutUtils;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity implements LoginActivityContract.View {
     private TextView textViewResetPassword;
     private TextInputLayout textLayoutPassword, textLayoutEmail;
-    private EditText editTextEmail, editTextPassword;
+    private TextInputEditText editTextEmail, editTextPassword;
     private Button btnLogin, btnGoToRegister;
     private ProgressBar progressBar;
     private LoginActivtyPresenter loginActivtyPresenter;
@@ -32,12 +35,10 @@ public class LoginActivity extends AppCompatActivity implements LoginActivityCon
         setContentView(R.layout.activity_login);
         init();
 
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null && FirebaseAuth.getInstance().getCurrentUser().isEmailVerified()) {
-            startActivity(new Intent(this, BaseMenuActivity.class));
-            finish();
-        }
-
+//        if (FirebaseAuth.getInstance().getCurrentUser() != null && FirebaseAuth.getInstance().getCurrentUser().isEmailVerified()) {
+//            startActivity(new Intent(this, BaseMenuActivity.class));
+//            finish();
+//        }
     }
 
     private void init() {
@@ -63,7 +64,7 @@ public class LoginActivity extends AppCompatActivity implements LoginActivityCon
         });
 
 
-        loginActivtyPresenter = new LoginActivtyPresenter(this);
+        loginActivtyPresenter = new LoginActivtyPresenter(this, this);
 
         btnLogin.setOnClickListener(view -> {
             String email = editTextEmail.getText().toString().trim();
@@ -76,6 +77,18 @@ public class LoginActivity extends AppCompatActivity implements LoginActivityCon
         });
 
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        MyApp.getInstance().setCurrentActivity(this);
+    }
+
+    @Override
+    protected void onResume() {
+        MyApp.getInstance().setCurrentActivity(this);
+        super.onResume();
     }
 
     @Override

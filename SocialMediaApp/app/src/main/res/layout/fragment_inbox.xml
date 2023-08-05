@@ -4,12 +4,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".view.fragments.InboxFragment">
-
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Inbox"
-        android:textSize="150dp" />
-
+        android:layout_height="wrap_content">
+        <include layout="@layout/app_bar_layout"/>
+    <RelativeLayout
+        android:id="@+id/relativeLayoutInboxAction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/appBar"
+        android:layout_marginTop="15dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+        <TextView
+            android:id="@+id/textViewInboxCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Inbox list (0)"
+            android:textSize="20dp"/>
+        <TextView
+            android:id="@+id/textViewInboxUnRead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Unread (0)"
+            android:layout_alignParentRight="true"
+            android:textSize="20dp"/>
+    </RelativeLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewInbox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_below="@+id/relativeLayoutInboxAction"/>
+    </RelativeLayout>
 </FrameLayout>
