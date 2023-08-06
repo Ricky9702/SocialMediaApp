@@ -13,7 +13,7 @@
         android:padding="5dp">
 
         <com.mikhaellopez.circularimageview.CircularImageView
-            android:id="@+id/imageViewFriendAvatar"
+            android:id="@+id/imageViewSearchingUserAvatar"
             android:layout_width="84dp"
             android:layout_height="84dp"
             android:adjustViewBounds="true"
@@ -31,7 +31,7 @@
             android:padding="10dp">
 
             <TextView
-                android:id="@+id/textViewFriendname"
+                android:id="@+id/textViewSearchingUserName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:clickable="false"

@@ -3,13 +3,17 @@ package com.example.h2ak.model;
 import androidx.annotation.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SearchHistory {
-    private int id;
+    private String id;
     private User currentUser;
     private User searchingUser;
+    private static AtomicInteger count = new AtomicInteger(0);
 
-
+    {
+        id = String.format("SearchHistory%d", count.incrementAndGet());
+    }
     public SearchHistory() {}
 
     public SearchHistory (User currentUser, User searchingUser) {
@@ -17,11 +21,11 @@ public class SearchHistory {
         this.searchingUser = searchingUser;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

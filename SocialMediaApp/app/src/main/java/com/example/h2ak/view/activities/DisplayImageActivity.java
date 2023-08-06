@@ -43,13 +43,21 @@ public class DisplayImageActivity extends AppCompatActivity {
         Intent intent = getIntent();
         if (intent != null) {
             String imageUri = intent.getStringExtra("IMAGE_URI");
-            if (imageUri != null && !imageUri.isEmpty()) {
-                Glide.with(DisplayImageActivity.this)
-                        .load(imageUri)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .into(imageViewFullScreen);
-            } else {
-                imageViewFullScreen.setImageResource(R.drawable.baseline_avatar_not_active_24);
+            String type = intent.getStringExtra("TYPE");
+            if (imageUri != null) {
+                if (type.equals("AVATAR")) {
+                    Glide.with(DisplayImageActivity.this)
+                            .load(imageUri)
+                            .placeholder(R.drawable.baseline_avatar_place_holder)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .into(imageViewFullScreen);
+                } else {
+                    Glide.with(DisplayImageActivity.this)
+                            .load(imageUri)
+                            .placeholder(R.color.not_active_icon)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .into(imageViewFullScreen);
+                }
             }
         }
     }

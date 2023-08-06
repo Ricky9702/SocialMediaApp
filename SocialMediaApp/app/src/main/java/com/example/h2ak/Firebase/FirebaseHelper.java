@@ -60,9 +60,9 @@ public class FirebaseHelper {
                     Log.d("Test compressed file", compressedFile.toString());
                     UploadTask uploadTask = fileRef.putFile(Uri.fromFile(compressedFile));
 
-                    // upload sucess
+                    // upload success
                     uploadTask.addOnSuccessListener(taskSnapshot -> {
-                        // download sucess
+                        // download success
                         fileRef.getDownloadUrl().addOnSuccessListener(uri -> {
                             Log.d("TEST URI", uri.toString());
                             if (listener != null) {

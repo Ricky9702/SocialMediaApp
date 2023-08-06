@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.ProfileAdapter;
 import com.example.h2ak.contract.ProfileActivityContract;
@@ -27,9 +28,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
 
     private Button buttonLogout;
     Button btnEditProfile;
-    CircularImageView imageViewProfileAvatar;
-    ImageView imageViewProfileBackground;
-    TextView textViewProfileName, textViewProfileBio;
     FirebaseAuth firebaseAuth;
     RecyclerView recyclerViewProfile;
     ProfileAdapter profileAdapter;
@@ -93,6 +91,7 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
         });
 
         getButtonLogout().setOnClickListener(v -> {
+            MyApp.getInstance().setUserOffline();
             FirebaseAuth.getInstance().signOut();
             startActivity(new Intent(ProfileActivity.this, LoginActivity.class));
             finish();

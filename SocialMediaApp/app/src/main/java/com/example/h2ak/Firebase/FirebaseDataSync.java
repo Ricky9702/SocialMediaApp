@@ -23,6 +23,7 @@ import com.example.h2ak.model.Inbox;
 import com.example.h2ak.model.User;
 import com.example.h2ak.view.activities.BaseMenuActivity;
 import com.example.h2ak.view.activities.LoginActivity;
+import com.example.h2ak.view.activities.UserProfileActivity;
 import com.example.h2ak.view.fragments.FriendFragment;
 import com.example.h2ak.view.fragments.HomeFragment;
 import com.example.h2ak.view.fragments.InboxFragment;
@@ -71,7 +72,7 @@ public class FirebaseDataSync {
         return instance;
     }
 
-    public void syncUser() {
+    public void syncUser(OnDataChangeListener listener) {
 
         userRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -99,20 +100,22 @@ public class FirebaseDataSync {
 
                         if (existingUser == null) {
                             userDataSource.createUser(user);
+                            listener.onDataChange();
                         } else {
                             userDataSource.UpdateUserChangeOnFirebase(user);
+                            listener.onDataChange();
                         }
                     }
                 }
 
-                if (MyApp.getInstance().getCurrentActivity() instanceof BaseMenuActivity) {
-                    Fragment currentFragment = ((BaseMenuActivity) MyApp.getInstance().getCurrentActivity()).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
-                    if (currentFragment instanceof FriendFragment) {
-                        ((FriendFragment) currentFragment).getPresenter().getFriendList();
-                    } else if (currentFragment instanceof HomeFragment) {
-                        ((HomeFragment) currentFragment).getPresenter().loadCurrentUser();
-                    }
-                }
+//                if (MyApp.getInstance().getCurrentActivity() instanceof BaseMenuActivity) {
+//                    Fragment currentFragment = ((BaseMenuActivity) MyApp.getInstance().getCurrentActivity()).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+//                    if (currentFragment instanceof FriendFragment) {
+//                        ((FriendFragment) currentFragment).getPresenter().getFriendList();
+//                    } else if (currentFragment instanceof HomeFragment) {
+//                        ((HomeFragment) currentFragment).getPresenter().loadCurrentUser();
+//                    }
+//                }
 
             }
 
@@ -124,7 +127,7 @@ public class FirebaseDataSync {
     }
 
 
-    public void syncFriendShip() {
+    public void syncFriendShip(OnDataChangeListener listener) {
         friendShipRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -152,20 +155,23 @@ public class FirebaseDataSync {
                             if (found == null) {
                                 Log.d("SyncFriendShip: ", "There is some change here!! X2");
                                 friendShipDataSource.createFriendShipOnFirebaseChange(friendShip);
+                                listener.onDataChange();
                             }
                         }
                     }
                 }
             }
 
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
 
             }
         });
+
     }
 
-    public void syncInbox() {
+    public void syncInbox(OnDataChangeListener listener) {
         inBoxRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -196,22 +202,12 @@ public class FirebaseDataSync {
                             } else {
                                 // create
                                 inboxDataSource.createInboxOnFirebaseChange(inbox);
+                                listener.onDataChange();
                             }
                         }
                     }
                 }
 
-                Activity activity = MyApp.getInstance().getCurrentActivity();
-                if (activity instanceof BaseMenuActivity) {
-                    ((BaseMenuActivity) activity).getPresenter().loadingListInboxUnRead();
-
-                    Fragment fragment = ((BaseMenuActivity) activity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
-
-                    if (fragment instanceof InboxFragment) {
-                        ((InboxFragment) fragment).getPresenter().getListInboxes();
-                    }
-
-                }
             }
 
             @Override
@@ -231,22 +227,8 @@ public class FirebaseDataSync {
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                // Handle the deletion of inbox item from Firebase
-                String userId1 = snapshot.child(MySQLiteHelper.COLUMN_INBOX_USER_1).getValue(String.class);
-                String userId2 = snapshot.child(MySQLiteHelper.COLUMN_INBOX_USER_2).getValue(String.class);
-
-                if (userId1 != null && userId2 != null) {
-                    User user1 = userDataSource.getUserById(userId1);
-                    User user2 = userDataSource.getUserById(userId2);
-
-                    if (user1 != null && user2 != null) {
-                        Inbox inbox = new Inbox();
-                        inbox.setUserRecieveRequest(user1);
-                        inbox.setUserSentRequest(user2);
-
-                        // Delete the corresponding inbox item from the local database
-                        inboxDataSource.deleteInboxOnFirebaseChange(inbox);
-                    }
+                if (snapshot.exists()) {
+                    inboxDataSource.deleteInboxOnFirebaseChange(snapshot.getKey());
                 }
             }
 
@@ -261,4 +243,9 @@ public class FirebaseDataSync {
             }
         });
     }
+
+    public interface OnDataChangeListener{
+        void onDataChange();
+    }
+
 }

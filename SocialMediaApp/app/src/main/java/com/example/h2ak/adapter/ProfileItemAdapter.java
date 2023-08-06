@@ -2,6 +2,7 @@ package com.example.h2ak.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.SearchHistoryDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
@@ -84,7 +86,13 @@ public class ProfileItemAdapter extends RecyclerView.Adapter<ProfileItemAdapter.
             SearchHistory searchHistory = searchHistoryDataSource.findSearchHistory(currentUser, user);
             if (searchHistory == null) {
                 searchHistory = new SearchHistory(currentUser, user);
-                searchHistoryDataSource.createSearchHistory(searchHistory);
+                if(searchHistoryDataSource.createSearchHistory(searchHistory, false)) {
+                    Log.d("searchHistoryDataSource create", "success");
+                } else {
+                    Log.d("searchHistoryDataSource create", "failed");
+                }
+            } else {
+                Log.d("searchHistory", "exists");
             }
 
             Intent intent = new Intent(context, UserProfileActivity.class);

@@ -47,19 +47,40 @@ public class InboxDataSourceImpl implements InboxDataSource {
         db.beginTransaction();
         boolean result = false;
         try {
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_ID, inbox.getId());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_CREATED_DATE, inbox.getCreatedDate());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_CONTENT, inbox.getContent());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_TYPE, inbox.getType());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_READ, inbox.isRead() ? 1 : 0);
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive() ? 1 : 0);
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_1, inbox.getUserRecieveRequest().getId());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_2, inbox.getUserSentRequest().getId());
+            if (inbox.getId() == null || inbox.getId().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "is is null");
+                return false;
+            } else if (inbox.getContent() == null || inbox.getContent().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "content is null");
+                return false;
+            } else if (inbox.getCreatedDate() == null || inbox.getCreatedDate().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "createdDate is null");
+                return false;
+            } else if (inbox.getType() == null || inbox.getType().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "type is null");
+                return false;
+            } else if (inbox.getUserRecieveRequest() == null) {
+                Log.d("createInboxOnFirebaseChange", "user1 is null");
+                return false;
+            } else if (inbox.getUserSentRequest() == null) {
+                Log.d("createInboxOnFirebaseChange", "user2 is null");
+                return false;
+            } else {
+                Log.d("createInbox : ", "LOCAL");
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_ID, inbox.getId());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_CREATED_DATE, inbox.getCreatedDate());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_CONTENT, inbox.getContent());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_TYPE, inbox.getType());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_READ, inbox.isRead() ? 1 : 0);
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive() ? 1 : 0);
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_1, inbox.getUserRecieveRequest().getId());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_2, inbox.getUserSentRequest().getId());
 
-            firebaseInboxDataSource.createInbox(inbox);
-            result = db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
-            Log.d("createInbox : ", "LOCAL");
+                firebaseInboxDataSource.createInbox(inbox);
+                result = db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
+            }
+
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             Log.d("createInbox : ", ex.getMessage());
@@ -74,17 +95,38 @@ public class InboxDataSourceImpl implements InboxDataSource {
         db.beginTransaction();
         boolean result = false;
         try {
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_ID, inbox.getId());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_CREATED_DATE, inbox.getCreatedDate());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_CONTENT, inbox.getContent());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_TYPE, inbox.getType());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_READ, inbox.isRead() ? 1 : 0);
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive() ? 1 : 0);
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_1, inbox.getUserRecieveRequest().getId());
-            contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_2, inbox.getUserSentRequest().getId());
-            result =  db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
-            Log.d("createInbox : ", "LOCAL FIREBASE");
+            if (inbox.getId() == null || inbox.getId().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "is is null");
+                return false;
+            } else if (inbox.getContent() == null || inbox.getContent().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "content is null");
+                return false;
+            } else if (inbox.getCreatedDate() == null || inbox.getCreatedDate().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "createdDate is null");
+                return false;
+            } else if (inbox.getType() == null || inbox.getType().isEmpty()) {
+                Log.d("createInboxOnFirebaseChange", "type is null");
+                return false;
+            } else if (inbox.getUserRecieveRequest() == null) {
+                Log.d("createInboxOnFirebaseChange", "user1 is null");
+                return false;
+            } else if (inbox.getUserSentRequest() == null) {
+                Log.d("createInboxOnFirebaseChange", "user2 is null");
+                return false;
+            } else {
+                Log.d("createInbox : ", "LOCAL FIREBASE");
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_ID, inbox.getId());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_CREATED_DATE, inbox.getCreatedDate());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_CONTENT, inbox.getContent());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_TYPE, inbox.getType());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_READ, inbox.isRead() ? 1 : 0);
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive() ? 1 : 0);
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_1, inbox.getUserRecieveRequest().getId());
+                contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_2, inbox.getUserSentRequest().getId());
+                result =  db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
+                Log.d("createInbox : ", "LOCAL FIREBASE");
+            }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             Log.d("createInboxOnFirebaseChange", ex.getMessage());
@@ -95,13 +137,13 @@ public class InboxDataSourceImpl implements InboxDataSource {
     }
 
     @Override
-    public boolean deleteInboxOnFirebaseChange(Inbox inbox) {
+    public boolean deleteInboxOnFirebaseChange(String id) {
         db.beginTransaction();
         boolean result = false;
         try {
             Log.d("DeleteInbox : ", "LOCAL FIREBASE");
             result = db.delete(MySQLiteHelper.TABLE_INBOX,
-                    MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()}) > 0;
+                    MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{id}) > 0;
         db.setTransactionSuccessful();
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -145,13 +187,14 @@ public class InboxDataSourceImpl implements InboxDataSource {
 
     @Override
     public Inbox findInboxOnFirebaseChange(Inbox inbox) {
+        Inbox inbox1 = null;
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_INBOX
                 + " WHERE " + MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()})) {
             if (c.moveToFirst()) {
-                return inbox;
+               inbox1 = this.getInboxByCursor(c);
             }
         }
-        return null;
+        return inbox1;
     }
 
     @Override

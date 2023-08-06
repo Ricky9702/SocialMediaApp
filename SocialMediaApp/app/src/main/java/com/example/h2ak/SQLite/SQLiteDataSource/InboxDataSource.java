@@ -7,7 +7,7 @@ import java.util.List;
 public interface InboxDataSource {
     boolean createInbox(Inbox inbox);
     boolean createInboxOnFirebaseChange(Inbox inbox);
-    boolean deleteInboxOnFirebaseChange(Inbox inbox);
+    boolean deleteInboxOnFirebaseChange(String id);
     List<Inbox> getAllInboxesByUserId(String id);
     Inbox findInboxFriendRequest(String userId1, String userId2);
     Inbox findInboxOnFirebaseChange(Inbox inbox);

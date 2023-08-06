@@ -17,7 +17,9 @@ import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.model.FriendShip;
 import com.example.h2ak.model.User;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class FriendShipDataSourceImpl implements FriendShipDataSource {
@@ -50,13 +52,31 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
         boolean result = false;
         try {
             Log.d("createFriendShip : ", "LOCAL FIREBASE");
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_ID, friendShip.getId());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS, friendShip.getStatus());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE, friendShip.getCreatedDate());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1, friendShip.getUser1().getId());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2, friendShip.getUser2().getId());
-            result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
+
+            if (friendShip.getId() == null || friendShip.getId().isEmpty()) {
+                Log.d("createFriendShip : ", "id is null");
+                return false;
+            } else if (friendShip.getStatus() == null || friendShip.getStatus().isEmpty()) {
+                Log.d("createFriendShip : ", "status is null");
+                return false;
+            } else if (friendShip.getUser1() == null) {
+                Log.d("createFriendShip : ", "user1 is null");
+                return false;
+            } else if (friendShip.getUser2() == null) {
+                Log.d("createFriendShip : ", "user2 is null");
+                return false;
+            } else if (friendShip.getCreatedDate() == null || friendShip.getCreatedDate().isEmpty()) {
+                Log.d("createFriendShip : ", "createdDate is null");
+
+            } else {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_ID, friendShip.getId());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS, friendShip.getStatus());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE, friendShip.getCreatedDate());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1, friendShip.getUser1().getId());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2, friendShip.getUser2().getId());
+                result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
+            }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
             Log.d("createFriendShip: ", exception.getMessage());
@@ -73,15 +93,31 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
         try {
             Log.d("createFriendShip : ", "LOCAL");
             ContentValues contentValues = new ContentValues();
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_ID, friendShip.getId());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS, friendShip.getStatus());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE, friendShip.getCreatedDate());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1, friendShip.getUser1().getId());
-            contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2, friendShip.getUser2().getId());
 
-            firebaseFriendShipDataSource.createFriendShip(friendShip);
-
-            result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
+            if (friendShip.getId() == null || friendShip.getId().isEmpty()) {
+                Log.d("createFriendShip", "createFriendShip: id is null or empty");
+                return false;
+            } else if (friendShip.getCreatedDate() == null || friendShip.getCreatedDate().isEmpty()) {
+                Log.d("createFriendShip", "createFriendShip: createdDate is null or empty");
+                return false;
+            } else if (friendShip.getStatus() == null || friendShip.getStatus().isEmpty()) {
+                Log.d("createFriendShip", "createFriendShip: status is null or empty");
+                return false;
+            } else if (friendShip.getUser1() == null) {
+                Log.d("createFriendShip", "user 1: id is null or empty");
+                return false;
+            } else if (friendShip.getUser2() == null) {
+                Log.d("createFriendShip", "user 2: id is null or empty");
+                return false;
+            } else {
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_ID, friendShip.getId());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS, friendShip.getStatus());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE, friendShip.getCreatedDate());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1, friendShip.getUser1().getId());
+                contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2, friendShip.getUser2().getId());
+                firebaseFriendShipDataSource.createFriendShip(friendShip);
+                result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
+            }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
             Log.d("createFriendShip: ", exception.getMessage());
@@ -97,9 +133,9 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
         FriendShip friendShip = null;
 
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP
-                + " WHERE " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + "= ? AND " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + "= ?"
-                + "OR " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + "= ? AND " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + "= ?"
-                + "ORDER BY " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " DESC"
+                + " WHERE (" + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + "= ? AND " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + "= ? )"
+                + " OR (" + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + "= ? AND " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + "= ? )"
+                + " ORDER BY " + MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE + " DESC "
                 + " LIMIT 1 ", new String[]{user1.getId(), user2.getId(), user2.getId(), user1.getId()})) {
 
             if (c.moveToFirst()) {
@@ -107,7 +143,6 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 friendShip.setId(c.getString(0));
                 friendShip.setCreatedDate(c.getString(1));
                 friendShip.setStatus(c.getString(2));
-
                 friendShip.setUser1(userDataSource.getUserById(c.getString(3)));
                 friendShip.setUser2(userDataSource.getUserById(c.getString(4)));
 
@@ -120,17 +155,24 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
 
     @Override
     public FriendShip findFriendShipFirebase(FriendShip friendShip) {
+        FriendShip friendShip1 = null;
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP + " WHERE " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? "
                         + " LIMIT 1 ",
                 new String[]{friendShip.getId()})) {
 
             if (c.moveToFirst()) {
-                return friendShip;
+                friendShip1 = new FriendShip();
+                friendShip1.setId(c.getString(0));
+                friendShip1.setCreatedDate(c.getString(1));
+                friendShip1.setStatus(c.getString(2));
+                friendShip1.setUser1(userDataSource.getUserById(c.getString(3)));
+                friendShip1.setUser2(userDataSource.getUserById(c.getString(4)));
+                return friendShip1;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return friendShip1;
     }
 
 
@@ -147,28 +189,53 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
     public Set<FriendShip> getAllFriendShipByUser(User user) {
         Set<FriendShip> friendShipSet = new HashSet<>();
         try (Cursor c = db.rawQuery(
-                "SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP +
-                        " WHERE (" + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + " = ? OR " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + " = ?) " +
-                        " AND " + MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS + " = ? " +
-                        " ORDER BY " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " DESC",
-                new String[]{user.getId(), user.getId(), FriendShip.FriendShipStatus.ACCEPTED.getStatus()}
+                "SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP
+                        + " WHERE (" + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + " = ? OR " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + " = ?) "
+                        + " ORDER BY " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " DESC",
+                new String[]{user.getId(), user.getId()}
         )) {
             while (c.moveToNext()) {
+
+                Log.d("FriendShipId?", c.getString(0));
                 User user1 = userDataSource.getUserById(c.getString(3));
                 User user2 = userDataSource.getUserById(c.getString(4));
 
-                // check if the latest friendship between user is still friend
-                FriendShip friendShip = findLastestFriendShip(user1, user2);
+                FriendShip friendShip1 = new FriendShip();
+                friendShip1.setId(c.getString(0));
+                friendShip1.setCreatedDate(c.getString(1));
+                friendShip1.setStatus(c.getString(2));
+                friendShip1.setUser1(user1);
+                friendShip1.setUser2(user2);
 
-                // Check if the latest friendship is accepted
-                if (friendShip != null && friendShip.getStatus().equals(FriendShip.FriendShipStatus.ACCEPTED.getStatus())) {
-                    friendShipSet.add(friendShip);
+                // check if the lastest friendship is accepted
+                FriendShip found  = findLastestFriendShip(user1, user2);
+                if (found.equals(friendShip1) && found.getStatus().equals(FriendShip.FriendShipStatus.ACCEPTED.getStatus())) {
+                    friendShipSet.add(found);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return friendShipSet;
+    }
+
+    @Override
+    public Set<FriendShip> getMutualFriends(User user1, User user2) {
+        Set<FriendShip> mutualFriends = new HashSet<>();
+
+        // Get all friends from user 1, user2
+        Set<FriendShip> user1Friends = getAllFriendShipByUser(user1);
+        Set<FriendShip> user2Friends = getAllFriendShipByUser(user2);
+
+        for (FriendShip friend1 : user1Friends) {
+            for (FriendShip friend2 : user2Friends) {
+                // Check if the friendships have the same user in both user1 and user2 positions
+                if (friend1.equals(friend2)) {
+                    mutualFriends.add(friend1);
+                }
+            }
+        }
+        return mutualFriends;
     }
 
 

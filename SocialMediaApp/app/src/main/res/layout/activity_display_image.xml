@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.activities.DisplayImageActivity"
-    android:background="@color/black">
+    tools:context=".view.activities.DisplayImageActivity">
 
     <include layout="@layout/app_bar_layout"/>
         <ImageView

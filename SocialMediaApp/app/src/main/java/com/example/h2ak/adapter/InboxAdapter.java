@@ -28,8 +28,11 @@ import com.example.h2ak.model.FriendShip;
 import com.example.h2ak.model.Inbox;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> {
 
@@ -137,9 +140,42 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                 View childView = LayoutInflater.from(context).inflate(R.layout.custom_search_profile_layout, linearLayout, false);
 
                 // Get view from childView
+                LinearLayout linearLayoutMutualFriends = childView.findViewById(R.id.linearLayoutMutualFriends);
+                CircularImageView imageViewFriend1 = childView.findViewById(R.id.imageViewFriend1);
+                CircularImageView imageViewFriend2 = childView.findViewById(R.id.imageViewFriend2);
                 CircularImageView imageViewProfileAvatar = childView.findViewById(R.id.imageViewProfileAvatar);
                 TextView textViewProfileName = childView.findViewById(R.id.textViewProfileName);
                 ImageView imageViewGoto = childView.findViewById(R.id.imageViewGoto);
+                TextView textViewMutualFriendsCount = childView.findViewById(R.id.textViewMutualFriends);
+                TextView textViewCreatedDate = childView.findViewById(R.id.textViewProfileCreatedDate);
+                textViewCreatedDate.setVisibility(View.GONE);
+
+                List<FriendShip> mutualFriendsList = new ArrayList<>();
+                mutualFriendsList.addAll(friendShipDataSource.getMutualFriends(inbox.getUserSentRequest(), inbox.getUserSentRequest()));
+                if (mutualFriendsList.isEmpty()) {
+                    linearLayoutMutualFriends.setVisibility(View.GONE);
+                } else {
+                    int maxImageView = Math.min(mutualFriendsList.size(), 2);
+
+                    Glide.with(context)
+                            .load(mutualFriendsList.get(0).getUser2().getImageAvatar())
+                            .into(imageViewFriend1);
+
+                    if (maxImageView == 1) {
+                        imageViewFriend2.setVisibility(View.GONE);
+                    } else {
+                        Glide.with(context)
+                                .load(mutualFriendsList.get(1).getUser2().getImageAvatar())
+                                .into(imageViewFriend2);
+                        imageViewFriend2.setVisibility(View.VISIBLE);
+                    }
+                    textViewMutualFriendsCount.setText(String.format("%d mutual friends", mutualFriendsList.size()));
+                    linearLayoutMutualFriends.setVisibility(View.VISIBLE);
+                }
+
+
+
+
 
                 imageViewGoto.setVisibility(View.GONE);
 
@@ -147,7 +183,7 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                 Glide.with(context)
                         .load(inbox.getUserSentRequest().getImageAvatar())
                         .diskCacheStrategy(DiskCacheStrategy.ALL) // Disable caching to reload the image
-                        .placeholder(R.color.not_active_icon)// Disable memory caching to reload the image
+                        .placeholder(R.drawable.baseline_avatar_place_holder)// Disable memory caching to reload the image
                         .into(imageViewProfileAvatar);
                 textViewProfileName.setText(inbox.getUserSentRequest().getName());
 
@@ -159,9 +195,7 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                 // this friendship is for if the current user accept or denied, then will update
                 FriendShip friendShip = friendShipDataSource.findLastestFriendShip(inbox.getUserSentRequest(), inbox.getUserRecieveRequest());
                 friendShip.setId(new FriendShip().getId());
-                if (friendShip.getStatus() != null && friendShip.getStatus().equals(FriendShip.FriendShipStatus.ACCEPTED)) {
-                    holder.linearLayoutParent.setEnabled(false);
-                }
+                friendShip.setCreatedDate(new FriendShip().getCreatedDate());
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
                 builder.setTitle("Friend Request")
@@ -180,8 +214,14 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
 
                                     Inbox newInbox = new Inbox(message, Inbox.InboxType.MESSAGE, inbox.getUserSentRequest(), inbox.getUserRecieveRequest());
                                     if (inboxDataSource.createInbox(newInbox)) {
+                                        message = Inbox.FRIEND_REQUEST_ACCEPTED_MESSAGE.replace("{{senderName}}", inbox.getUserSentRequest().getName());
+                                        Inbox newInbox2 = new Inbox(message, Inbox.InboxType.MESSAGE, inbox.getUserRecieveRequest(), inbox.getUserSentRequest());
+                                        if (inboxDataSource.createInbox(newInbox2)) {
+                                            Log.d(this.getClass().getName(), "onBindViewHolder: create inbox success X2");
+                                        } else {
+                                            Log.d(this.getClass().getName(), "onBindViewHolder: create inbox failed X2");
+                                        }
                                         Log.d(this.getClass().getName(), "onBindViewHolder: create inbox success");
-
                                     } else {
                                         Log.d(this.getClass().getName(), "onBindViewHolder: create inbox failed");
                                     }

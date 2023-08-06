@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebaseFriendShipDataSourceImpl;
 import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseFriendShipDataSource;
+import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
@@ -61,7 +62,7 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
             Log.d("UserProfilePresenter", friendShip.getUser2().getId() + "");
             // create popup menu delete, if selected friends
             friendShip.setId(new FriendShip().getId());
-
+            friendShip.setCreatedDate(new FriendShip().getCreatedDate());
             if (friendShip.getStatus().equals(FriendShip.FriendShipStatus.ACCEPTED.getStatus())) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 FriendShip finalFriendShip = friendShip;

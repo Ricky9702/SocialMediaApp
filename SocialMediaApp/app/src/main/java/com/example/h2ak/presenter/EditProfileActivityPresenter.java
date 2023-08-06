@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.contract.EditProfileActivityContract;
 import com.example.h2ak.Firebase.FirebaseHelper;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;

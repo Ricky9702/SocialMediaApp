@@ -22,7 +22,7 @@ import java.util.List;
 
 public class FriendFragment extends Fragment implements FriendFragmentContract.View{
     Toolbar toolbar;
-    FriendAdapter friendAdapter;
+    private FriendAdapter friendAdapter;
     RecyclerView recyclerView;
     TextView textViewFriendCount;
     private View view;
@@ -46,8 +46,8 @@ public class FriendFragment extends Fragment implements FriendFragmentContract.V
 
         recyclerView = view.findViewById(R.id.recyclerViewFriendList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
-        friendAdapter = new FriendAdapter(this.getContext());
-        recyclerView.setAdapter(friendAdapter);
+        setFriendAdapter(new FriendAdapter(this.getContext()));
+        recyclerView.setAdapter(getFriendAdapter());
 
         setPresenter(new FriendFragmentPresenter(this, this.getContext()));
         getPresenter().getFriendList();
@@ -59,14 +59,13 @@ public class FriendFragment extends Fragment implements FriendFragmentContract.V
     public void onFriendListRecieved(List<User> userList) {
         if (userList != null) {
             textViewFriendCount.setText(String.format("Friend list (%d)", userList.size()));
-            friendAdapter.setUserList(userList);
+            getFriendAdapter().setUserList(userList);
         }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        getPresenter().getFriendList();
     }
 
     public FriendFragmentContract.Presenter getPresenter() {
@@ -75,5 +74,13 @@ public class FriendFragment extends Fragment implements FriendFragmentContract.V
 
     public void setPresenter(FriendFragmentContract.Presenter presenter) {
         this.presenter = presenter;
+    }
+
+    public FriendAdapter getFriendAdapter() {
+        return friendAdapter;
+    }
+
+    public void setFriendAdapter(FriendAdapter friendAdapter) {
+        this.friendAdapter = friendAdapter;
     }
 }

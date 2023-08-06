@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.h2ak.Firebase.FirebaseDataSync;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.ProfileAdapter;
 import com.example.h2ak.contract.UserProfileAcitivtyContract;
@@ -28,6 +29,7 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
     Button btnAddFriend;
     ProgressBar progressBar;
     private UserProfileAcitivtyContract.Presenter presenter;
+    private String id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,13 +51,13 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
         recyclerViewProfile = findViewById(R.id.recyclerViewProfile);
         recyclerViewProfile.setLayoutManager(new LinearLayoutManager(this));
         profileAdapter = new ProfileAdapter(this);
-        presenter = new UserProfileAcitivtyPresenter(this, this);
+        setPresenter(new UserProfileAcitivtyPresenter(this, this));
 
         // Get the user email from previous activity
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("USER_ID")) {
-            String id = intent.getStringExtra("USER_ID");
-            presenter.getUserById(id);
+            id = intent.getStringExtra("USER_ID");
+            getPresenter().getUserById(id);
         }
 
         recyclerViewProfile.setAdapter(profileAdapter);
@@ -106,7 +108,7 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
 
         // Set on click event on button add friend
         btnAddFriend.setOnClickListener(view -> {
-            presenter.createOrUpdateFriendRequest(user);
+            getPresenter().createOrUpdateFriendRequest(user);
         });
     }
 
@@ -124,5 +126,13 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
     public void showProgressBar(boolean flag) {
         if (flag) progressBar.setVisibility(View.VISIBLE);
         else progressBar.setVisibility(View.GONE);
+    }
+
+    public UserProfileAcitivtyContract.Presenter getPresenter() {
+        return presenter;
+    }
+
+    public void setPresenter(UserProfileAcitivtyContract.Presenter presenter) {
+        this.presenter = presenter;
     }
 }

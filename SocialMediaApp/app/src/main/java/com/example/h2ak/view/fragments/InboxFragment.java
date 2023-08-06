@@ -54,8 +54,8 @@ public class InboxFragment extends Fragment implements InboxFragmentContract.Vie
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
 
-        setPresenter(new InboxFragmentPresenter(this, this.getContext()));
-        getPresenter().getListInboxes();
+        presenter = new InboxFragmentPresenter(this, this.getContext());
+        presenter.getListInboxes();
 
         return view;
     }

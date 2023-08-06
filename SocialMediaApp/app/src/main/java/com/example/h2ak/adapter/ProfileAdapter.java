@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
@@ -97,7 +98,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
             Glide.with(context)
                     .load(avatar)
                     .diskCacheStrategy(DiskCacheStrategy.ALL) // Disable caching to reload the image
-                    .placeholder(R.color.not_active_icon)// Disable memory caching to reload the image
+                    .placeholder(R.drawable.baseline_avatar_place_holder)// Disable memory caching to reload the image
                     .into(holder.imageViewProfileAvatar);
         } else {
             holder.imageViewProfileAvatar.setImageResource(R.drawable.baseline_person_24);
@@ -118,12 +119,14 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         holder.imageViewProfileAvatar.setOnClickListener(view -> {
                 Intent intent = new Intent(context, DisplayImageActivity.class);
                 intent.putExtra("IMAGE_URI", currentUser.getImageAvatar());
+                intent.putExtra("TYPE", "AVATAR");
                 context.startActivity(intent);
         });
 
         holder.imageViewProfileBackground.setOnClickListener(view -> {
                 Intent intent = new Intent(context, DisplayImageActivity.class);
                 intent.putExtra("IMAGE_URI", currentUser.getImageCover());
+            intent.putExtra("TYPE", "COVER");
                 context.startActivity(intent);
         });
 

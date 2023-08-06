@@ -52,25 +52,26 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-<!--        <RelativeLayout-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_below="@+id/linearLayoutSearch"-->
-<!--            android:paddingLeft="15dp">-->
+        <RelativeLayout
+            android:id="@+id/relativeLayoutSearchHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/linearLayoutSearch"
+            android:paddingLeft="15dp">
 
-<!--            <TextView-->
-<!--                android:id="@+id/textViewRecent"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:text="Recent"-->
-<!--                android:textSize="20dp" />-->
+            <TextView
+                android:id="@+id/textViewRecent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No recent searches"
+                android:textSize="20dp" />
 
-<!--            <androidx.recyclerview.widget.RecyclerView-->
-<!--                android:id="@+id/recyclerViewSearchHistory"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_below="@+id/textViewRecent" />-->
-<!--        </RelativeLayout>-->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewSearchHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textViewRecent" />
+        </RelativeLayout>
 
 
                 <TextView

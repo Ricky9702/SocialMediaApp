@@ -10,6 +10,7 @@ public interface SearchFragmentContract {
     interface View {
         void onUserListRecieved(List<User> userList);
         void onSearchHistoryRecieved(List<User> userList);
+        void onDeleteAllSearchHistory();
     }
 
     interface Presenter {

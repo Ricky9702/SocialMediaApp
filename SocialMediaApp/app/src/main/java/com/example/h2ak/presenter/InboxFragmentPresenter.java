@@ -9,7 +9,10 @@ import com.example.h2ak.contract.InboxFragmentContract;
 import com.example.h2ak.model.Inbox;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class InboxFragmentPresenter implements InboxFragmentContract.Presenter {
@@ -33,10 +36,23 @@ public class InboxFragmentPresenter implements InboxFragmentContract.Presenter {
         Log.d("InboxPresenter", inboxList.size() + "");
 
         Collections.sort(inboxList, (inbox1, inbox2) -> {
+            Date date1 = parseDateFromString(inbox1.getCreatedDate());
+            Date date2 = parseDateFromString(inbox2.getCreatedDate());
+
             // Sorting in descending order (latest items first)
-            return inbox2.getId().compareTo(inbox1.getId());
+            return date2.compareTo(date1);
         });
 
         view.onListInboxesRecieved(inboxList);
+    }
+
+    private Date parseDateFromString(String dateString) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        try {
+            return dateFormat.parse(dateString);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return new Date(); // Return a default date in case of parsing error
+        }
     }
 }

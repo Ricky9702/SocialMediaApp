@@ -4,7 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.DatabaseManager;
 import com.example.h2ak.SQLite.MySQLiteHelper;
 import com.example.h2ak.SQLite.SQLiteDataSource.SearchHistoryDataSource;
@@ -21,33 +23,92 @@ public class SearchHistoryDataSourceImpl implements SearchHistoryDataSource {
     private DatabaseManager databaseManager;
     private SQLiteDatabase db;
     private UserDataSource userDataSource;
+    private String currentUserId;
 
-    private SearchHistoryDataSourceImpl(Context context) {
+    private SearchHistoryDataSourceImpl(Context context, String currentUserId) {
         databaseManager = DatabaseManager.getInstance(context);
         db = databaseManager.getDatabase();
         userDataSource = UserDataSourceImpl.getInstance(context);
+        this.currentUserId = currentUserId;
     }
 
     public static synchronized SearchHistoryDataSourceImpl getInstance(Context context) {
         if (instance == null) {
-            instance = new SearchHistoryDataSourceImpl(context.getApplicationContext());
+            instance = new SearchHistoryDataSourceImpl(context.getApplicationContext(), MyApp.getInstance().getCurrentUserId());
         }
         return instance;
     }
 
 
     @Override
-    public boolean createSearchHistory(SearchHistory searchHistory) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MySQLiteHelper.COLUMN_SEARCH_USER_1, searchHistory.getCurrentUser().getId());
-        contentValues.put(MySQLiteHelper.COLUMN_SEARCH_USER_2, searchHistory.getSearchingUser().getId());
+    public boolean createSearchHistory(SearchHistory searchHistory, boolean allowInsertInFirebase) {
+        db.beginTransaction();
+        boolean result = false;
+        try {
+            ContentValues contentValues = new ContentValues();
 
-        return db.insert(MySQLiteHelper.TABLE_SEARCH_HISTORY, null, contentValues) > 0;
+            if (searchHistory.getId() == null || searchHistory.getId().isEmpty()) {
+                Log.d("createSearchHistory: ", "id is null");
+                return false;
+            } else if (searchHistory.getCurrentUser() == null) {
+                Log.d("createSearchHistory: ", "currentUser is null");
+                return false;
+            } else if (searchHistory.getSearchingUser() == null) {
+                Log.d("createSearchHistory: ", "searchingUser is null");
+                return false;
+            } else {
+
+                if (allowInsertInFirebase) {
+                    // do insert into firebase
+                }
+
+                contentValues.put(MySQLiteHelper.COLUMN_SEARCH_ID, searchHistory.getId());
+                contentValues.put(MySQLiteHelper.COLUMN_SEARCH_USER_1, searchHistory.getCurrentUser().getId());
+                contentValues.put(MySQLiteHelper.COLUMN_SEARCH_USER_2, searchHistory.getSearchingUser().getId());
+                result = db.insert(MySQLiteHelper.TABLE_SEARCH_HISTORY, null, contentValues) > 0;
+            }
+
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            Log.d("createSearchHistory Error: ", ex.getMessage());
+        } finally {
+            db.endTransaction();
+        }
+        return result;
     }
 
     @Override
-    public boolean deleteSearchHistory(SearchHistory searchHistory) {
-        return db.delete(MySQLiteHelper.TABLE_SEARCH_HISTORY, MySQLiteHelper.COLUMN_SEARCH_ID + " = ? ", new String[]{String.valueOf(searchHistory.getId())}) > 0;
+    public boolean deleteSearchHistory(SearchHistory searchHistory, boolean allowDeleteInFirebase) {
+        db.beginTransaction();
+        boolean result = false;
+        try {
+
+            if (searchHistory.getId() == null || searchHistory.getId().isEmpty()) {
+                Log.d("deleteSearchHistory: ", "id is null");
+                return false;
+            } else if (searchHistory.getCurrentUser() == null) {
+                Log.d("deleteSearchHistory: ", "currentUser is null");
+                return false;
+            } else if (searchHistory.getSearchingUser() == null) {
+                Log.d("deleteSearchHistory: ", "searchingUser is null");
+                return false;
+            } else {
+
+                if (allowDeleteInFirebase) {
+                    // do delete in firebase
+                }
+
+                result = db.delete(MySQLiteHelper.TABLE_SEARCH_HISTORY,
+                        MySQLiteHelper.COLUMN_SEARCH_ID + " = ? ",
+                        new String[]{String.valueOf(searchHistory.getId())}) > 0;
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+
+        } finally {
+            db.endTransaction();
+        }
+        return result;
     }
 
     @Override
@@ -87,7 +148,7 @@ public class SearchHistoryDataSourceImpl implements SearchHistoryDataSource {
         int user2 = c.getColumnIndex(MySQLiteHelper.COLUMN_SEARCH_USER_2);
 
         SearchHistory searchHistory = new SearchHistory();
-        searchHistory.setId(c.getInt(id));
+        searchHistory.setId(c.getString(id));
         searchHistory.setCurrentUser(userDataSource.getUserById(c.getString(user1)));
         searchHistory.setSearchingUser(userDataSource.getUserById(c.getString(user2)));
 

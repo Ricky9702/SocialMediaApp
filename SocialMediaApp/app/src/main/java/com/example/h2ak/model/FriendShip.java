@@ -13,26 +13,22 @@ public class FriendShip {
     private String createdDate;
     private String status;
     private FriendShipStatus friendShipStatus;
-    String dateFormat;
 
     private static AtomicInteger count = new AtomicInteger(0);
 
     {
-        Date date = new Date();
-        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
-        id = String.format("FriendShip%05d", count.incrementAndGet());
+        this.createdDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        id = String.format("FriendShip%d", count.incrementAndGet());
+        this.friendShipStatus = FriendShipStatus.PENDING;
+        this.status = this.friendShipStatus.getStatus();
     }
 
     public FriendShip() {
     }
 
     public FriendShip(User user1, User user2) {
-        this.id = id;
         this.user1 = user1;
         this.user2 = user2;
-        this.createdDate = dateFormat;
-        this.friendShipStatus = FriendShipStatus.PENDING;
-        this.status = this.friendShipStatus.getStatus();
     }
 
     @Override

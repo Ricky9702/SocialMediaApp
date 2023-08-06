@@ -58,7 +58,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String TABLE_SEARCH_HISTORY = "search_history";
 
     private static final String CREATE_TABLE_SEARCH_HISTORY = "CREATE TABLE " + TABLE_SEARCH_HISTORY + " (" +
-            COLUMN_SEARCH_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            COLUMN_SEARCH_ID + " TEXT PRIMARY KEY, " +
             COLUMN_SEARCH_USER_1 + " TEXT NOT NULL, " +
             COLUMN_SEARCH_USER_2 + " TEXT NOT NULL, " +
             "FOREIGN KEY (" + COLUMN_SEARCH_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "), " +

@@ -6,8 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import androidx.collection.LongSparseArray;
-
 import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebaseUserDataSourceImpl;
 import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseUserDataSource;
 import com.example.h2ak.MyApp;
@@ -21,6 +19,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UserDataSourceImpl implements UserDataSource {
 
@@ -29,18 +28,24 @@ public class UserDataSourceImpl implements UserDataSource {
     private FirebaseUserDataSource firebaseUserDataSource;
     private static UserDataSourceImpl instance;
     private String currentUserId;
+    private static int instanceCount = 0;
+
+    private static AtomicInteger count = new AtomicInteger(0);
 
     private UserDataSourceImpl(Context context, String currentUserId) {
         firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
         databaseManager = DatabaseManager.getInstance(context);
         db = databaseManager.getDatabase();
-        this.currentUserId = currentUserId;
+        this.setCurrentUserId(currentUserId);
+        Log.d("count x1", count.incrementAndGet()+"");
     }
 
     public static synchronized UserDataSourceImpl getInstance(Context context) {
         if (instance == null) {
+            Log.d("count X2", count.incrementAndGet()+"");
             instance = new UserDataSourceImpl(context.getApplicationContext(), MyApp.getInstance().getCurrentUserId());
         }
+        instanceCount++;
         return instance;
     }
 
@@ -265,5 +270,13 @@ public class UserDataSourceImpl implements UserDataSource {
     @Override
     public void deleteUser(int userId) {
 
+    }
+
+    public String getCurrentUserId() {
+        return currentUserId;
+    }
+
+    public void setCurrentUserId(String currentUserId) {
+        this.currentUserId = currentUserId;
     }
 }

@@ -3,6 +3,7 @@ package com.example.h2ak.presenter;
 
 import android.content.Context;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.contract.HomeFragmentContract;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;

@@ -3,6 +3,7 @@ package com.example.h2ak.presenter;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;

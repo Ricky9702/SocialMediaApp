@@ -16,8 +16,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.h2ak.R;
-import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
-import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
 import com.example.h2ak.model.User;
 import com.example.h2ak.view.activities.UserProfileActivity;
 import com.mikhaellopez.circularimageview.CircularImageView;
@@ -48,15 +46,15 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.ViewHolder
         Glide.with(context)
                 .load(friend.getImageAvatar())
                 .diskCacheStrategy(DiskCacheStrategy.ALL) // Disable caching to reload the image
-                .placeholder(R.drawable.baseline_avatar_not_active_24)// Disable memory caching to reload the image
+                .placeholder(R.drawable.baseline_avatar_place_holder)// Disable memory caching to reload the image
                 .into(holder.imageViewFriendAvatar);
 
-        holder.textViewFriendname.setText(friend.getName());
+        holder.textViewFriendName.setText(friend.getName());
         if (friend.isOnline()) {
             Glide.with(context)
                     .load(R.drawable.baseline_avatar_active_24)
                     .diskCacheStrategy(DiskCacheStrategy.ALL) // Disable caching to reload the image
-                    .placeholder(R.drawable.baseline_avatar_not_active_24)// Disable memory caching to reload the image
+                    .placeholder(R.drawable.baseline_avatar_active_24)// Disable memory caching to reload the image
                     .into(holder.imageViewFriendStatus);
         } else {
             Glide.with(context)
@@ -99,17 +97,17 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.ViewHolder
     public static class ViewHolder extends RecyclerView.ViewHolder {
         LinearLayout linearLayoutParent;
         CircularImageView imageViewFriendAvatar, imageViewFriendStatus;
-        TextView textViewFriendname;
+        TextView textViewFriendName;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             linearLayoutParent = itemView.findViewById(R.id.linearLayoutParent);
             imageViewFriendAvatar = itemView.findViewById(R.id.imageViewFriendAvatar);
             imageViewFriendStatus = itemView.findViewById(R.id.imageViewFriendStatus);
-            textViewFriendname = itemView.findViewById(R.id.textViewFriendname);
+            textViewFriendName = itemView.findViewById(R.id.textViewFriendName);
 
             imageViewFriendStatus.setClickable(false);
             imageViewFriendAvatar.setClickable(false);
-            textViewFriendname.setClickable(false);
+            textViewFriendName.setClickable(false);
         }
     }
 }
