@@ -2,6 +2,7 @@ package com.example.h2ak.utils;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -10,10 +11,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class TextInputLayoutUtils {
 
     private static boolean emailFocused;
+    public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public TextInputLayoutUtils() {
         emailFocused = false;
@@ -92,5 +95,65 @@ public class TextInputLayoutUtils {
         // Check if the selected date is within the age range (10 to 70 years)
         return selectedCalendar.after(minCalendar) && selectedCalendar.before(maxCalendar);
     }
+
+    public static String covertTimeToText(String dataDate) {
+
+        String convTime = null;
+
+        String prefix = "";
+        String suffix = "";
+
+        try {
+            Date pasTime = simpleDateFormat.parse(dataDate);
+
+            Date nowTime = new Date();
+
+            long dateDiff = nowTime.getTime() - pasTime.getTime();
+
+            if (dateDiff < 0) {
+                convTime = "Just now";
+            } else {
+                long second = TimeUnit.MILLISECONDS.toSeconds(dateDiff);
+                long minute = TimeUnit.MILLISECONDS.toMinutes(dateDiff);
+                long hour   = TimeUnit.MILLISECONDS.toHours(dateDiff);
+                long day  = TimeUnit.MILLISECONDS.toDays(dateDiff);
+
+                if (second < 60) {
+                    convTime = second + " Seconds " + suffix;
+                } else if (minute < 60) {
+                    convTime = minute + " Minutes "+suffix;
+                } else if (hour < 24) {
+                    convTime = hour + " Hours "+suffix;
+                } else if (day >= 7) {
+                    if (day > 360) {
+                        convTime = (day / 360) + " Years " + suffix;
+                    } else if (day > 30) {
+                        convTime = (day / 30) + " Months " + suffix;
+                    } else {
+                        convTime = (day / 7) + " Week " + suffix;
+                    }
+                } else if (day < 7) {
+                    convTime = day+" Days "+suffix;
+                }
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            Log.e("ConvTimeE", e.getMessage());
+        }
+        if (convTime.toLowerCase().trim().contains("0 seconds"))
+            convTime = "now";
+        return convTime.toLowerCase();
+    }
+
+    public static Date parseDateFromString(String dateString) {
+        try {
+            return TextInputLayoutUtils.simpleDateFormat.parse(dateString);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return new Date(); // Return a default date in case of parsing error
+        }
+    }
+
 
 }

@@ -21,8 +21,9 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
 
 
     // User
-    public static final String TABLE_USER = "users";
-    public static final String COLUMN_USER_ID = "user_id";
+    public static final String TABLE_USER = "user";
+    public static final String COLUMN_POST_USER_ID = "user_id";
+    public static final String COLUMN_USER_ID = COLUMN_POST_USER_ID;
     public static final String COLUMN_USER_NAME = "name";
     public static final String COLUMN_USER_EMAIL = "email";
     public static final String COLUMN_USER_PASSWORD = "password";
@@ -32,7 +33,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String COLUMN_USER_BIO = "bio";
     public static final String COLUMN_USER_GENDER = "gender";
     public static final String COLUMN_USER_BIRTHDAY = "birthday";
-    public static final String COLUMN_USER_CREATED_DATE = "created_date";
+    public static final String COLUMN_POST_REACTION_CREATED_DATE = "created_date";
+    public static final String COLUMN_USER_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
     public static final String COLUMN_USER_USER_ROLE = "user_role";
     public static final String COLUMN_USER_IS_ONLINE = "is_online";
     private static final String CREATE_TABLE_USER = "CREATE TABLE " + TABLE_USER + "("
@@ -67,13 +69,15 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     // Inbox
     public static final String TABLE_INBOX = "inbox";
     public static final String COLUMN_INBOX_ID = "inbox_id";
-    public static final String COLUMN_INBOX_TYPE = "type";
-    public static final String COLUMN_INBOX_CONTENT = "content";
+    public static final String COLUMN_POST_REACTION_TYPE = "type";
+    public static final String COLUMN_INBOX_TYPE = COLUMN_POST_REACTION_TYPE;
+    public static final String COLUMN_POST_CONTENT = "content";
+    public static final String COLUMN_INBOX_CONTENT = COLUMN_POST_CONTENT;
     public static final String COLUMN_INBOX_IS_READ = "is_read";
     public static final String COLUMN_INBOX_IS_ACTIVE = "is_active";
     public static final String COLUMN_INBOX_USER_1 = COLUMN_SEARCH_USER_1;
     public static final String COLUMN_INBOX_USER_2 = COLUMN_SEARCH_USER_2;
-    public static final String COLUMN_INBOX_CREATED_DATE = "created_date";
+    public static final String COLUMN_INBOX_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
 
     private static final String CREATE_TABLE_INBOX = "CREATE TABLE " + TABLE_INBOX
             + " (" + COLUMN_INBOX_ID + " TEXT PRIMARY KEY , "
@@ -94,7 +98,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String COLUMN_FRIENDSHIP_STATUS = "status";
     public static final String COLUMN_FRIENDSHIP_USER_1 = COLUMN_SEARCH_USER_1;
     public static final String COLUMN_FRIENDSHIP_USER_2 = COLUMN_SEARCH_USER_2;
-    public static final String COLUMN_FRIENDSHIP_CREATED_DATE = "created_date";
+    public static final String COLUMN_FRIENDSHIP_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
     private static final String CREATE_TABLE_FRIENDSHIP = "CREATE TABLE " + TABLE_FRIENDSHIP
             + " ( " + COLUMN_FRIENDSHIP_ID + " TEXT  PRIMARY KEY, "
             + COLUMN_FRIENDSHIP_CREATED_DATE + " TEXT, "
@@ -104,9 +108,52 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "), "
             + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "));";
 
-    // Create Database
+    // Post
+    public static final String TABLE_POST = "post";
+    public static final String COLUMN_POST_ID = TABLE_POST + "_id";
+    public static final String COLUMN_POST_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
+    public static final String COLUMN_POST_PRIVACY = "post_privacy";
 
-    private UserDataSource userDataSource;
+    private static final String CREATE_TABLE_POST = "CREATE TABLE " + TABLE_POST
+            + " ( " + COLUMN_POST_ID + " TEXT PRIMARY KEY, "
+            + COLUMN_POST_CONTENT + " TEXT, "
+            + COLUMN_POST_USER_ID + " TEXT NOT NULL,"
+            + COLUMN_POST_CREATED_DATE + " TEXT NOT NULL, "
+            + COLUMN_POST_PRIVACY + " TEXT NOT NULL, "
+            + " FOREIGN KEY ( " + COLUMN_POST_USER_ID + " ) REFERENCES " + TABLE_USER  + "( "+ COLUMN_USER_ID  +" )" +" )";
+
+    // Post Images
+    public static final String TABLE_POST_IMAGES = "post_images";
+    public static final String COLUMN_POST_IMAGES_ID = "post_images_id";
+    public static final String COLUMN_POST_IMAGES_IMAGE_URL = "image_url";
+    public static final String COLUMN_POST_IMAGES_POST_ID = "post_id";
+    public static final String COLUMN_POST_IMAGES_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
+
+    private static final String CREATE_TABLE_POST_IMAGES = " CREATE TABLE " + TABLE_POST_IMAGES + " (" +
+            " " + COLUMN_POST_IMAGES_ID + " TEXT PRIMARY KEY, " +
+            " " + COLUMN_POST_IMAGES_IMAGE_URL + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_IMAGES_POST_ID + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_IMAGES_CREATED_DATE +  " TEXT NOT NULL,  " +
+            " FOREIGN KEY ( " + COLUMN_POST_IMAGES_POST_ID + " ) REFERENCES " + TABLE_POST + "( " +  COLUMN_POST_ID + " )" + "  )";
+
+
+
+    // Post Reaction
+    public static final String TABLE_POST_REACTION = "post_reaction";
+    public static final String COLUMN_POST_REACTION_ID = TABLE_POST_REACTION + "_id";
+    public static final String COLUMN_POST_REACTION_USER_ID = TABLE_POST_REACTION + "_user_id";
+    public static final String COLUMN_POST_REACTION_POST_ID = TABLE_POST_REACTION + "_post_id";
+    private static final String CREATE_TABLE_POST_REACTION = " CREATE TABLE " + TABLE_POST_REACTION + " (" +
+            " " + COLUMN_POST_REACTION_ID + " TEXT PRIMARY KEY, " +
+            " " + COLUMN_POST_REACTION_TYPE + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_REACTION_CREATED_DATE + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_REACTION_USER_ID + " TEXT NOT NULL, " +
+            COLUMN_POST_REACTION_POST_ID + " TEXT NOT NULL, " +
+            " FOREIGN KEY ( " + COLUMN_POST_REACTION_USER_ID + " ) REFERENCES " + TABLE_USER + "( " +  COLUMN_USER_ID + " )" + "" +
+            " FOREIGN KEY ( " + COLUMN_POST_REACTION_POST_ID + " ) REFERENCES + " + TABLE_POST + "( " + COLUMN_POST_ID  + " )"  + " ) ";
+
+
+    // Create Database
     private Context context;
     public MySQLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -116,10 +163,17 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     // Create multiple tables
     @Override
     public void onCreate(SQLiteDatabase database) {
+//        database.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
+//        database.execSQL("DROP TABLE IF EXISTS " + TABLE_FRIENDSHIP);
+//        database.execSQL("DROP TABLE IF EXISTS " + TABLE_INBOX);
+//        database.execSQL("DROP TABLE IF EXISTS " + TABLE_SEARCH_HISTORY);
         database.execSQL(CREATE_TABLE_USER);
         database.execSQL(CREATE_TABLE_FRIENDSHIP);
         database.execSQL(CREATE_TABLE_INBOX);
         database.execSQL(CREATE_TABLE_SEARCH_HISTORY);
+        database.execSQL(CREATE_TABLE_POST);
+        database.execSQL(CREATE_TABLE_POST_IMAGES);
+        database.execSQL(CREATE_TABLE_POST_REACTION);
 
     }
     // Upgrade version database
@@ -129,8 +183,6 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
                 "Upgrading database from version " + oldVersion + " to "
                         + newVersion + ", which will destroy all old data");
         // Drop all tables
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_FRIENDSHIP);
         // Recreate all tables
         onCreate(db);
     }

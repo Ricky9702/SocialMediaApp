@@ -4,11 +4,11 @@ import com.example.h2ak.R;
 import com.example.h2ak.contract.BaseMenuActivityContract;
 import com.example.h2ak.databinding.ActivityBaseMenuBinding;
 import com.example.h2ak.presenter.BaseMenuActivityPresenter;
-import com.example.h2ak.view.fragments.CreateFragment;
 import com.example.h2ak.view.fragments.DiscoverFragment;
 import com.example.h2ak.view.fragments.HomeFragment;
 import com.example.h2ak.view.fragments.FriendFragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
@@ -78,7 +78,7 @@ public class BaseMenuActivity extends AppCompatActivity implements BaseMenuActiv
         });
 
         linearLayoutCreate.setOnClickListener(view -> {
-            replaceFragment(new CreateFragment());
+            startActivity(new Intent(this, CreatePostActivity.class));
         });
 
         linearLayoutFriend.setOnClickListener(view -> {

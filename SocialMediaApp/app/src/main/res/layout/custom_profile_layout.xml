@@ -24,7 +24,7 @@
             android:layout_marginLeft="10dp"
             android:layout_marginTop="100dp"
             android:adjustViewBounds="true"
-            android:src="@drawable/baseline_person_24"
+            android:src="@drawable/baseline_avatar_place_holder"
             app:civ_border_color="@color/white"
             app:civ_border_width="5dp" />
     </FrameLayout>

@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FriendShipDataSourceImpl implements FriendShipDataSource {
     private SQLiteDatabase db;
@@ -220,25 +222,39 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
     }
 
     @Override
-    public Set<FriendShip> getMutualFriends(User user1, User user2) {
-        Set<FriendShip> mutualFriends = new HashSet<>();
+    public Set<User> getMutualFriends(User user1, User user2) {
 
-        // Get all friends from user 1, user2
+        Set<User> mutualFriends = new HashSet<>();
+
         Set<FriendShip> user1Friends = getAllFriendShipByUser(user1);
         Set<FriendShip> user2Friends = getAllFriendShipByUser(user2);
 
-        for (FriendShip friend1 : user1Friends) {
-            for (FriendShip friend2 : user2Friends) {
-                // Check if the friendships have the same user in both user1 and user2 positions
-                if (friend1.equals(friend2)) {
-                    mutualFriends.add(friend1);
-                }
-            }
-        }
+        // Get all friends from user1 (include user1)
+        Set<User> user1FriendSet = user1Friends.stream()
+                .flatMap(friendShip -> Stream.of(friendShip.getUser1(), friendShip.getUser2()))
+                .collect(Collectors.toSet());
+
+//        user1FriendSet.forEach(user -> Log.d("user1FriendSet: ", user.getEmail()));
+
+        // Get all friends from user 2 (include user2)
+        Set<User> user2FriendSet = user2Friends.stream()
+                .flatMap(friendShip -> Stream.of(friendShip.getUser1(), friendShip.getUser2()))
+                .collect(Collectors.toSet());
+
+//        user2FriendSet.forEach(user -> Log.d("user2FriendSet: ", user.getEmail()));
+
+        // add friends from user1
+        mutualFriends.addAll(user1FriendSet);
+
+//        mutualFriends.forEach(user -> Log.d("mutualFriends: ", user.getEmail()));
+
+        // delete if not any match friends from user1
+        mutualFriends.retainAll(user2FriendSet);
+
+//        mutualFriends.forEach(user -> Log.d("mutualFriends Del: ", user.getEmail()));
+
         return mutualFriends;
     }
-
-
     @Override
     public void close() {
         databaseManager.closeDatabase();

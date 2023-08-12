@@ -3,73 +3,115 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".view.activities.ProfileActivity">
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    tools:context=".view.activities.ProfileActivity"
+    android:background="@color/not_active_icon">
 
-       <include layout="@layout/app_bar_layout"/>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <include layout="@layout/app_bar_layout" />
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/appBar">
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/appBar"
+            android:scrollbars="none">
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <RelativeLayout
+                    android:id="@+id/relativeLayoutProfileParent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?android:colorBackground">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+
+                        <!--            Profile section-->
+                        <LinearLayout
+                            android:id="@+id/linearLayoutProfile"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <!-- Profile section-->
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/recyclerViewProfile"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:orientation="horizontal">
+
+                                <Button
+                                    android:id="@+id/btnEditProfile"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginRight="10dp"
+                                    android:background="@drawable/rounded_button"
+                                    android:backgroundTint="@color/default_background_color_button"
+                                    android:drawableLeft="@drawable/baseline_edit_24"
+                                    android:text="Edit profile"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/white" />
+
+                                <Button
+                                    android:id="@+id/btnlogout"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/rounded_button"
+                                    android:drawableLeft="@drawable/baseline_logout_24"
+                                    android:gravity="center"
+                                    android:text="Log out" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_below="@+id/linearLayoutProfile"
+                            android:background="@color/not_active_icon" />
+                    </RelativeLayout>
+                </RelativeLayout>
+
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/white">
+                    android:layout_below="@+id/relativeLayoutProfileParent"
+                    android:layout_marginTop="10dp"
+                    android:background="?android:colorBackground">
 
+                    <TextView
+                        android:id="@+id/textViewPost"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Posts"
+                        android:textColor="@color/black"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:textSize="24dp" />
 
-                    <!--            Profile section-->
-                    <LinearLayout
-                        android:id="@+id/linearLayoutProfile"
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewPostImage"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <!-- Profile section-->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/recyclerViewProfile"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"/>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_margin = "10dp" >
-
-                            <Button
-                                android:id="@+id/btnEditProfile"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Edit profile"
-                                android:textColor="@color/white"
-                                android:textAlignment="center"
-                                android:backgroundTint="@color/default_background_color_button"
-                                android:background="@drawable/rounded_button"
-                                android:drawableLeft="@drawable/baseline_edit_24"
-                                />
-                        </LinearLayout>
-
-                    </LinearLayout>
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/not_active_icon"
-                        android:layout_below="@+id/linearLayoutProfile"/>
+                        android:layout_below="@+id/textViewPost"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginLeft="2dp"/>
                 </RelativeLayout>
-                <Button
-                    android:id="@+id/btnlogout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/baseline_logout_24"
-                    android:layout_marginTop="500dp"
-                    android:text="Log out"/>
+
+
             </RelativeLayout>
         </ScrollView>
     </RelativeLayout>

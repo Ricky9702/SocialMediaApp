@@ -3,16 +3,16 @@ package com.example.h2ak.model;
 import androidx.annotation.Nullable;
 
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SearchHistory {
     private String id;
     private User currentUser;
     private User searchingUser;
-    private static AtomicInteger count = new AtomicInteger(0);
 
     {
-        id = String.format("SearchHistory%d", count.incrementAndGet());
+        id = UUID.randomUUID().toString();
     }
     public SearchHistory() {}
 

@@ -10,17 +10,26 @@ import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseFriendShipDataSource
 import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.contract.UserProfileAcitivtyContract;
 import com.example.h2ak.model.FriendShip;
 import com.example.h2ak.model.Inbox;
+import com.example.h2ak.model.Post;
 import com.example.h2ak.model.User;
+import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.firebase.auth.FirebaseAuth;
 
+import org.w3c.dom.Text;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract.Presenter {
 
@@ -30,10 +39,12 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
     private FriendShipDataSource friendShipDataSource;
     private InboxDataSource inboxDataSource;
     private FirebaseAuth firebaseAuth;
+    private PostDataSource postDataSource;
 
     public UserProfileAcitivtyPresenter(UserProfileAcitivtyContract.View view, Context context) {
         this.view = view;
         this.context = context;
+        postDataSource = PostDataSourceImpl.getInstance(context);
         userDataSource = UserDataSourceImpl.getInstance(context);
         friendShipDataSource = FriendShipDataSourceImpl.getInstance(context);
         inboxDataSource = InboxDataSourceImpl.getInstance(context);
@@ -124,6 +135,20 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
             }
         }
         view.showProgressBar(false);
+    }
+
+    @Override
+    public void getAllPostByUserId(String id, String privacy1, String privacy2) {
+        List<Post> postList = new ArrayList<>();
+        postList.addAll(postDataSource.getAllPostByUserIdWithPrivacy(id, privacy1, privacy2));
+        Collections.sort(postList, (post1, post2) -> {
+            Date date1 = TextInputLayoutUtils.parseDateFromString(post1.getCreatedDate());
+            Date date2 = TextInputLayoutUtils.parseDateFromString(post2.getCreatedDate());
+
+            // Sorting in descending order (latest items first)
+            return date2.compareTo(date1);
+        });
+        view.onListPostRecieved(postList);
     }
 
     private void createNewInbox(User currentUser, User user2) {

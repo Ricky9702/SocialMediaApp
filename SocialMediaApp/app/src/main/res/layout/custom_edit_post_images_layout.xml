@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewImageSlider"
+        android:layout_width="match_parent"
+        android:layout_height="350dp"/>
+    <me.relex.circleindicator.CircleIndicator2
+        android:id="@+id/indicator"
+        android:layout_width="match_parent"
+        android:layout_below="@+id/recyclerViewImageSlider"
+        app:ci_drawable="@drawable/circle_background_select_image_active"
+        app:ci_drawable_unselected="@drawable/circle_background_dot_not_active"
+        android:gravity="center"
+        android:layout_height="30dp"/>
+
+    <TextView
+        android:id="@+id/textViewAddImage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="15dp"
+        android:layout_below="@+id/indicator"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:text="+"
+        android:textSize="32dp"
+        android:textColor="@color/white"
+        android:background="@drawable/circle_background_select_image_active"/>
+</RelativeLayout>

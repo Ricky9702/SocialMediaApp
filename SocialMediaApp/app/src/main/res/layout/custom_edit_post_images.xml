@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/relativeLayoutSlider"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/textViewDeleteImage"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_alignParentRight="true"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:text="X"
+        android:textSize="22dp"
+        android:textColor="@color/white"
+        android:background="@drawable/circle_background"
+        android:translationZ="1dp"/>
+
+    <ImageView
+        android:id="@+id/imageViewSlider"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@color/active_icon"
+        android:scaleType="centerCrop"
+        android:clickable="false"/>
+</RelativeLayout>

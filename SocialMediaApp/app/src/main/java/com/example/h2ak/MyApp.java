@@ -20,7 +20,6 @@ import com.example.h2ak.view.activities.LoginActivity;
 import com.example.h2ak.view.activities.ProfileActivity;
 import com.example.h2ak.view.activities.RegisterActivity;
 import com.example.h2ak.view.fragments.FriendFragment;
-import com.example.h2ak.view.fragments.HomeFragment;
 import com.example.h2ak.view.fragments.InboxFragment;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -55,7 +54,6 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
         if (activity instanceof BaseMenuActivity) {
             this.currentUserId = this.getCurrentUserId();
             userDataSource = UserDataSourceImpl.getInstance(this);
-            firebaseDataSync = FirebaseDataSync.getInstance(this);
             firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
             firebaseDataSync = FirebaseDataSync.getInstance(this);
 
@@ -159,10 +157,10 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
         if (activity instanceof ProfileActivity) {
-            if(((ProfileActivity) activity).getButtonLogout().isPressed()) {
-                getCurrentUser().setOnline(false);
-                firebaseUserDataSource.updateOnlineField(getCurrentUser());
-            }
+//            if(((ProfileActivity) activity).getButtonLogout().isPressed()) {
+//                getCurrentUser().setOnline(false);
+//                firebaseUserDataSource.updateOnlineField(getCurrentUser());
+//            }
         }
     }
 

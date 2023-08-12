@@ -101,7 +101,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
                     .placeholder(R.drawable.baseline_avatar_place_holder)// Disable memory caching to reload the image
                     .into(holder.imageViewProfileAvatar);
         } else {
-            holder.imageViewProfileAvatar.setImageResource(R.drawable.baseline_person_24);
+            holder.imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
         }
 
         // Load the cover image

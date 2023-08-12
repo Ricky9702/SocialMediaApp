@@ -4,6 +4,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -11,17 +12,18 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.ProfileAdapter;
+import com.example.h2ak.adapter.ProfilePostDisplayAdapter;
 import com.example.h2ak.contract.ProfileActivityContract;
+import com.example.h2ak.model.Post;
 import com.example.h2ak.model.User;
 import com.example.h2ak.presenter.ProfileActivityPresenter;
 import com.google.firebase.auth.FirebaseAuth;
-import com.mikhaellopez.circularimageview.CircularImageView;
+
+import java.util.List;
 
 public class ProfileActivity extends AppCompatActivity implements ProfileActivityContract.View {
     Toolbar toolBar;
@@ -29,8 +31,9 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
     private Button buttonLogout;
     Button btnEditProfile;
     FirebaseAuth firebaseAuth;
-    RecyclerView recyclerViewProfile;
+    RecyclerView recyclerViewProfile, recyclerViewPostImage;
     ProfileAdapter profileAdapter;
+    ProfilePostDisplayAdapter profileDisplayPostAdapter;
     private ProfileActivityContract.Presenter presenter;
     private ActivityResultLauncher<Intent> editProfileLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -62,8 +65,26 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
         setContentView(R.layout.activity_profile);
         init();
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         presenter = new ProfileActivityPresenter(this, this);
         presenter.getUser();
+
+        profileDisplayPostAdapter.setPostActivityLauncher(registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        boolean isChange = result.getData() != null && result.getData().getBooleanExtra("UPDATED", false);
+                        if (isChange) {
+                            presenter.getAllPost();
+                        }
+                    }
+                }));
+
+
+        presenter.getAllPost();
     }
 
     private void init() {
@@ -71,11 +92,19 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
         //Get views
         btnEditProfile = findViewById(R.id.btnEditProfile);
         buttonLogout = findViewById(R.id.btnlogout);
+        firebaseAuth = FirebaseAuth.getInstance();
+
         recyclerViewProfile = findViewById(R.id.recyclerViewProfile);
         recyclerViewProfile.setLayoutManager(new LinearLayoutManager(this));
-        firebaseAuth = FirebaseAuth.getInstance();
         profileAdapter = new ProfileAdapter(this);
         recyclerViewProfile.setAdapter(profileAdapter);
+
+        recyclerViewPostImage = findViewById(R.id.recyclerViewPostImage);
+
+        profileDisplayPostAdapter = new ProfilePostDisplayAdapter(this);
+
+        recyclerViewPostImage.setAdapter(profileDisplayPostAdapter);
+        recyclerViewPostImage.setLayoutManager(new GridLayoutManager(this, 3));
 
 
         //Edit toolBar
@@ -107,7 +136,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
     @Override
     protected void onResume() {
         super.onResume();
-        profileAdapter.onReload();
     }
 
     @Override
@@ -121,6 +149,13 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
     public void loadUserInformation(User user) {
         if (user != null) {
             profileAdapter.setCurrentUser(user);
+        }
+    }
+
+    @Override
+    public void onPostListRecieved(List<Post> postList) {
+        if (postList != null && !postList.isEmpty()) {
+            profileDisplayPostAdapter.setPostList(postList);
         }
     }
 

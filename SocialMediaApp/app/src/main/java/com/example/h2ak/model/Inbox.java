@@ -2,6 +2,7 @@ package com.example.h2ak.model;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Inbox {
@@ -18,11 +19,9 @@ public class Inbox {
     private String type;
     private User userRecieveRequest;
 
-    private static AtomicInteger count = new AtomicInteger(0);
-
     {
         this.createdDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        this.id = String.format("Inbox%d", count.incrementAndGet());
+        id = UUID.randomUUID().toString();
         this.active = true;
         this.read = false;
     }

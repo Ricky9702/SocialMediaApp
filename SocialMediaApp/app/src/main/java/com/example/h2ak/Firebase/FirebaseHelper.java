@@ -47,6 +47,10 @@ public class FirebaseHelper {
         return imageStorageReference.child("cover");
     }
 
+    public static StorageReference getImagePostStorageRef() {
+        return imageStorageReference.child("post");
+    }
+
     public static void uploadImageToFirebaseCloud(Context context, Uri imageUri, StorageReference storageReference, OnImageUploadListener listener) {
         if (imageUri != null && storageReference != null) {
             Log.d("TEST IMAGE URI PART2", imageUri.toString());

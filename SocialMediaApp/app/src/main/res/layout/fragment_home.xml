@@ -16,7 +16,7 @@
             android:layout_height="55dp"
             android:layout_alignParentRight="true"
             android:layout_marginTop="5dp"
-            android:src="@drawable/baseline_person_24"
+            android:src="@drawable/baseline_avatar_place_holder"
             android:adjustViewBounds="true" />
         <ScrollView
             android:layout_width="match_parent"

@@ -3,25 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".view.activities.UserProfileActivity">
+    android:layout_height="wrap_content"
+    tools:context=".view.activities.UserProfileActivity"
+    android:background="@color/not_active_icon">
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <include layout="@layout/app_bar_layout"/>
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_below="@id/appBar">
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <RelativeLayout
+                    android:id="@+id/relativeLayoutProfileParent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/white">
+                    android:background="?android:colorBackground">
 
 
                     <!--            Profile section-->
@@ -61,6 +63,31 @@
                         android:layout_height="1dp"
                         android:background="@color/not_active_icon"
                         android:layout_below="@+id/linearLayoutProfile"/>
+                </RelativeLayout>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/relativeLayoutProfileParent"
+                    android:layout_marginTop="10dp"
+                    android:background="?android:colorBackground">
+
+                    <TextView
+                        android:id="@+id/textViewPost"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Posts"
+                        android:textColor="@color/black"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:textSize="24dp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewPostImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textViewPost"
+                        android:layout_marginTop="15dp"
+                        android:layout_marginLeft="2dp"/>
                 </RelativeLayout>
             </RelativeLayout>
         </ScrollView>

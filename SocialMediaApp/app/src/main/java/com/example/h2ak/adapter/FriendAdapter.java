@@ -22,11 +22,14 @@ import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.ViewHolder> {
 
     private Context context;
     private List<User> userList = new ArrayList<>();
+    private List<User> originalUserList = new ArrayList<>();
 
     public FriendAdapter(Context context) {
         this.context = context;
@@ -93,6 +96,31 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.ViewHolder
         this.userList = userList;
         this.notifyDataSetChanged();
     }
+
+    public void setFilterForList(Map<String, String> params) {
+        if (params != null) {
+            String kw = params.get("kw");
+            if (kw != null && !kw.isEmpty()) {
+                List<User> filterList = this.userList.stream().filter(user -> user.getName().toLowerCase().contains(kw.toLowerCase().trim())).collect(Collectors.toList());
+                this.setUserList(filterList);
+            } else {
+                this.setUserList(originalUserList);
+                this.notifyDataSetChanged();
+            }
+        } else {
+            this.setUserList(originalUserList);
+            this.notifyDataSetChanged();
+        }
+    }
+
+    public List<User> getOriginalUserList() {
+        return originalUserList;
+    }
+
+    public void setOriginalUserList(List<User> originalUserList) {
+        this.originalUserList = originalUserList;
+    }
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         LinearLayout linearLayoutParent;

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/relativeLayoutParent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <ImageView
+        android:id="@+id/imageViewPostFirstImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@color/not_active_icon"
+        android:scaleType="centerCrop"
+        android:clickable="false"/>
+    <ImageView
+        android:id="@+id/imageViewGalleryPost"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_alignParentRight="true"
+        android:layout_margin="10dp"
+        android:src="@drawable/gallery_collections_svgrepo_com"
+        android:clickable="false"/>
+</RelativeLayout>

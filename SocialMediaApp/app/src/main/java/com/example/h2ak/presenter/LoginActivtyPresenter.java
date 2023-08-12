@@ -45,7 +45,7 @@ public class LoginActivtyPresenter implements LoginActivityContract.Presenter{
             if (task.isSuccessful()) {
                 FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
                 Log.d("USER NOT FOUND??2", firebaseUser.getUid());
-                User user = userDataSource.getUserById(firebaseUser.getUid());
+                User user = userDataSource.getUserById(MyApp.getInstance().getCurrentUserId());
                 listener.onEmailVerified(firebaseUser.isEmailVerified());
                 if (firebaseUser != null) {
                     if (firebaseUser.isEmailVerified()) {

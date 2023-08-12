@@ -7,6 +7,7 @@ import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxDataSourceImpl;
 import com.example.h2ak.contract.InboxFragmentContract;
 import com.example.h2ak.model.Inbox;
+import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.ParseException;
@@ -47,9 +48,8 @@ public class InboxFragmentPresenter implements InboxFragmentContract.Presenter {
     }
 
     private Date parseDateFromString(String dateString) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
-            return dateFormat.parse(dateString);
+            return TextInputLayoutUtils.simpleDateFormat.parse(dateString);
         } catch (ParseException e) {
             e.printStackTrace();
             return new Date(); // Return a default date in case of parsing error

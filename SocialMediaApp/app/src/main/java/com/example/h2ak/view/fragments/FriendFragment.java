@@ -7,9 +7,12 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.h2ak.R;
@@ -18,10 +21,13 @@ import com.example.h2ak.contract.FriendFragmentContract;
 import com.example.h2ak.model.User;
 import com.example.h2ak.presenter.FriendFragmentPresenter;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FriendFragment extends Fragment implements FriendFragmentContract.View{
     Toolbar toolbar;
+    EditText editTextSearch;
     private FriendAdapter friendAdapter;
     RecyclerView recyclerView;
     TextView textViewFriendCount;
@@ -43,6 +49,7 @@ public class FriendFragment extends Fragment implements FriendFragmentContract.V
         toolbar.setTitle("Friends");
 
         textViewFriendCount = view.findViewById(R.id.textViewFriendCount);
+        editTextSearch = view.findViewById(R.id.editTextSearch);
 
         recyclerView = view.findViewById(R.id.recyclerViewFriendList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
@@ -52,6 +59,30 @@ public class FriendFragment extends Fragment implements FriendFragmentContract.V
         setPresenter(new FriendFragmentPresenter(this, this.getContext()));
         getPresenter().getFriendList();
 
+        Map<String, String> params = new HashMap<>();
+        editTextSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                String kw = editTextSearch.getText().toString().trim();
+                if (kw != null && !kw.isEmpty()) {
+                    params.put("kw", kw);
+                } else {
+                    params.remove("kw");
+                }
+                friendAdapter.setFilterForList(params);
+            }
+        });
+
         return view;
     }
 
@@ -60,6 +91,7 @@ public class FriendFragment extends Fragment implements FriendFragmentContract.V
         if (userList != null) {
             textViewFriendCount.setText(String.format("Friend list (%d)", userList.size()));
             getFriendAdapter().setUserList(userList);
+            getFriendAdapter().setOriginalUserList(userList);
         }
     }
 

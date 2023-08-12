@@ -44,6 +44,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
 
         // Events
         imageViewProfileAvatar.setOnClickListener(v -> {
+            this.getActivity().overridePendingTransition(0, 0);
             startActivity(new Intent(this.getContext(), ProfileActivity.class));
         });
 

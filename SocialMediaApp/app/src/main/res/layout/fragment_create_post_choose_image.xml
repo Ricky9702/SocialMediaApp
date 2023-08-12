@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.fragments.CreatePostChooseImageFragment">
+
+    <RelativeLayout
+        android:id="@+id/relativeLayoutParent"
+        android:layout_width="match_parent"
+        android:layout_height="300dp">
+
+<!--        <androidx.viewpager.widget.ViewPager-->
+<!--            android:id="@+id/viewPagerImageSlider"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"/>-->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewImageSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/textViewImageSliderPlaceHolder"
+            android:layout_width="wrap_content"
+            android:layout_height="300dp"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="Pick your image."
+            android:textSize="35dp" />
+    </RelativeLayout>
+
+    <me.relex.circleindicator.CircleIndicator2
+        android:id="@+id/indicator"
+        android:layout_width="match_parent"
+        android:layout_below="@+id/relativeLayoutParent"
+        app:ci_drawable="@drawable/circle_background_select_image_active"
+        app:ci_drawable_unselected="@drawable/circle_background_dot_not_active"
+        android:gravity="center"
+        android:layout_height="30dp"/>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayoutAction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/indicator"
+        android:paddingLeft="5dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableRight="@drawable/baseline_keyboard_arrow_down_24"
+            android:padding="10dp"
+            android:text="Recents"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="20dp" />
+
+        <ImageButton
+            android:id="@+id/btnMultipleImages"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="50dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/multiple_images_not_active_com" />
+
+        <ImageButton
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/camera_icon" />
+    </RelativeLayout>
+
+    <GridView
+        android:id="@+id/gridViewRecentImages"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/relativeLayoutAction"
+        android:alwaysDrawnWithCache="true"
+        android:clipChildren="true"
+        android:gravity="center_horizontal"
+        android:horizontalSpacing="1dp"
+        android:numColumns="4"
+        android:scrollingCache="true"
+        android:verticalSpacing="1dp" />
+
+</RelativeLayout>

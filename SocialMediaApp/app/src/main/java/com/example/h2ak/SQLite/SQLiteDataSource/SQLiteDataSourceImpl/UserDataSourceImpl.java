@@ -28,7 +28,6 @@ public class UserDataSourceImpl implements UserDataSource {
     private FirebaseUserDataSource firebaseUserDataSource;
     private static UserDataSourceImpl instance;
     private String currentUserId;
-    private static int instanceCount = 0;
 
     private static AtomicInteger count = new AtomicInteger(0);
 
@@ -37,15 +36,13 @@ public class UserDataSourceImpl implements UserDataSource {
         databaseManager = DatabaseManager.getInstance(context);
         db = databaseManager.getDatabase();
         this.setCurrentUserId(currentUserId);
-        Log.d("count x1", count.incrementAndGet()+"");
     }
 
     public static synchronized UserDataSourceImpl getInstance(Context context) {
         if (instance == null) {
-            Log.d("count X2", count.incrementAndGet()+"");
+            Log.d("count X2", count.incrementAndGet() + "");
             instance = new UserDataSourceImpl(context.getApplicationContext(), MyApp.getInstance().getCurrentUserId());
         }
-        instanceCount++;
         return instance;
     }
 
@@ -88,7 +85,7 @@ public class UserDataSourceImpl implements UserDataSource {
     @Override
     public User getUserById(String id) {
         User user = null;
-        try(Cursor cursor = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_USER
+        try (Cursor cursor = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_USER
                         + " WHERE " + MySQLiteHelper.COLUMN_USER_ID + " = ?",
                 new String[]{id})) {
             //if user is exists
@@ -164,7 +161,7 @@ public class UserDataSourceImpl implements UserDataSource {
 
     @Override
     public boolean updateCurrentUser(User user) {
-        Log.d("FirebaseUpdateUser: user", user.getEmail()+"");
+        Log.d("FirebaseUpdateUser: user", user.getEmail() + "");
         db.beginTransaction();
         try {
             User currentUser = this.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid());
@@ -204,12 +201,12 @@ public class UserDataSourceImpl implements UserDataSource {
                         firebaseUser.setGender(user.getGender());
                     }
 
-                if ( user.getPassword() != null && currentUser.getPassword() != null && !user.getPassword().equals(currentUser.getPassword()) && !PasswordHashing.verifyPassword(user.getPassword(), currentUser.getPassword())) {
-                    String password = PasswordHashing.hashPassword(user.getPassword());
-                    Log.d("password", password);
-                    contentValues.put(MySQLiteHelper.COLUMN_USER_PASSWORD, password);
-                    firebaseUser.setPassword(password);
-                }
+                    if (user.getPassword() != null && currentUser.getPassword() != null && !user.getPassword().equals(currentUser.getPassword()) && !PasswordHashing.verifyPassword(user.getPassword(), currentUser.getPassword())) {
+                        String password = PasswordHashing.hashPassword(user.getPassword());
+                        Log.d("password", password);
+                        contentValues.put(MySQLiteHelper.COLUMN_USER_PASSWORD, password);
+                        firebaseUser.setPassword(password);
+                    }
 
                     if (user.getRole() != null && !currentUser.getRole().equals(user.getRole())) {
                         contentValues.put(MySQLiteHelper.COLUMN_USER_USER_ROLE, user.getRole());
@@ -222,7 +219,7 @@ public class UserDataSourceImpl implements UserDataSource {
                     Log.d("Sqlite transaction", "Update current user");
 
                     firebaseUserDataSource.updateUser(firebaseUser);
-                     return db.update(MySQLiteHelper.TABLE_USER, contentValues, MySQLiteHelper.COLUMN_USER_ID + "= ?",
+                    return db.update(MySQLiteHelper.TABLE_USER, contentValues, MySQLiteHelper.COLUMN_USER_ID + "= ?",
                             new String[]{String.valueOf(user.getId())}) > 0;
                 }
             }

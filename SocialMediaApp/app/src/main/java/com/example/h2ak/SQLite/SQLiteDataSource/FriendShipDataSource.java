@@ -12,6 +12,6 @@ public interface FriendShipDataSource {
     FriendShip findFriendShipFirebase(FriendShip friendShip);
     boolean updateFriendShip(FriendShip friendShip);
     Set<FriendShip> getAllFriendShipByUser(User user);
-    Set<FriendShip> getMutualFriends(User user1, User user2);
+    Set<User> getMutualFriends(User user1, User user2);
     void close();
 }

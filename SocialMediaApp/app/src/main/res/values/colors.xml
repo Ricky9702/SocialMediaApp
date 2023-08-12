@@ -9,4 +9,5 @@
     <color name="not_active_icon">#b3b3b3</color>
     <color name="default_background_color_button">#eeeeee</color>
     <color name="default_text_color">#1e1e1e</color>
+    <color name="facebook_not_active_color">#6f6f6f</color>
 </resources>
