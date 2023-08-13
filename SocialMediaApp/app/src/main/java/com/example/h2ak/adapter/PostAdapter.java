@@ -1,14 +1,24 @@
 package com.example.h2ak.adapter;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Spinner;
@@ -16,10 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,20 +34,29 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.h2ak.Firebase.FirebaseHelper;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostImagesDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostReactionDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostImagesDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostReactionDataSourceImpl;
 import com.example.h2ak.model.Post;
+import com.example.h2ak.model.PostComment;
 import com.example.h2ak.model.PostImages;
+import com.example.h2ak.model.PostReaction;
 import com.example.h2ak.utils.GalleryUtils;
 import com.example.h2ak.utils.PermissionUtils;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.textfield.TextInputEditText;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import me.relex.circleindicator.CircleIndicator2;
 
@@ -48,22 +64,26 @@ public class PostAdapter extends PostPreviewAdapter {
     private Context context;
     private List<PostImages> insertPostImagesList = new ArrayList<>();
     private List<Post> postList = new ArrayList<>();
-    private PostImagesDataSource postImagesDataSource;
-    private PostDataSource postDataSource;
     private GalleryUtils galleryUtils;
     private ActivityResultLauncher<Intent> galleryActivityResultLauncher;
     private ImageSliderEditAdapter adapter;
     private Post currentPost;
     private OnChangePostListener listener;
     private Boolean isEnableAction = true;
+    private PostImagesDataSource postImagesDataSource;
+    private PostDataSource postDataSource;
+    private PostReactionDataSource postReactionDataSource;
+    private PostCommentDataSource postCommentDataSource;
 
     public PostAdapter(Context context, OnChangePostListener listener) {
         super(context);
         this.context = context;
-        postImagesDataSource = PostImagesDataSourceImpl.getInstance(context);
-        postDataSource = PostDataSourceImpl.getInstance(context);
         galleryUtils = new GalleryUtils();
         this.listener = listener;
+        postCommentDataSource = PostCommentDataSourceImpl.getInstance(context);
+        postReactionDataSource = PostReactionDataSourceImpl.getInstance(context);
+        postImagesDataSource = PostImagesDataSourceImpl.getInstance(context);
+        postDataSource = PostDataSourceImpl.getInstance(context);
     }
 
     @NonNull
@@ -108,6 +128,84 @@ public class PostAdapter extends PostPreviewAdapter {
             holder.btnPostAction.setEnabled(true);
         }
 
+        // Add comment system
+
+        Set<PostComment> postCommentSet = postCommentDataSource.getAllCommentByPost(post);
+        Log.d("TAG", "postCommentSet: " + postCommentSet.size());
+
+        // check if then current has not click the like button yet
+        Set<PostReaction> postReactionSet = postReactionDataSource.getAllReactionByPost(post);
+
+        Log.d("TAG", "postReactionSet: "+ postReactionSet.size());
+
+
+        // Check if the post has any comments
+        if (postCommentSet.isEmpty()) {
+            holder.textViewPostStatsComment.setVisibility(View.GONE);
+        } else {
+            holder.textViewPostStatsComment.setText(String.format("%d Comments", postCommentSet.size()));
+            holder.textViewPostStatsComment.setVisibility(View.VISIBLE);
+        }
+
+
+        holder.textViewPostStatsComment.setOnClickListener(view1 -> buildTabDialog(postReactionSet, postCommentSet, post,  1));
+
+        holder.btnCommentPost.setOnClickListener(view -> buildTabDialog(postReactionSet, postCommentSet, post,  1));
+
+        // Add like system
+
+        Drawable likeDrawableActive = context.getDrawable(R.drawable.baseline_thumb_up_off_alt__active_24);
+        Drawable likeDrawableNotActive = context.getDrawable(R.drawable.baseline_thumb_up_off_alt_24);
+
+        PostReaction found = postReactionDataSource.find(post, MyApp.getInstance().getCurrentUserId());
+
+        // there is not like yet
+        if (postReactionSet.isEmpty()) {
+            holder.btnLikePost.setImageDrawable(likeDrawableNotActive);
+            holder.textViewPostStatsLike.setVisibility(View.GONE);
+        } else {
+            // check if then current user is like yet?
+            if (found != null ) {
+                holder.btnLikePost.setImageDrawable(likeDrawableActive);
+            }
+
+            holder.textViewPostStatsLike.setVisibility(View.VISIBLE);
+            holder.textViewPostStatsLike.setText(String.format("%d Likes", postReactionSet.size()));
+
+
+            // inflate the users profile like
+            holder.textViewPostStatsLike.setOnClickListener(view -> buildTabDialog(postReactionSet, postCommentSet, post,  0));
+
+        }
+
+        holder.btnLikePost.setOnClickListener(view -> {
+
+            // the current user does not click yet then create a new reaction
+            if (found == null) {
+                PostReaction postReaction = new PostReaction(PostReaction.PostReactionType.LIKE, MyApp.getInstance().getCurrentUser(), post);
+                if (postReactionDataSource.create(postReaction)) {
+                    postReactionSet.add(postReaction);
+                    notifyItemInserted(holder.getAdapterPosition());
+                    Log.d("PostAdapter", "createPostReaction: success ");
+                } else {
+                    Log.d("PostAdapter", "createPostReaction: failed ");
+                }
+            } else {
+                // delete the like
+                if (postReactionDataSource.delete(found)) {
+                    postReactionSet.remove(found);
+                    notifyItemRemoved(holder.getAdapterPosition());
+                    Log.d("PostAdapter", "deletePostReaction: success ");
+                } else {
+                    Log.d("PostAdapter", "deletePostReaction: failed ");
+                }
+            }
+            this.notifyItemChanged(holder.getAdapterPosition());
+        });
+
+
+
+        // Add edit, delete post for current user
         holder.btnPostAction.setOnClickListener(view -> {
 
             this.setCurrentPost(post);
@@ -135,7 +233,7 @@ public class PostAdapter extends PostPreviewAdapter {
                                     params.setMargins(25, 0, 25, 0);
 
                                     EditText content = new EditText(context);
-                                    content.setHint("Enter your new content.");
+                                    content.setHint("Write your new content.");
                                     content.setText(post.getContent());
 
                                     linearLayout.addView(content, params);
@@ -351,16 +449,18 @@ public class PostAdapter extends PostPreviewAdapter {
                     // delete post
                     builder.setTitle("Delete post")
                             .setMessage("Are you sure want to delete this post?")
-                            .setNegativeButton("Cancel", (dialogInterface, i) -> {
-                                dialogInterface.dismiss();
-                            })
+                            .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
                             .setPositiveButton("Confirm", (dialogInterface, i) -> {
                                 if (postDataSource.deletePost(post)) {
 
                                     // delete post images inside the post
-                                    postImages.forEach(postImages1 -> {
-                                        postImagesDataSource.deletePostImages(postImages1);
-                                    });
+                                    postImages.forEach(postImages1 -> postImagesDataSource.deletePostImages(postImages1));
+
+                                    // delete post like inside the post
+                                    postReactionSet.forEach(postReaction -> postReactionDataSource.delete(postReaction));
+
+                                    postCommentSet.forEach(postComment -> postCommentDataSource.delete(postComment));
+
 
                                     int actualPosition = holder.getAdapterPosition();
                                     postList.remove(actualPosition);
@@ -378,6 +478,203 @@ public class PostAdapter extends PostPreviewAdapter {
             });
 
         });
+
+    }
+
+    private void buildTabDialog(Set<PostReaction> postReactionSet, Set<PostComment> postCommentSet, Post post, int selected) {
+
+        AlertDialog.Builder tabLayout = new AlertDialog.Builder(context);
+        LinearLayout linearLayoutParent = new LinearLayout(context);
+        linearLayoutParent.setOrientation(LinearLayout.VERTICAL);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        params.setMargins(0, 10, 0, 0);
+
+        View v = LayoutInflater.from(context).inflate(R.layout.custom_post_tab, null , false);
+
+        TabLayout tab = v.findViewById(R.id.tabLayout);
+
+        tab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                // likes
+                if (tab.getPosition() == 0) {
+
+                    if (linearLayoutParent.getChildCount() > 1) {
+                        linearLayoutParent.removeViewAt(1);
+                    }
+
+                    Log.d("TAG", "onTabSelected: "+ postReactionSet.size());
+
+                    RecyclerView recyclerViewSearchHistory = new RecyclerView(context);
+
+                    recyclerViewSearchHistory.setLayoutManager(new LinearLayoutManager(context));
+                    recyclerViewSearchHistory.setVisibility(View.VISIBLE);
+
+                    ProfileItemAdapter ProfileItemAdapter = new ProfileItemAdapter(context);
+                    ProfileItemAdapter.setUserList(postReactionSet.stream().flatMap(postReaction -> Stream.of(postReaction.getUser())).collect(Collectors.toList()));
+                    recyclerViewSearchHistory.setAdapter(ProfileItemAdapter);
+
+//                    LinearLayout linearLayout = new LinearLayout(context);
+//                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+//
+//                    linearLayout.addView(recyclerViewSearchHistory);
+
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//
+//                    builder.setTitle("People who reacted")
+//                            .setView(linearLayout);
+//
+//                    final AlertDialog alertDialog = builder.create();
+//                    alertDialog.show();
+//
+//                    Rect displayRectangle = new Rect();
+//                    Window window = ((Activity)context).getWindow();
+//
+//                    window.getDecorView().getWindowVisibleDisplayFrame(displayRectangle);
+//
+//                    alertDialog.getWindow().setLayout((int)(displayRectangle.width()), (int)(displayRectangle.height() * 0.9f));
+
+                    linearLayoutParent.addView(recyclerViewSearchHistory);
+                } else {
+                    // comments
+
+
+                    if (linearLayoutParent.getChildCount() > 1) {
+                        linearLayoutParent.removeViewAt(1);
+                    }
+
+
+                    View viewComment = LayoutInflater.from(context).inflate(R.layout.custom_post_comment, null, false);
+
+                    ImageButton btnSend = viewComment.findViewById(R.id.btnSend);
+                    btnSend.setEnabled(false);
+                    TextInputEditText editTextComment = viewComment.findViewById(R.id.editTextComment);
+
+                    RecyclerView recyclerViewComments = viewComment.findViewById(R.id.recyclerViewComments);
+                    recyclerViewComments.setLayoutManager(new LinearLayoutManager(context));
+
+                    CommentAdapter commentAdapter = new CommentAdapter(context);
+                    recyclerViewComments.setAdapter(commentAdapter);
+
+                    if (!postCommentSet.isEmpty()) {
+                        commentAdapter.setPostCommentList(postCommentSet.stream().collect(Collectors.toList()));
+                    }
+
+                    btnSend.setOnClickListener(view1 -> {
+                        String content = editTextComment.getText().toString().trim();
+
+                        if (content != null && !content.isEmpty()) {
+                            PostComment postComment = new PostComment(content, MyApp.getInstance().getCurrentUser(), post);
+                            if (postCommentDataSource.create(postComment)) {
+                                recyclerViewComments.scrollToPosition(0);
+                                Log.d("PostAdapter", "create comment: success");
+                                editTextComment.setText("");
+                                commentAdapter.addPostComment(postComment);
+                            } else { Log.d("PostAdapter", "create comment: failed"); }
+                        }
+
+
+                    });
+
+
+                    editTextComment.setOnFocusChangeListener((view, b) -> {
+                        if (b) {
+                            tabLayout.create().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                        }
+                    });
+
+                    editTextComment.addTextChangedListener(new TextWatcher() {
+                        @Override
+                        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                        }
+
+                        @Override
+                        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                        }
+
+                        @Override
+                        public void afterTextChanged(Editable editable) {
+                            String content = editTextComment.getText().toString().trim();
+                            if (content == null || content.isEmpty()) {
+                                btnSend.setEnabled(false);
+                                btnSend.setImageDrawable(context.getDrawable(R.drawable.baseline_send_not_active24));
+                            } else {
+                                btnSend.setEnabled(true);
+                                btnSend.setImageDrawable(context.getDrawable(R.drawable.baseline_send_active_24));
+                            }
+                        }
+                    });
+
+//                    LinearLayout linearLayout = new LinearLayout(context);
+//                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+//                    params.setMargins(10, 0, 0, 10);
+//                    linearLayout.addView(v, params);
+
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//
+//                    builder.setTitle("Comments")
+//                            .setView(linearLayout);
+//
+//                    final AlertDialog alertDialog = builder.create();
+//                    alertDialog.show();
+//
+//                    Rect displayRectangle = new Rect();
+//                    Window window = ((Activity)context).getWindow();
+//
+//                    window.getDecorView().getWindowVisibleDisplayFrame(displayRectangle);
+//
+//                    alertDialog.getWindow().setLayout((int)(displayRectangle.width()), (int)(displayRectangle.height() * 0.9f));
+
+                    linearLayoutParent.addView(viewComment);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
+
+
+        linearLayoutParent.addView(v, params);
+
+        tabLayout.setView(linearLayoutParent);
+
+        if (selected == 0) {
+            tab.getTabAt(1).select();
+            tab.getTabAt(0).select();
+        } else if (selected == 1){
+            tab.getTabAt(1).select();
+        }
+
+        AlertDialog alertDialog = tabLayout.create();
+        alertDialog.show();
+
+        Rect displayRectangle = new Rect();
+        Window window = alertDialog.getWindow();
+
+        WindowManager.LayoutParams wlp = window.getAttributes();
+
+        wlp.gravity = Gravity.BOTTOM;
+
+        wlp.flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+
+        window.setAttributes(wlp);
+
+        window.getDecorView().getWindowVisibleDisplayFrame(displayRectangle);
+
+        alertDialog.getWindow().setLayout((int) (displayRectangle.width()), (int) (displayRectangle.height()));
+
 
     }
 

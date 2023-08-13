@@ -23,6 +23,7 @@ import com.example.h2ak.SQLite.SQLiteDataSource.SearchHistoryDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.model.SearchHistory;
 import com.example.h2ak.model.User;
+import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.example.h2ak.view.activities.UserProfileActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.mikhaellopez.circularimageview.CircularImageView;
@@ -62,7 +63,8 @@ public class ProfileItemAdapter extends RecyclerView.Adapter<ProfileItemAdapter.
 
 
         holder.textViewProfileName.setText(name);
-        holder.textViewProfileCreatedDate.setText(createdDate);
+        holder.textViewProfileCreatedDate.setText(TextInputLayoutUtils.convertToJoinedMonthYear(createdDate));
+        holder.textViewProfileCreatedDate.setTextColor(context.getColor(R.color.facebook_not_active_color));
 
         if (avatar != null && !avatar.isEmpty()) {
             Glide.with(context)

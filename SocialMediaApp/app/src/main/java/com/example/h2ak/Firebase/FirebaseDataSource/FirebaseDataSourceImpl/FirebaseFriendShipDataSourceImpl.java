@@ -35,4 +35,11 @@ public class FirebaseFriendShipDataSourceImpl implements FirebaseFriendShipDataS
         friendShipRef.child(friendShip.getId()).child(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE).setValue(friendShip.getCreatedDate());
         friendShipRef.child(friendShip.getId()).child(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS).setValue(friendShip.getStatus());
     }
+
+    @Override
+    public void updateFriendShip(FriendShip friendShip) {
+        if (friendShip.getStatus() != null) {
+            friendShipRef.child(friendShip.getId()).child(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS).setValue(friendShip.getStatus());
+        }
+    }
 }

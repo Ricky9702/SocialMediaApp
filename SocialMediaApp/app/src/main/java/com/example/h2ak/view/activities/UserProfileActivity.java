@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.h2ak.Firebase.FirebaseDataSync;
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.adapter.ProfileAdapter;
 import com.example.h2ak.adapter.ProfilePostDisplayAdapter;
@@ -101,13 +102,22 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("USER_ID")) {
             id = intent.getStringExtra("USER_ID");
-            getPresenter().getUserById(id);
+
+            if (id.equals(MyApp.getInstance().getCurrentUserId())) {
+                startActivity(new Intent(this, ProfileActivity.class));
+                finish();
+            }
+
             params.put("id", id);
+            params.put("privacy1", Post.PostPrivacy.PUBLIC.getPrivacy());
+            getPresenter().getUserById(id);
+            presenter.getAllPostByUserId(id, Post.PostPrivacy.PUBLIC.getPrivacy(), null);
+            profileDisplayPostAdapter.setParams(params);
         }
     }
 
     @Override
-    public void onStatusRecieved(String status) {
+    public void onStatusReceived(String status) {
         if (status != null) {
 
             if (status.equals(FriendShip.FriendShipStatus.PENDING.getStatus())) {
@@ -117,7 +127,6 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
 
                 btnAddFriend.setCompoundDrawablesWithIntrinsicBounds(drawableLeft, null, null, null);
 
-                presenter.getAllPostByUserId(id, Post.PostPrivacy.PUBLIC.getPrivacy(), null);
 
             } else if (status.equals(FriendShip.FriendShipStatus.DELETED.getStatus())) {
                 btnAddFriend.setText("Add Friend");
@@ -125,8 +134,6 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
                 Drawable drawableLeft = ContextCompat.getDrawable(this, R.drawable.baseline_person_add_alt_1_24);
 
                 btnAddFriend.setCompoundDrawablesWithIntrinsicBounds(drawableLeft, null, null, null);
-
-                presenter.getAllPostByUserId(id, Post.PostPrivacy.PUBLIC.getPrivacy(), null);
 
             } else {
                 btnAddFriend.setText("Friends");
@@ -140,9 +147,7 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
                 presenter.getAllPostByUserId(id, Post.PostPrivacy.PUBLIC.getPrivacy(), Post.PostPrivacy.FRIENDS.getPrivacy());
 
             }
-            params.put("privacy1", Post.PostPrivacy.PUBLIC.getPrivacy());
         }
-
         profileDisplayPostAdapter.setParams(params);
 
     }

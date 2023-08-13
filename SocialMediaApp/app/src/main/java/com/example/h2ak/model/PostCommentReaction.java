@@ -6,38 +6,31 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
 
-public class PostReaction {
+public class PostCommentReaction {
     private String id;
     private String createdDate;
     private String type;
     private User user;
-    private Post post;
-
+    private PostComment PostComment;
 
     {
         id = UUID.randomUUID().toString();
         createdDate = TextInputLayoutUtils.simpleDateFormat.format(new Date());
     }
 
-    public PostReaction(PostReactionType postReactionType, User user, Post post) {
-        this.type = postReactionType.getType();
+    public PostCommentReaction(CommentReactionType commentReactionType, User user, PostComment postComment) {
+        this.type = commentReactionType.getType();
         this.user = user;
-        this.post = post;
+        this.PostComment = postComment;
     }
 
-    public String getType() {
-        return type;
-    }
 
-    public void setType(String type) {
-        this.type = type;
-    }
 
-    public enum PostReactionType{
-        LIKE("LIKE");
+    public enum CommentReactionType{
+        LIKE("LIKE"), DISLIKE("DISLIKE");
 
         private String type;
-        PostReactionType(String type) {
+        CommentReactionType(String type) {
             this.type = type;
         }
 
@@ -51,13 +44,13 @@ public class PostReaction {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PostReaction that = (PostReaction) o;
-        return id.equals(that.id) && createdDate.equals(that.createdDate) && type.equals(that.type) && user.equals(that.user) && post.equals(that.post);
+        PostCommentReaction that = (PostCommentReaction) o;
+        return id.equals(that.id) && createdDate.equals(that.createdDate) && type.equals(that.type) && user.equals(that.user) && Objects.equals(PostComment, that.PostComment);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, createdDate, type, user, post);
+        return Objects.hash(id, createdDate, type, user, PostComment);
     }
 
     public String getId() {
@@ -76,6 +69,14 @@ public class PostReaction {
         this.createdDate = createdDate;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public User getUser() {
         return user;
     }
@@ -84,11 +85,11 @@ public class PostReaction {
         this.user = user;
     }
 
-    public Post getPost() {
-        return post;
+    public com.example.h2ak.model.PostComment getPostComment() {
+        return PostComment;
     }
 
-    public void setPost(Post post) {
-        this.post = post;
+    public void setPostComment(com.example.h2ak.model.PostComment postComment) {
+        PostComment = postComment;
     }
 }

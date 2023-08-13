@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="10dp">
+
+    <RelativeLayout
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/relativeLayoutParent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewComments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/relativeLayoutParent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/btnSend"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="40dp"
+            android:hint=" "
+            app:boxBackgroundMode="none">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextComment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_button"
+                android:backgroundTint="#f3f2f7"
+                android:hint="Write a comment."
+                android:textColor="@color/black"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:textSize="14dp"
+                android:text=""/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginRight="15dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/baseline_send_not_active24"
+            android:background="@android:color/transparent" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

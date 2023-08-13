@@ -55,12 +55,6 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
         recyclerViewPosts.setAdapter(postDisplayAdapter);
 
         presenter = new PostActivityPresenter(this, this);
-
-
-
-
-
-
     }
 
     @Override

@@ -11,7 +11,7 @@ public class DatabaseManager {
     private static final Object lock = new Object();
 
     private DatabaseManager(Context context) {
-        helper = new MySQLiteHelper(context);
+        helper = new MySQLiteHelper(context.getApplicationContext());
         db = helper.getWritableDatabase();
     }
 

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:clickable="false"
+    android:layout_marginTop="10dp">
+
+    <LinearLayout
+        android:id="@+id/linearLayoutParent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+
+        <com.mikhaellopez.circularimageview.CircularImageView
+            android:id="@+id/imageViewProfileAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="5dp"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            app:civ_border_width="0.5dp"
+            android:src="@drawable/baseline_avatar_place_holder"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="30dp"
+                android:layout_gravity="center"
+                android:padding="10dp"
+                android:background="@drawable/rounded_button"
+                android:clickable="false"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textViewProfileName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="An Khuong"
+                        android:textColor="@color/facebook_not_active_color" />
+
+                    <TextView
+                        android:layout_width="3dp"
+                        android:layout_height="3dp"
+                        android:text="  "
+                        android:layout_gravity="center"
+                        android:layout_marginTop="1dp"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginRight="5dp"
+                        android:background="@drawable/circle_background_dot_not_active"/>
+
+                    <TextView
+                        android:id="@+id/textViewCommentCreatedDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="3 hours"
+                        android:textSize="12dp"
+                        android:textColor="@color/facebook_not_active_color" />
+                </LinearLayout>
+
+
+                <TextView
+                    android:id="@+id/textViewContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="asddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+asddddddddddddddddddddddddddddddddddddddddddddddddd"
+                    android:textColor="@color/black" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:orientation="horizontal">
+
+
+                    <ImageButton
+                        android:id="@+id/btnCommentLike"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:padding="5dp"
+                        android:layout_marginRight="5dp"
+                        android:src="@drawable/baseline_thumb_up_off_alt_24"
+                        android:background="@android:color/transparent"
+                        android:adjustViewBounds="true"
+                        android:scaleType="centerCrop"/>
+
+                    <TextView
+                        android:id="@+id/textViewCommentLikeSize"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="20dp"
+                        android:text="1"
+                        android:layout_gravity="center"
+                        android:clickable="false"
+                        android:textColor="@color/facebook_not_active_color"
+                        android:textSize="11dp"/>
+
+
+                    <ImageButton
+                        android:id="@+id/btnCommentDislike"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:padding="5dp"
+                        android:layout_marginRight="25dp"
+                        android:src="@drawable/baseline_thumb_down_off_alt_not_active_24"
+                        android:background="@android:color/transparent"
+                        android:adjustViewBounds="true"
+                        android:scaleType="centerCrop"/>
+
+                    <ImageButton
+                        android:id="@+id/btnCommentReply"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:padding="5dp"
+                        android:adjustViewBounds="true"
+                        android:background="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/baseline_chat_bubble_outline_24" />
+
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/textViewCommentChildSize"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:textColor="@color/active_icon"
+                    android:textStyle="bold"
+                    android:textSize="13dp"
+                    android:text="2 replies"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+    <ImageButton
+        android:id="@+id/btnAction"
+        android:layout_width="17dp"
+        android:layout_height="17dp"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/baseline_more_vert_24"
+        android:background="@android:color/transparent"/>
+
+</RelativeLayout>

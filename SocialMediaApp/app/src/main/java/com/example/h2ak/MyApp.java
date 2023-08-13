@@ -52,7 +52,6 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     @Override
     public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
         if (activity instanceof BaseMenuActivity) {
-            this.currentUserId = this.getCurrentUserId();
             userDataSource = UserDataSourceImpl.getInstance(this);
             firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
             firebaseDataSync = FirebaseDataSync.getInstance(this);
@@ -107,7 +106,8 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
                 }
             });
 
-            currentUser = userDataSource.getUserById(currentUserId);
+            this.currentUserId = this.getCurrentUserId();
+            this.currentUser = userDataSource.getUserById(currentUserId);
         }
     }
 

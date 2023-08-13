@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+  
+  <com.google.android.material.tabs.TabLayout
+      android:id="@+id/tabLayout"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      app:tabMode="scrollable"
+      app:tabGravity="fill"
+      app:tabTextColor="@color/facebook_not_active_color"
+      app:tabSelectedTextColor="@color/active_icon"
+      app:tabIndicatorColor="@color/active_icon">
+      
+      <com.google.android.material.tabs.TabItem
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Likes" />
+
+      <com.google.android.material.tabs.TabItem
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Comments"
+          android:textAlignment="textEnd"/>
+      
+  </com.google.android.material.tabs.TabLayout>
+    
+</RelativeLayout>

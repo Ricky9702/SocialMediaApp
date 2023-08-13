@@ -180,11 +180,48 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
 
     @Override
     public boolean updateFriendShip(FriendShip friendShip) {
-        Log.d("updateFriendShip : ", "LOCAL");
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("status", friendShip.getStatus());
-        return db.update(MySQLiteHelper.TABLE_FRIENDSHIP, contentValues, MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? ",
-                new String[]{String.valueOf(friendShip.getId())}) > 0;
+        boolean result = false;
+        if(this.updateFriendShipOnFirebaseChange(friendShip)) {
+            firebaseFriendShipDataSource.updateFriendShip(friendShip);
+            result = true;
+        }
+        return result;
+    }
+
+    @Override
+    public boolean updateFriendShipOnFirebaseChange(FriendShip friendShip) {
+        db.beginTransaction();
+        boolean result = false;
+        try {
+            if (friendShip.getId() == null || friendShip.getId().isEmpty()) {
+                Log.d("createFriendShip", "createFriendShip: id is null or empty");
+                return false;
+            } else if (friendShip.getCreatedDate() == null || friendShip.getCreatedDate().isEmpty()) {
+                Log.d("createFriendShip", "createFriendShip: createdDate is null or empty");
+                return false;
+            } else if (friendShip.getStatus() == null || friendShip.getStatus().isEmpty()) {
+                Log.d("createFriendShip", "createFriendShip: status is null or empty");
+                return false;
+            } else if (friendShip.getUser1() == null) {
+                Log.d("createFriendShip", "user 1: id is null or empty");
+                return false;
+            } else if (friendShip.getUser2() == null) {
+                Log.d("createFriendShip", "user 2: id is null or empty");
+                return false;
+            } else {
+                Log.d("updateFriendShip : ", "LOCAL");
+                ContentValues contentValues = new ContentValues();
+                contentValues.put("status", friendShip.getStatus());
+                result = db.update(MySQLiteHelper.TABLE_FRIENDSHIP, contentValues, MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? ",
+                        new String[]{String.valueOf(friendShip.getId())}) > 0;
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+
+        } finally {
+            db.endTransaction();;
+        }
+        return result;
     }
 
     @Override

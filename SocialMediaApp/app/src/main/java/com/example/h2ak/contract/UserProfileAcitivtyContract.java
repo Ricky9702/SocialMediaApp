@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface UserProfileAcitivtyContract {
     interface View {
-        void onStatusRecieved(String status);
+        void onStatusReceived(String status);
         void onUserRecieved(User user);
         void onSendMessage(String message);
         void onSendFriendRequestFailed(String message);

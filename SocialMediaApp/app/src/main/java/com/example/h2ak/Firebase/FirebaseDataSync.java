@@ -156,6 +156,8 @@ public class FirebaseDataSync {
                                 Log.d("SyncFriendShip: ", "There is some change here!! X2");
                                 friendShipDataSource.createFriendShipOnFirebaseChange(friendShip);
                                 listener.onDataChange();
+                            } else if (!friendShip.equals(found)){
+                                friendShipDataSource.updateFriendShip(friendShip);
                             }
                         }
                     }

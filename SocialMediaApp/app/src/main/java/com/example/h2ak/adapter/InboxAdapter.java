@@ -200,7 +200,6 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
 
                 // this friendship is for if the current user accept or denied, then will update
                 FriendShip friendShip = friendShipDataSource.findLastestFriendShip(inbox.getUserSentRequest(), inbox.getUserRecieveRequest());
-                friendShip.setId(new FriendShip().getId());
                 friendShip.setCreatedDate(new FriendShip().getCreatedDate());
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
@@ -210,7 +209,7 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                         .setPositiveButton("Confirm", (dialogInterface, i) -> {
                             if (friendShip != null) {
                                 friendShip.setStatus(FriendShip.FriendShipStatus.ACCEPTED.getStatus());
-                                if (friendShipDataSource.createFriendShip(friendShip)) {
+                                if (friendShipDataSource.updateFriendShip(friendShip)) {
                                     Log.d(this.getClass().getName(), "onBindViewHolder: update friendship success");
 
                                     // create inbox for user sent the friend request, that they are now friends
@@ -243,7 +242,7 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                         })
                         .setNegativeButton("Delete", (dialogInterface, i) -> {
                             friendShip.setStatus(FriendShip.FriendShipStatus.DELETED.getStatus());
-                            friendShipDataSource.createFriendShip(friendShip);
+                            friendShipDataSource.updateFriendShip(friendShip);
                             inbox.setActive(false);
 
                             // create inbox for user sent the friend request, that the user recieve is denied the request

@@ -88,8 +88,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + COLUMN_INBOX_IS_ACTIVE + " INTEGER NOT NULL, "
             + COLUMN_INBOX_USER_1 + " INTEGER, "
             + COLUMN_INBOX_USER_2 + " INTEGER, "
-            + "FOREIGN KEY (" + COLUMN_INBOX_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "), "
-            + "FOREIGN KEY (" + COLUMN_INBOX_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "));";
+            + "FOREIGN KEY (" + COLUMN_INBOX_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE, "
+            + "FOREIGN KEY (" + COLUMN_INBOX_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE );";
 
 
     // FriendShip
@@ -105,8 +105,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + COLUMN_FRIENDSHIP_STATUS + " TEXT, "
             + COLUMN_FRIENDSHIP_USER_1 + " INTEGER, "
             + COLUMN_FRIENDSHIP_USER_2 + " INTEGER, "
-            + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "), "
-            + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "));";
+            + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE, "
+            + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE );";
 
     // Post
     public static final String TABLE_POST = "post";
@@ -120,7 +120,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + COLUMN_POST_USER_ID + " TEXT NOT NULL,"
             + COLUMN_POST_CREATED_DATE + " TEXT NOT NULL, "
             + COLUMN_POST_PRIVACY + " TEXT NOT NULL, "
-            + " FOREIGN KEY ( " + COLUMN_POST_USER_ID + " ) REFERENCES " + TABLE_USER  + "( "+ COLUMN_USER_ID  +" )" +" )";
+            + " FOREIGN KEY ( " + COLUMN_POST_USER_ID + " ) REFERENCES " + TABLE_USER  + "( "+ COLUMN_USER_ID  +" )" +" ON DELETE CASCADE )";
 
     // Post Images
     public static final String TABLE_POST_IMAGES = "post_images";
@@ -134,7 +134,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             " " + COLUMN_POST_IMAGES_IMAGE_URL + " TEXT NOT NULL, " +
             " " + COLUMN_POST_IMAGES_POST_ID + " TEXT NOT NULL, " +
             " " + COLUMN_POST_IMAGES_CREATED_DATE +  " TEXT NOT NULL,  " +
-            " FOREIGN KEY ( " + COLUMN_POST_IMAGES_POST_ID + " ) REFERENCES " + TABLE_POST + "( " +  COLUMN_POST_ID + " )" + "  )";
+            " FOREIGN KEY ( " + COLUMN_POST_IMAGES_POST_ID + " ) REFERENCES " + TABLE_POST + "( " +  COLUMN_POST_ID + " )" + " ON DELETE CASCADE )";
 
 
 
@@ -149,8 +149,44 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             " " + COLUMN_POST_REACTION_CREATED_DATE + " TEXT NOT NULL, " +
             " " + COLUMN_POST_REACTION_USER_ID + " TEXT NOT NULL, " +
             COLUMN_POST_REACTION_POST_ID + " TEXT NOT NULL, " +
-            " FOREIGN KEY ( " + COLUMN_POST_REACTION_USER_ID + " ) REFERENCES " + TABLE_USER + "( " +  COLUMN_USER_ID + " )" + "" +
-            " FOREIGN KEY ( " + COLUMN_POST_REACTION_POST_ID + " ) REFERENCES + " + TABLE_POST + "( " + COLUMN_POST_ID  + " )"  + " ) ";
+            " FOREIGN KEY ( " + COLUMN_POST_REACTION_USER_ID + " ) REFERENCES " + TABLE_USER + "( " +  COLUMN_USER_ID + " )" + " ON DELETE CASCADE , " +
+            " FOREIGN KEY ( " + COLUMN_POST_REACTION_POST_ID + " ) REFERENCES " + TABLE_POST + "( " + COLUMN_POST_ID  + " )"  + " ON DELETE CASCADE ) ";
+
+
+    // Post Comment
+    public static final String TABLE_POST_COMMENT = "post_comment";
+    public static final String COLUMN_POST_COMMENT_ID = TABLE_POST_COMMENT + "_id";
+    public static final String COLUMN_POST_COMMENT_USER_ID = TABLE_POST_COMMENT + "_user_id";
+    public static final String COLUMN_POST_COMMENT_POST_ID = TABLE_POST_COMMENT + "_post_id";
+    public static final String COLUMN_POST_COMMENT_PARENT_ID = TABLE_POST_COMMENT + "_parent_id";
+    public static final String COLUMN_POST_COMMENT_CREATED_DATE = "created_date";
+    public static final String COLUMN_POST_COMMENT_CONTENT = "content";
+    private static final String CREATE_TABLE_POST_COMMENT = " CREATE TABLE " + TABLE_POST_COMMENT + " (" +
+            " " + COLUMN_POST_COMMENT_ID + " TEXT PRIMARY KEY, " +
+            " " + COLUMN_POST_COMMENT_CREATED_DATE + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_COMMENT_CONTENT + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_COMMENT_USER_ID + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_COMMENT_PARENT_ID + " TEXT NOT NULL, " +
+            COLUMN_POST_COMMENT_POST_ID + " TEXT NOT NULL, " +
+            " FOREIGN KEY ( " + COLUMN_POST_COMMENT_PARENT_ID + " ) REFERENCES " + TABLE_POST_COMMENT + "( " +  COLUMN_POST_COMMENT_ID + " )" + " ON DELETE CASCADE , " +
+            " FOREIGN KEY ( " + COLUMN_POST_COMMENT_USER_ID + " ) REFERENCES " + TABLE_USER + "( " +  COLUMN_USER_ID + " )" + " ON DELETE CASCADE , " +
+            " FOREIGN KEY ( " + COLUMN_POST_COMMENT_POST_ID + " ) REFERENCES " + TABLE_POST + "( " + COLUMN_POST_ID  + " )"  + " ON DELETE CASCADE ) ";
+    
+    // Post Comment Reaction
+    public static final String TABLE_POST_COMMENT_REACTION = "post_comment_reaction";
+    public static final String COLUMN_POST_COMMENT_REACTION_ID = TABLE_POST_COMMENT_REACTION + "_id";
+    public static final String COLUMN_POST_COMMENT_REACTION_USER_ID = TABLE_POST_COMMENT_REACTION + "_user_id";
+    public static final String COLUMN_POST_COMMENT_REACTION_POST_COMMENT_ID = TABLE_POST_COMMENT_REACTION + "_post_comment_id";
+    public static final String COLUMN_POST_COMMENT_REACTION_TYPE = "type";
+    public static final String COLUMN_POST_COMMENT_REACTION_CREATED_DATE = "created_date" ;
+    public static final String CREATE_TABLE_POST_COMMENT_REACTION = " CREATE TABLE " + TABLE_POST_COMMENT_REACTION + " (" +
+            " " + COLUMN_POST_COMMENT_REACTION_ID + " TEXT PRIMARY KEY, " +
+            " " + COLUMN_POST_COMMENT_REACTION_TYPE + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_COMMENT_REACTION_CREATED_DATE + " TEXT NOT NULL, " +
+            " " + COLUMN_POST_COMMENT_REACTION_USER_ID + " TEXT NOT NULL, " +
+            COLUMN_POST_COMMENT_REACTION_POST_COMMENT_ID + " TEXT NOT NULL, " +
+            " FOREIGN KEY ( " + COLUMN_POST_COMMENT_REACTION_USER_ID + " ) REFERENCES " + TABLE_USER + "( " +  COLUMN_USER_ID + " )" + " ON DELETE CASCADE , " +
+            " FOREIGN KEY ( " + COLUMN_POST_COMMENT_REACTION_POST_COMMENT_ID + " ) REFERENCES " + TABLE_POST_COMMENT + "( " + COLUMN_POST_COMMENT_ID  + " )"  + " ON DELETE CASCADE ) ";
 
 
     // Create Database
@@ -174,6 +210,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
         database.execSQL(CREATE_TABLE_POST);
         database.execSQL(CREATE_TABLE_POST_IMAGES);
         database.execSQL(CREATE_TABLE_POST_REACTION);
+        database.execSQL(CREATE_TABLE_POST_COMMENT);
+        database.execSQL(CREATE_TABLE_POST_COMMENT_REACTION);
 
     }
     // Upgrade version database

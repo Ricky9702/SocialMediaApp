@@ -107,7 +107,7 @@ public class CreatePostChooseContentFragment extends Fragment implements CreateP
                     params.setMargins(25, 0 , 25, 0);
 
                     EditText content = new EditText(this.getContext());
-                    content.setHint("Enter your new content.");
+                    content.setHint("Write your new content.");
                     content.setText(post.getContent());
 
                     linearLayout.addView(content, params);

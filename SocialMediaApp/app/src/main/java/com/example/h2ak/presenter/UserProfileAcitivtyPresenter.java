@@ -5,9 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebaseFriendShipDataSourceImpl;
-import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseFriendShipDataSource;
-import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
@@ -23,8 +20,6 @@ import com.example.h2ak.model.Post;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.google.firebase.auth.FirebaseAuth;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +51,7 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
         User user = userDataSource.getUserById(id);
         FriendShip friendShip = friendShipDataSource.findLastestFriendShip(currentUser, user);
         if (friendShip != null)
-            view.onStatusRecieved(friendShip.getStatus());
+            view.onStatusReceived(friendShip.getStatus());
         if (user != null) view.onUserRecieved(user);
     }
 
@@ -72,7 +67,6 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
             Log.d("UserProfilePresenter", friendShip.getUser1().getId() + "");
             Log.d("UserProfilePresenter", friendShip.getUser2().getId() + "");
             // create popup menu delete, if selected friends
-            friendShip.setId(new FriendShip().getId());
             friendShip.setCreatedDate(new FriendShip().getCreatedDate());
             if (friendShip.getStatus().equals(FriendShip.FriendShipStatus.ACCEPTED.getStatus())) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -84,8 +78,8 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
                         })
                         .setPositiveButton("YES", (dialogInterface, i) -> {
                             finalFriendShip.setStatus(FriendShip.FriendShipStatus.DELETED.getStatus());
-                            friendShipDataSource.createFriendShip(finalFriendShip);
-                            view.onStatusRecieved(finalFriendShip.getStatus());
+                            friendShipDataSource.updateFriendShip(finalFriendShip);
+                            view.onStatusReceived(finalFriendShip.getStatus());
                             view.onSendMessage("Delete " + user2.getName() + " from friend list successfully.");
                             dialogInterface.dismiss();
                         })
@@ -95,8 +89,8 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
             //Send friend requests then Cancel requests
             else if (friendShip.getStatus().equals(FriendShip.FriendShipStatus.PENDING.getStatus())) {
                 friendShip.setStatus(FriendShip.FriendShipStatus.DELETED.getStatus());
-                if (friendShipDataSource.createFriendShip(friendShip)) {
-                    view.onStatusRecieved(friendShip.getStatus());
+                if (friendShipDataSource.updateFriendShip(friendShip)) {
+                    view.onStatusReceived(friendShip.getStatus());
 
                     // delete the inbox from the user recieve request
                     Inbox inbox = inboxDataSource.findInboxFriendRequest(user2.getId(), currentUser.getId());
@@ -115,10 +109,10 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
             } // Cancel request then send friend requests
             else if (friendShip.getStatus().equals(FriendShip.FriendShipStatus.DELETED.getStatus())) {
                 friendShip.setStatus(FriendShip.FriendShipStatus.PENDING.getStatus());
-                boolean test = friendShipDataSource.createFriendShip(friendShip);
+                boolean test = friendShipDataSource.updateFriendShip(friendShip);
                 Log.d("createOrUpdateFriendRequest", "test: " + test);
                 if (test) {
-                    view.onStatusRecieved(friendShip.getStatus());
+                    view.onStatusReceived(friendShip.getStatus());
                     createNewInbox(currentUser, user2);
                 } else {
                     view.onSendFriendRequestFailed("Send friend request failed!!");
@@ -128,7 +122,7 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
         } else { // create a new friendship
             friendShip = new FriendShip(currentUser, user2);
             if (friendShipDataSource.createFriendShip(friendShip)) {
-                view.onStatusRecieved(friendShip.getStatus());
+                view.onStatusReceived(friendShip.getStatus());
                 createNewInbox(currentUser, user2);
             } else {
                 view.onSendFriendRequestFailed("Send friend request failed!!");

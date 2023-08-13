@@ -146,6 +146,19 @@ public class TextInputLayoutUtils {
         return convTime.toLowerCase();
     }
 
+    public static String convertToJoinedMonthYear(String dateTimeString) {
+        SimpleDateFormat outputFormat = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+        try {
+            Date date = TextInputLayoutUtils.simpleDateFormat.parse(dateTimeString);
+            String monthYear = outputFormat.format(date);
+            return "Joined " + monthYear;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
     public static Date parseDateFromString(String dateString) {
         try {
             return TextInputLayoutUtils.simpleDateFormat.parse(dateString);

@@ -48,7 +48,18 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="11h"
-                        android:layout_marginRight="10dp"/>
+                        android:textColor="@color/facebook_not_active_color"/>
+
+                    <TextView
+                        android:layout_width="3dp"
+                        android:layout_height="3dp"
+                        android:text="  "
+                        android:layout_gravity="center"
+                        android:layout_marginTop="1dp"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginRight="5dp"
+                        android:background="@drawable/circle_background_dot_not_active"/>
+
                     <ImageView
                         android:id="@+id/imageViewPostPrivacy"
                         android:layout_width="15dp"

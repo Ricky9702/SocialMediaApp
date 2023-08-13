@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,19 +37,16 @@ public class FriendShip {
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
-        FriendShip friendShip = (FriendShip) obj;
-        return this.getUser2().equals(friendShip.getUser2()) &&
-                this.getUser1().equals(friendShip.getUser1()) &&
-                this.status.equals(friendShip.status);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FriendShip that = (FriendShip) o;
+        return id.equals(that.id) && user1.equals(that.user1) && user2.equals(that.user2) && createdDate.equals(that.createdDate) && status.equals(that.status) && friendShipStatus == that.friendShipStatus;
     }
 
     @Override
     public int hashCode() {
-        int result = getUser1().hashCode();
-        result = 31 * result + getUser2().hashCode();
-        result = 31 * result + status.hashCode();
-        return result;
+        return Objects.hash(id, user1, user2, createdDate, status, friendShipStatus);
     }
 
     public String getId() {
