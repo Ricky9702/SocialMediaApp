@@ -7,7 +7,10 @@ import android.os.Bundle;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,18 +18,22 @@ import android.view.ViewGroup;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.h2ak.R;
+import com.example.h2ak.adapter.PostAdapter;
 import com.example.h2ak.contract.HomeFragmentContract;
+import com.example.h2ak.model.Post;
 import com.example.h2ak.model.User;
 import com.example.h2ak.presenter.HomeFragmentPresenter;
 import com.example.h2ak.view.activities.ProfileActivity;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
-public class HomeFragment extends Fragment implements HomeFragmentContract.View {
+import java.util.List;
 
+public class HomeFragment extends Fragment implements HomeFragmentContract.View {
     Toolbar toolbar;
     CircularImageView imageViewProfileAvatar;
     private HomeFragmentPresenter presenter;
-
+    RecyclerView recyclerViewPosts;
+    PostAdapter postAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,6 +59,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
         setPresenter(new HomeFragmentPresenter(this.getContext(), this));
         getPresenter().loadCurrentUser();
 
+        recyclerViewPosts = view.findViewById(R.id.recyclerViewPosts);
 
         return view;
     }
@@ -59,7 +67,26 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     @Override
     public void onResume() {
         super.onResume();
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        recyclerViewPosts.setLayoutManager(new LinearLayoutManager(this.getContext()));
+
+        postAdapter = new PostAdapter(this.getContext(), flag -> {
+            Intent resultIntent = new Intent();
+            if (flag) {
+                resultIntent.putExtra("UPDATED", true);
+            }
+            getActivity().setResult(getActivity().RESULT_OK, resultIntent);
+        });
+
+        recyclerViewPosts.setAdapter(postAdapter);
+
         getPresenter().loadCurrentUser();
+        getPresenter().loadFriendsPost();
     }
 
     @Override
@@ -75,6 +102,15 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
             } else {
                 imageViewProfileAvatar.setImageResource(R.drawable.baseline_avatar_place_holder);
             }
+        }
+    }
+
+    @Override
+    public void onListPostReceived(List<Post> postList) {
+        if (!postList.isEmpty()) {
+            postAdapter.setPostList(postList);
+        } else {
+            Log.d("TAG", "onMapPostRecieved: empty ");
         }
     }
 

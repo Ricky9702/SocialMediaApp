@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebasePostDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebasePostDataSource;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.DatabaseManager;
 import com.example.h2ak.SQLite.MySQLiteHelper;
@@ -27,12 +29,14 @@ public class PostDataSourceImpl implements PostDataSource {
     private DatabaseManager databaseManager;
     private String currentUserId;
     private UserDataSource userDataSource;
+    private FirebasePostDataSource firebasePostDataSource;
 
     private PostDataSourceImpl(Context context, String currentUserId) {
         databaseManager = DatabaseManager.getInstance(context);
         db = databaseManager.getDatabase();
         this.currentUserId = currentUserId;
         userDataSource = UserDataSourceImpl.getInstance(context);
+        firebasePostDataSource = FirebasePostDataSourceImpl.getInstance();
     }
 
     public static synchronized PostDataSourceImpl getInstance(Context context) {
@@ -70,7 +74,19 @@ public class PostDataSourceImpl implements PostDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_POST_CREATED_DATE, post.getCreatedDate());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_USER_ID, post.getUser().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_PRIVACY, post.getPrivacy());
-                result = db.insert(MySQLiteHelper.TABLE_POST, null, contentValues) > 0;
+
+                if (findPost(post.getId()) == null) {
+                    result = db.insert(MySQLiteHelper.TABLE_POST, null, contentValues) > 0;
+                    if (result) {
+                        if (firebasePostDataSource.create(post)) {
+                            Log.d("createPostFirebase: ", "success");
+                        } else {
+                            Log.d("createPostFirebase: ", "failed");
+                        }
+                    }
+                } else {
+                    Log.d("createPost: ", "already exists");
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
@@ -103,9 +119,17 @@ public class PostDataSourceImpl implements PostDataSource {
                 Log.d("deletePost: ", "privacy is null");
                 return false;
             } else {
-                result = db.delete(MySQLiteHelper.TABLE_POST, MySQLiteHelper.COLUMN_POST_ID + " = ? " , new String[]{post.getId()}) > 0;
+                if (findPost(post.getId()) != null) {
+                    result = db.delete(MySQLiteHelper.TABLE_POST, MySQLiteHelper.COLUMN_POST_ID + " = ? " , new String[]{post.getId()}) > 0;
+                    if (result) {
+                        if (firebasePostDataSource.delete(post)) {
+                            Log.d("deletePostFirebase: ", "success");
+                        } else {
+                            Log.d("deletePostFirebase: ", "failed");
+                        }
+                    }
+                }
             }
-
             // delete post, so we need to delete its like, comment, image;
 
             db.setTransactionSuccessful();
@@ -142,7 +166,16 @@ public class PostDataSourceImpl implements PostDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_POST_CONTENT, post.getContent());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_PRIVACY, post.getPrivacy());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_CREATED_DATE, new Post().getCreatedDate());
-                result = db.update(MySQLiteHelper.TABLE_POST, contentValues, MySQLiteHelper.COLUMN_POST_ID + " = ? ", new String[]{post.getId()}) > 0;
+                if (findPost(post.getId()) != null && !findPost(post.getId()).equals(post)) {
+                    result = db.update(MySQLiteHelper.TABLE_POST, contentValues, MySQLiteHelper.COLUMN_POST_ID + " = ? ", new String[]{post.getId()}) > 0;
+                    if (result) {
+                        if (firebasePostDataSource.update(post)) {
+                            Log.d("updatePostFirebase: ", "successs");
+                        } else {
+                            Log.d("updatePostFirebase: ", "failed");
+                        }
+                    }
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
@@ -158,6 +191,20 @@ public class PostDataSourceImpl implements PostDataSource {
         Post post = null;
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST
                 + " WHERE " + MySQLiteHelper.COLUMN_POST_ID + " = ? ", new String[]{id})) {
+            if (c != null && c.moveToFirst()) {
+                post = getPostByCursor(c);
+            }
+        }
+        return post;
+    }
+
+    @Override
+    public Post getNewestPost(User user) {
+        Post post = null;
+        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST
+                + " WHERE " + MySQLiteHelper.COLUMN_POST_USER_ID + " = ? "
+                + " ORDER BY " + MySQLiteHelper.COLUMN_POST_CREATED_DATE + " DESC "
+                + " LIMIT 1 ", new String[]{user.getId()})) {
             if (c != null && c.moveToFirst()) {
                 post = getPostByCursor(c);
             }
@@ -195,13 +242,15 @@ public class PostDataSourceImpl implements PostDataSource {
     @Override
     public Set<Post> getAllPostByUserId(String id) {
         Set<Post> postSet = new HashSet<>();
-        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST
-                + " WHERE " + MySQLiteHelper.COLUMN_POST_USER_ID + " = ? ", new String[]{id})) {
-            if (c != null) {
-                while (c.moveToNext()) {
-                    Post post = getPostByCursor(c);
-                    if (post != null) {
-                        postSet.add(post);
+        if (id != null && !id.isEmpty()) {
+            try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST
+                    + " WHERE " + MySQLiteHelper.COLUMN_POST_USER_ID + " = ? ", new String[]{id})) {
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        Post post = getPostByCursor(c);
+                        if (post != null) {
+                            postSet.add(post);
+                        }
                     }
                 }
             }
@@ -215,6 +264,24 @@ public class PostDataSourceImpl implements PostDataSource {
         postSet.addAll(getAllPostByUserId(id).stream().filter(post -> post.getPrivacy().equals(privacy1)).collect(Collectors.toList()));
         if (privacy2 != null && !privacy2.isEmpty()) {
             postSet.addAll(getAllPostByUserId(id).stream().filter(post -> post.getPrivacy().equals(privacy2)).collect(Collectors.toList()));
+        }
+        return postSet;
+    }
+
+    @Override
+    public Set<Post> getRandomPost() {
+        Set<Post> postSet = new HashSet<>();
+        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST
+                + " WHERE " + MySQLiteHelper.COLUMN_POST_PRIVACY + " = ? "
+                + " ORDER BY RANDOM() ", new String[]{Post.PostPrivacy.PUBLIC.getPrivacy()})) {
+            if (c != null) {
+                while (c.moveToNext()) {
+                    Post post = getPostByCursor(c);
+                    if (post != null) {
+                        postSet.add(post);
+                    }
+                }
+            }
         }
         return postSet;
     }

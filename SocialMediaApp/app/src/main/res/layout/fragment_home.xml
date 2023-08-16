@@ -1,33 +1,36 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.h2ak.view.fragments.HomeFragment"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    tools:context="com.example.h2ak.view.fragments.HomeFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <include layout="@layout/app_bar_layout"/>
+        <include layout="@layout/app_bar_layout" />
+
         <com.mikhaellopez.circularimageview.CircularImageView
             android:id="@+id/imageViewProfileAvatar"
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_alignParentRight="true"
             android:layout_marginTop="5dp"
-            android:src="@drawable/baseline_avatar_place_holder"
-            android:adjustViewBounds="true" />
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@+id/appBar">
+            android:adjustViewBounds="true"
+            android:src="@drawable/baseline_avatar_place_holder" />
 
-            <TextView
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/appBar"
+            android:background="@color/not_active_icon">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewPosts"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="home"
-                android:textSize="150dp" />
-        </ScrollView>
+                android:layout_height="wrap_content"
+                android:animationCache="true" />
+        </RelativeLayout>
     </RelativeLayout>
 </FrameLayout>

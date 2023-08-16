@@ -11,10 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
+import com.example.h2ak.adapter.DisplayFriendAdapter;
 import com.example.h2ak.adapter.ProfileAdapter;
 import com.example.h2ak.adapter.ProfilePostDisplayAdapter;
 import com.example.h2ak.contract.ProfileActivityContract;
@@ -30,10 +33,11 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
 
     private Button buttonLogout;
     Button btnEditProfile;
-    FirebaseAuth firebaseAuth;
-    RecyclerView recyclerViewProfile, recyclerViewPostImage;
+    RecyclerView recyclerViewProfile, recyclerViewPostImage, recyclerViewFriends;
+    DisplayFriendAdapter friendAdapter;
     ProfileAdapter profileAdapter;
     ProfilePostDisplayAdapter profileDisplayPostAdapter;
+    TextView textViewPostPlaceHolder, textViewFriendsPlaceHolder, textViewFriendsCount, textViewPostCount;
     private ProfileActivityContract.Presenter presenter;
     private ActivityResultLauncher<Intent> editProfileLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -82,9 +86,8 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
                         }
                     }
                 }));
-
-
         presenter.getAllPost();
+        presenter.getFriends();
     }
 
     private void init() {
@@ -92,8 +95,10 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
         //Get views
         btnEditProfile = findViewById(R.id.btnEditProfile);
         buttonLogout = findViewById(R.id.btnlogout);
-        firebaseAuth = FirebaseAuth.getInstance();
-
+        textViewFriendsCount = findViewById(R.id.textViewFriendsCount);
+        textViewPostCount = findViewById(R.id.textViewPostCount);
+        textViewFriendsPlaceHolder = findViewById(R.id.textViewFriendsPlaceHolder);
+        textViewPostPlaceHolder = findViewById(R.id.textViewPostPlaceHolder);
         recyclerViewProfile = findViewById(R.id.recyclerViewProfile);
         recyclerViewProfile.setLayoutManager(new LinearLayoutManager(this));
         profileAdapter = new ProfileAdapter(this);
@@ -105,6 +110,13 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
 
         recyclerViewPostImage.setAdapter(profileDisplayPostAdapter);
         recyclerViewPostImage.setLayoutManager(new GridLayoutManager(this, 3));
+
+        friendAdapter = new DisplayFriendAdapter(this);
+
+        recyclerViewFriends = findViewById(R.id.recyclerViewFriends);
+        recyclerViewFriends.setAdapter(friendAdapter);
+        recyclerViewFriends.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
 
 
         //Edit toolBar
@@ -156,6 +168,27 @@ public class ProfileActivity extends AppCompatActivity implements ProfileActivit
     public void onPostListRecieved(List<Post> postList) {
         if (postList != null && !postList.isEmpty()) {
             profileDisplayPostAdapter.setPostList(postList);
+            textViewPostCount.setText("(" + profileDisplayPostAdapter.getPostList().size() + ")");
+            recyclerViewPostImage.setVisibility(View.VISIBLE);
+            textViewPostPlaceHolder.setVisibility(View.GONE);
+        } else {
+            textViewPostCount.setText("");
+            recyclerViewPostImage.setVisibility(View.GONE);
+            textViewPostPlaceHolder.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onSetFriendsReceived(List<User> friends) {
+        if (friends != null && !friends.isEmpty()) {
+            friendAdapter.setFriends(friends);
+            textViewFriendsCount.setText("("+friends.size()+")");
+            recyclerViewFriends.setVisibility(View.VISIBLE);
+            textViewFriendsPlaceHolder.setVisibility(View.GONE);
+        } else {
+            textViewFriendsCount.setText("");
+            recyclerViewFriends.setVisibility(View.GONE);
+            textViewFriendsPlaceHolder.setVisibility(View.VISIBLE);
         }
     }
 

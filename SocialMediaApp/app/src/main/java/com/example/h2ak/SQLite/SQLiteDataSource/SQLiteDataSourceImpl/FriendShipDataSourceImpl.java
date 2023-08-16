@@ -48,7 +48,6 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
     }
 
 
-    @Override
     public boolean createFriendShipOnFirebaseChange(FriendShip friendShip) {
         db.beginTransaction();
         boolean result = false;
@@ -117,8 +116,13 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE, friendShip.getCreatedDate());
                 contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1, friendShip.getUser1().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2, friendShip.getUser2().getId());
-                firebaseFriendShipDataSource.createFriendShip(friendShip);
-                result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
+
+                if (findFriendShip(friendShip) == null) {
+                    result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
+                    if (result) {
+                        firebaseFriendShipDataSource.createFriendShip(friendShip);
+                    }
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
@@ -147,6 +151,7 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 friendShip.setStatus(c.getString(2));
                 friendShip.setUser1(userDataSource.getUserById(c.getString(3)));
                 friendShip.setUser2(userDataSource.getUserById(c.getString(4)));
+                friendShip.setFriendShipStatus(FriendShip.FriendShipStatus.valueOf(friendShip.getStatus()));
 
             }
         } catch (Exception e) {
@@ -156,9 +161,10 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
     }
 
     @Override
-    public FriendShip findFriendShipFirebase(FriendShip friendShip) {
+    public FriendShip findFriendShip(FriendShip friendShip) {
         FriendShip friendShip1 = null;
-        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP + " WHERE " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? "
+        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP
+                        + " WHERE " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? "
                         + " LIMIT 1 ",
                 new String[]{friendShip.getId()})) {
 
@@ -167,6 +173,7 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 friendShip1.setId(c.getString(0));
                 friendShip1.setCreatedDate(c.getString(1));
                 friendShip1.setStatus(c.getString(2));
+                friendShip1.setFriendShipStatus(FriendShip.FriendShipStatus.valueOf(friendShip1.getStatus()));
                 friendShip1.setUser1(userDataSource.getUserById(c.getString(3)));
                 friendShip1.setUser2(userDataSource.getUserById(c.getString(4)));
                 return friendShip1;
@@ -212,8 +219,11 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 Log.d("updateFriendShip : ", "LOCAL");
                 ContentValues contentValues = new ContentValues();
                 contentValues.put("status", friendShip.getStatus());
-                result = db.update(MySQLiteHelper.TABLE_FRIENDSHIP, contentValues, MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? ",
-                        new String[]{String.valueOf(friendShip.getId())}) > 0;
+
+                if (findFriendShip(friendShip) != null && !findFriendShip(friendShip).equals(friendShip)) {
+                    result = db.update(MySQLiteHelper.TABLE_FRIENDSHIP, contentValues, MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? ",
+                            new String[]{String.valueOf(friendShip.getId())}) > 0;
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
@@ -230,8 +240,9 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
         try (Cursor c = db.rawQuery(
                 "SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP
                         + " WHERE (" + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1 + " = ? OR " + MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2 + " = ?) "
+                        + " AND  " + MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS + " = ? "
                         + " ORDER BY " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " DESC",
-                new String[]{user.getId(), user.getId()}
+                new String[]{user.getId(), user.getId(), FriendShip.FriendShipStatus.ACCEPTED.getStatus()}
         )) {
             while (c.moveToNext()) {
 
@@ -245,12 +256,9 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 friendShip1.setStatus(c.getString(2));
                 friendShip1.setUser1(user1);
                 friendShip1.setUser2(user2);
+                friendShip1.setFriendShipStatus(FriendShip.FriendShipStatus.valueOf(friendShip1.getStatus()));
 
-                // check if the lastest friendship is accepted
-                FriendShip found  = findLastestFriendShip(user1, user2);
-                if (found.equals(friendShip1) && found.getStatus().equals(FriendShip.FriendShipStatus.ACCEPTED.getStatus())) {
-                    friendShipSet.add(found);
-                }
+                friendShipSet.add(friendShip1);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -263,35 +271,29 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
 
         Set<User> mutualFriends = new HashSet<>();
 
-        Set<FriendShip> user1Friends = getAllFriendShipByUser(user1);
-        Set<FriendShip> user2Friends = getAllFriendShipByUser(user2);
+        Set<User> user1Friends = getFriendsByUser(user1);
+        Set<User> user2Friends = getFriendsByUser(user2);
 
+        mutualFriends.addAll(user1Friends);
+
+        mutualFriends.retainAll(user2Friends);
+
+
+        return mutualFriends.stream()
+                .filter(user -> !user.getId().equals(user1.getId()) && !user.getId().equals(user2.getId()))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<User> getFriendsByUser(User user) {
+        Set<FriendShip> user1Friends = getAllFriendShipByUser(user);
         // Get all friends from user1 (include user1)
         Set<User> user1FriendSet = user1Friends.stream()
                 .flatMap(friendShip -> Stream.of(friendShip.getUser1(), friendShip.getUser2()))
                 .collect(Collectors.toSet());
-
-//        user1FriendSet.forEach(user -> Log.d("user1FriendSet: ", user.getEmail()));
-
-        // Get all friends from user 2 (include user2)
-        Set<User> user2FriendSet = user2Friends.stream()
-                .flatMap(friendShip -> Stream.of(friendShip.getUser1(), friendShip.getUser2()))
-                .collect(Collectors.toSet());
-
-//        user2FriendSet.forEach(user -> Log.d("user2FriendSet: ", user.getEmail()));
-
-        // add friends from user1
-        mutualFriends.addAll(user1FriendSet);
-
-//        mutualFriends.forEach(user -> Log.d("mutualFriends: ", user.getEmail()));
-
-        // delete if not any match friends from user1
-        mutualFriends.retainAll(user2FriendSet);
-
-//        mutualFriends.forEach(user -> Log.d("mutualFriends Del: ", user.getEmail()));
-
-        return mutualFriends;
+        return user1FriendSet.stream().filter(user1 -> !user1.getId().equals(user.getId())).collect(Collectors.toSet());
     }
+
     @Override
     public void close() {
         databaseManager.closeDatabase();

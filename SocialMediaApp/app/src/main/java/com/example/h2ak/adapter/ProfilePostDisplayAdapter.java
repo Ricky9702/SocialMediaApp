@@ -2,6 +2,7 @@ package com.example.h2ak.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -56,10 +57,10 @@ public class ProfilePostDisplayAdapter extends RecyclerView.Adapter<ProfilePostD
         // Resize the post image
         int imageSize = calculateImageSize();
         holder.imageViewPostFirstImage.getLayoutParams().width = imageSize;
-        holder.imageViewPostFirstImage.getLayoutParams().height = (int) (imageSize + (imageSize * 0.3));
+        holder.imageViewPostFirstImage.getLayoutParams().height = imageSize + (int)(0.2*imageSize);
 
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.imageViewPostFirstImage.getLayoutParams();
-        layoutParams.setMargins(0, 0, 0, (int) (2 * context.getResources().getDisplayMetrics().density)); // Add vertical spacing
+        layoutParams.setMargins(0, 0, 0, (int) (1 * context.getResources().getDisplayMetrics().density)); // Add vertical spacing
 
         Log.d("TAG", "onBindViewHolder: " + postImagesDataSource.getAllPostImagesByPost(post).size());
 
@@ -83,12 +84,13 @@ public class ProfilePostDisplayAdapter extends RecyclerView.Adapter<ProfilePostD
             Intent intent = new Intent(context, PostActivity.class);
             intent.putExtra("postPosition", position);
             if (params != null) {
-                String id = params.get("id");
+                String id = post.getUser().getId();
                 Log.d("params", "onBindViewHolder: "+ id);
                 String privacy1 = params.get("privacy1");
                 Log.d("params", "onBindViewHolder: "+ privacy1);
                 String privacy2 = params.get("privacy2");
                 Log.d("params", "onBindViewHolder: "+ privacy2);
+                String random = params.get("random");
 
                 if (id != null && !id.isEmpty()) {
                     intent.putExtra("id", id);
@@ -101,6 +103,17 @@ public class ProfilePostDisplayAdapter extends RecyclerView.Adapter<ProfilePostD
                 if (privacy2 != null && !privacy2.isEmpty()) {
                     intent.putExtra("privacy2", privacy2);
                 }
+
+                if (random != null && !random.isEmpty()) {
+                   List<String> listPostId = new ArrayList<>();
+                   this.postList.forEach(post1 -> {
+                       listPostId.add(post1.getId());
+                   });
+
+                   intent.putStringArrayListExtra("listPostId", (ArrayList<String>) listPostId);
+
+                }
+
 
             }
             postActivityLauncher.launch(intent);
@@ -156,7 +169,7 @@ public class ProfilePostDisplayAdapter extends RecyclerView.Adapter<ProfilePostD
         // You can adjust the calculations based on your layout requirements
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         int screenWidth = displayMetrics.widthPixels;
-        int spacing = (int) (3 * displayMetrics.density); // Adjust spacing as needed
+        int spacing = (int) (1 * displayMetrics.density); // Adjust spacing as needed
         int availableWidth = screenWidth - (spacing * (3 - 1));
         int imageSize = availableWidth / 3;
         return imageSize;

@@ -15,7 +15,8 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/appBar">
+            android:layout_below="@id/appBar"
+            android:scrollbars="none">
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -56,7 +57,6 @@
                                 android:drawableLeft="@drawable/baseline_person_add_alt_1_24"
                                 />
                         </LinearLayout>
-
                     </LinearLayout>
                     <View
                         android:layout_width="match_parent"
@@ -64,30 +64,113 @@
                         android:background="@color/not_active_icon"
                         android:layout_below="@+id/linearLayoutProfile"/>
                 </RelativeLayout>
+                <!--                Friends-->
+                <RelativeLayout
+                    android:id="@+id/relativeLayoutFriends"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_below="@+id/relativeLayoutProfileParent"
+                    android:background="?android:colorBackground">
+
+                    <LinearLayout
+                        android:id="@+id/linearLayoutFriends"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/textViewFriends"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Friends"
+                            android:textColor="@color/black"
+                            android:textSize="20dp"/>
+
+                        <TextView
+                            android:id="@+id/textViewFriendsCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="148 (1 mutual)"
+                            android:gravity="center"
+                            android:textColor="@color/facebook_not_active_color"
+                            android:layout_marginLeft="7dp"
+                            android:textSize="19dp" />
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewFriends"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/linearLayoutFriends"
+                        android:layout_marginLeft="2dp"/>
+
+                    <TextView
+                        android:id="@+id/textViewFriendsPlaceHolder"
+                        android:layout_width="wrap_content"
+                        android:layout_height="250dp"
+                        android:layout_centerInParent="true"
+                        android:gravity="center"
+                        android:text="No Friends"
+                        android:textColor="@color/facebook_not_active_color"
+                        android:textSize="32dp" />
+                </RelativeLayout>
+
+                <!--                Post-->
+
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/relativeLayoutProfileParent"
+                    android:layout_below="@+id/relativeLayoutFriends"
                     android:layout_marginTop="10dp"
                     android:background="?android:colorBackground">
 
-                    <TextView
-                        android:id="@+id/textViewPost"
+                    <LinearLayout
+                        android:id="@+id/linearLayoutPost"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Posts"
-                        android:textColor="@color/black"
                         android:layout_marginTop="10dp"
                         android:layout_marginLeft="10dp"
-                        android:textSize="24dp" />
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/textViewPost"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Posts"
+                            android:textColor="@color/black"
+                            android:textSize="20dp"/>
+
+                        <TextView
+                            android:id="@+id/textViewPostCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="(3)"
+                            android:textColor="@color/facebook_not_active_color"
+                            android:layout_marginLeft="7dp"
+                            android:textSize="19dp" />
+
+                    </LinearLayout>
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerViewPostImage"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_below="@+id/textViewPost"
+                        android:layout_below="@+id/linearLayoutPost"
                         android:layout_marginTop="15dp"
                         android:layout_marginLeft="2dp"/>
+
+                    <TextView
+                        android:id="@+id/textViewPostPlaceHolder"
+                        android:layout_width="wrap_content"
+                        android:layout_height="250dp"
+                        android:gravity="center"
+                        android:layout_centerInParent="true"
+                        android:text="No Posts"
+                        android:textColor="@color/facebook_not_active_color"
+                        android:textSize="32dp" />
                 </RelativeLayout>
             </RelativeLayout>
         </ScrollView>

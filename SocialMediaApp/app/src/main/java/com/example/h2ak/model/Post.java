@@ -1,6 +1,7 @@
 package com.example.h2ak.model;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,6 +54,18 @@ public class Post {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Post post = (Post) o;
+        return id.equals(post.id) && content.equals(post.content) && createdDate.equals(post.createdDate) && privacy.equals(post.privacy) && user.equals(post.user);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, content, createdDate, privacy, user);
+    }
 
     public String getId() {
         return id;

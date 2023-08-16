@@ -3,6 +3,7 @@ package com.example.h2ak.contract;
 import com.example.h2ak.model.Inbox;
 
 import java.util.List;
+import java.util.Map;
 
 public interface InboxFragmentContract {
 
@@ -13,6 +14,6 @@ public interface InboxFragmentContract {
     }
 
     interface Presenter{
-        void getListInboxes();
+        void getListInboxes(Map<String, String> params);
     }
 }

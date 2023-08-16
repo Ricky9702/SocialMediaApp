@@ -18,6 +18,7 @@ import com.example.h2ak.model.Post;
 import com.example.h2ak.model.PostImages;
 import com.example.h2ak.presenter.PostActivityPresenter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PostActivity extends AppCompatActivity implements PostActivityContract.View {
@@ -50,6 +51,10 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
                 resultIntent.putExtra("UPDATED", true);
             }
             setResult(RESULT_OK, resultIntent);
+
+            if (postDisplayAdapter.getPostList().isEmpty()) {
+                finish();
+            }
         });
 
         recyclerViewPosts.setAdapter(postDisplayAdapter);
@@ -73,7 +78,6 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
             Log.d("params2", "onBindViewHolder: "+ privacy2);
 
             if (id != null && !id.isEmpty()) {
-
                 // the user is stranger
                 if (privacy2 == null || privacy2.isEmpty()) {
                     presenter.getAllPostByUserIdWithPrivacy(id, privacy1, null);
@@ -83,13 +87,19 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
                 }
                 postDisplayAdapter.setEnableAction(false);
             } else {
-                // this is the current user
-                presenter.getAllPostByUserIdWithPrivacy(null, null, null);
-                postDisplayAdapter.setEnableAction(true);
+                ArrayList<String> imageUrls = getIntent().getStringArrayListExtra("listPostId");
+                if (imageUrls != null && !imageUrls.isEmpty()) {
+                    List<String> listPostId = new ArrayList<>();
+                    listPostId.addAll(imageUrls);
+                    presenter.getPostByListId(listPostId);
+                } else {
+                    presenter.getAllPostByUserIdWithPrivacy(null, null, null);
+                    postDisplayAdapter.setEnableAction(true);
+                }
             }
         }
 
-        // scoll to postion
+        // scrollToPosition
         if (scrollToPosition >= 0) {
             recyclerViewPosts.post(() -> {
                 // Scroll the RecyclerView to the desired position
@@ -127,6 +137,5 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
         } else {
             Log.d("TAG", "onMapPostRecieved: empty ");
         }
-
     }
 }

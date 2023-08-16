@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.fragments.InboxFragment">
+    tools:context=".view.fragments.InboxFragment"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -32,11 +33,103 @@
             android:layout_alignParentRight="true"
             android:textSize="20dp"/>
     </RelativeLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayoutFilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/relativeLayoutInboxAction"
+            android:layout_alignParentLeft="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textViewFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/relativeLayoutInboxAction"
+                android:layout_gravity="center"
+                android:clickable="false"
+                android:text="Filter"
+                android:textSize="20dp" />
+
+            <ImageButton
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:background="@android:color/transparent"
+                android:clickable="false"
+                android:src="@drawable/baseline_filter_alt_24" />
+
+            <Spinner
+                android:id="@+id/spinnerFilter"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="5dp"
+                android:textAlignment="center"
+                android:visibility="invisible" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textLayoutSearch"
+                android:layout_width="120dp"
+                android:layout_height="50dp"
+                android:layout_below="@id/relativeLayoutInboxAction"
+                android:layout_gravity="right"
+                android:background="@android:color/transparent"
+                app:hintAnimationEnabled="false"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/rounded_button"
+                    android:backgroundTint="#f3f2f7"
+                    android:drawableRight="@drawable/baseline_search_24"
+                    android:ellipsize="end"
+                    android:hint="Search"
+                    android:singleLine="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewInbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_below="@+id/relativeLayoutInboxAction"/>
+            android:layout_below="@+id/linearLayoutFilter"/>
+
+        <FrameLayout
+            android:id="@+id/frameLayoutProgressbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:background="?android:colorBackground"
+            android:visibility="gone">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center">
+                <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:layout_gravity="center" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textColor="@color/facebook_not_active_color"
+                    android:textSize="20dp"
+                    android:text="LOADING. . . "/>
+            </LinearLayout>
+        </FrameLayout>
+
     </RelativeLayout>
 </FrameLayout>

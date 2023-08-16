@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
@@ -25,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract.Presenter {
 
@@ -132,9 +135,9 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
     }
 
     @Override
-    public void getAllPostByUserId(String id, String privacy1, String privacy2) {
+    public void getAllPostByUserId(String id) {
         List<Post> postList = new ArrayList<>();
-        postList.addAll(postDataSource.getAllPostByUserIdWithPrivacy(id, privacy1, privacy2));
+        postList.addAll(postDataSource.getAllPostByUserId(id));
         Collections.sort(postList, (post1, post2) -> {
             Date date1 = TextInputLayoutUtils.parseDateFromString(post1.getCreatedDate());
             Date date2 = TextInputLayoutUtils.parseDateFromString(post2.getCreatedDate());
@@ -142,7 +145,17 @@ public class UserProfileAcitivtyPresenter implements UserProfileAcitivtyContract
             // Sorting in descending order (latest items first)
             return date2.compareTo(date1);
         });
+        Log.d("TAG", "getAllPostByUserId: " + postList.size());
         view.onListPostRecieved(postList);
+    }
+
+    @Override
+    public void getFriendsByUserId(String id) {
+        User user = userDataSource.getUserById(id);
+        Set<User> friends = friendShipDataSource.getFriendsByUser(user);
+
+        view.onSetFriendsReceived(friends.stream().filter(user1 -> !user1.getId().equals(user.getId())).collect(Collectors.toList()));
+
     }
 
     private void createNewInbox(User currentUser, User user2) {

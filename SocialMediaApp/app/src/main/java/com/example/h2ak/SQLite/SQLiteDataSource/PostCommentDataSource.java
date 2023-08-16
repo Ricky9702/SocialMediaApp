@@ -2,6 +2,7 @@ package com.example.h2ak.SQLite.SQLiteDataSource;
 
 import com.example.h2ak.model.Post;
 import com.example.h2ak.model.PostComment;
+import com.example.h2ak.model.User;
 
 import org.w3c.dom.Comment;
 
@@ -14,4 +15,5 @@ public interface PostCommentDataSource {
     Set<PostComment> getAllCommentByPost(Post post);
     Set<PostComment> getAllCommentByParent(PostComment comment);
     PostComment getById(String id);
+    PostComment getNewestComment(User user);
 }

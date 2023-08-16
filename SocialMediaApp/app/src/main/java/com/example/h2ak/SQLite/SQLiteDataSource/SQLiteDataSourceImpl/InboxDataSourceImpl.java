@@ -17,7 +17,10 @@ import com.example.h2ak.model.Inbox;
 import com.example.h2ak.model.User;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class InboxDataSourceImpl implements InboxDataSource {
     private SQLiteDatabase db;
@@ -76,11 +79,13 @@ public class InboxDataSourceImpl implements InboxDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive() ? 1 : 0);
                 contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_1, inbox.getUserRecieveRequest().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_2, inbox.getUserSentRequest().getId());
-
-                firebaseInboxDataSource.createInbox(inbox);
-                result = db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
+                if (findInbox(inbox) == null) {
+                    result = db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
+                    if (result) {
+                        firebaseInboxDataSource.createInbox(inbox);
+                    }
+                }
             }
-
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             Log.d("createInbox : ", ex.getMessage());
@@ -90,7 +95,6 @@ public class InboxDataSourceImpl implements InboxDataSource {
         return result;
     }
 
-    @Override
     public boolean createInboxOnFirebaseChange(Inbox inbox) {
         db.beginTransaction();
         boolean result = false;
@@ -124,7 +128,7 @@ public class InboxDataSourceImpl implements InboxDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive() ? 1 : 0);
                 contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_1, inbox.getUserRecieveRequest().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_INBOX_USER_2, inbox.getUserSentRequest().getId());
-                result =  db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
+                result = db.insert(MySQLiteHelper.TABLE_INBOX, null, contentValues) > 0;
                 Log.d("createInbox : ", "LOCAL FIREBASE");
             }
             db.setTransactionSuccessful();
@@ -136,7 +140,6 @@ public class InboxDataSourceImpl implements InboxDataSource {
         return result;
     }
 
-    @Override
     public boolean deleteInboxOnFirebaseChange(String id) {
         db.beginTransaction();
         boolean result = false;
@@ -144,29 +147,32 @@ public class InboxDataSourceImpl implements InboxDataSource {
             Log.d("DeleteInbox : ", "LOCAL FIREBASE");
             result = db.delete(MySQLiteHelper.TABLE_INBOX,
                     MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{id}) > 0;
-        db.setTransactionSuccessful();
+            db.setTransactionSuccessful();
         } catch (Exception exception) {
             exception.printStackTrace();
         } finally {
             db.endTransaction();
         }
-        return  result;
+        return result;
     }
 
     @Override
     public List<Inbox> getAllInboxesByUserId(String id) {
-        List<Inbox> inboxList = new ArrayList<>();
+        Set<Inbox> inboxSet = new HashSet<>();
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_INBOX
                 + " WHERE " + MySQLiteHelper.COLUMN_INBOX_USER_1 + "  = ? ", new String[]{id})) {
-
-            while (c.moveToNext()) {
-                Inbox inbox = getInboxByCursor(c);
-                inboxList.add(inbox);
+            if (c != null) {
+                while (c.moveToNext()) {
+                    Inbox inbox = getInboxByCursor(c);
+                    if (inbox != null) {
+                        inboxSet.add(inbox);
+                    }
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return inboxList;
+        return inboxSet.stream().collect(Collectors.toList());
     }
 
     @Override
@@ -175,7 +181,7 @@ public class InboxDataSourceImpl implements InboxDataSource {
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_INBOX
                 + " WHERE " + MySQLiteHelper.COLUMN_INBOX_USER_1 + " = ? AND " + MySQLiteHelper.COLUMN_INBOX_USER_2 + " = ?  OR "
                 + MySQLiteHelper.COLUMN_INBOX_USER_1 + " = ? AND " + MySQLiteHelper.COLUMN_INBOX_USER_2 + " = ? "
-                + " ORDER BY " + MySQLiteHelper.COLUMN_INBOX_ID + " DESC "
+                + " ORDER BY " + MySQLiteHelper.COLUMN_INBOX_CREATED_DATE + " DESC "
                 + " LIMIT 1", new String[]{userId1, userId2, userId2, userId1})) {
 
             if (c.moveToFirst()) {
@@ -186,12 +192,14 @@ public class InboxDataSourceImpl implements InboxDataSource {
     }
 
     @Override
-    public Inbox findInboxOnFirebaseChange(Inbox inbox) {
+    public Inbox findInbox(Inbox inbox) {
         Inbox inbox1 = null;
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_INBOX
                 + " WHERE " + MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()})) {
-            if (c.moveToFirst()) {
-               inbox1 = this.getInboxByCursor(c);
+            if (c != null && c.moveToFirst()) {
+                if (getInboxByCursor(c) != null) {
+                    inbox1 = getInboxByCursor(c);
+                }
             }
         }
         return inbox1;
@@ -203,9 +211,13 @@ public class InboxDataSourceImpl implements InboxDataSource {
         boolean result = false;
         try {
             Log.d("DeleteInbox : ", "LOCAL");
-            firebaseInboxDataSource.deleteInbox(inbox);
-            result = db.delete(MySQLiteHelper.TABLE_INBOX,
-                    MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()}) > 0;
+            if (findInbox(inbox) != null) {
+                result = db.delete(MySQLiteHelper.TABLE_INBOX,
+                        MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()}) > 0;
+                if (result) {
+                    firebaseInboxDataSource.deleteInbox(inbox);
+                }
+            }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
             Log.d("deleteInbox", exception.getMessage());
@@ -224,19 +236,22 @@ public class InboxDataSourceImpl implements InboxDataSource {
             ContentValues contentValues = new ContentValues();
             contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_ACTIVE, inbox.isActive());
             contentValues.put(MySQLiteHelper.COLUMN_INBOX_IS_READ, inbox.isRead());
-            firebaseInboxDataSource.updateInbox(inbox);
-            result = db.update(MySQLiteHelper.TABLE_INBOX, contentValues,
-                    MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()}) > 0;
+            if (findInbox(inbox) != null && !findInbox(inbox).equals(inbox)) {
+                result = db.update(MySQLiteHelper.TABLE_INBOX, contentValues,
+                        MySQLiteHelper.COLUMN_INBOX_ID + " = ? ", new String[]{inbox.getId()}) > 0;
+                if (result) {
+                    firebaseInboxDataSource.updateInbox(inbox);
+                }
+            }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             Log.d("updateInbox", ex.getMessage());
         } finally {
             db.endTransaction();
         }
-       return result;
+        return result;
     }
 
-    @Override
     public boolean updateInboxOnFirebaseChange(Inbox inbox) {
         db.beginTransaction();
         boolean result = false;
@@ -274,9 +289,10 @@ public class InboxDataSourceImpl implements InboxDataSource {
         inbox.setContent(c.getString(content));
         inbox.setType(c.getString(type));
         inbox.setRead(c.getInt(isRead) == 1);
-        inbox.setActive(c.getInt(isActive)==1);
+        inbox.setActive(c.getInt(isActive) == 1);
         inbox.setUserRecieveRequest(userDataSource.getUserById(c.getString(user1)));
         inbox.setUserSentRequest(userDataSource.getUserById(c.getString(user2)));
+        inbox.setInboxType(Inbox.InboxType.valueOf(inbox.getType()));
 
         return inbox;
     }

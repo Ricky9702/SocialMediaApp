@@ -1,12 +1,21 @@
 package com.example.h2ak.adapter;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -15,20 +24,29 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
+import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.InboxPostDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentReactionDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxPostDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentReactionDataSourceImpl;
+import com.example.h2ak.model.Inbox;
+import com.example.h2ak.model.InboxPost;
 import com.example.h2ak.model.PostComment;
 import com.example.h2ak.model.PostCommentReaction;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.example.h2ak.view.activities.UserProfileActivity;
+import com.google.android.material.textfield.TextInputEditText;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.ArrayList;
@@ -36,6 +54,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
@@ -44,13 +64,18 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private Context context;
     private PostCommentDataSource postCommentDataSource;
     private PostCommentReactionDataSource postCommentReactionDataSource;
+    private InboxDataSource inboxDataSource;
+    private InboxPostDataSource inboxPostDataSource;
     private ViewGroup parent;
+    private boolean isChild = false;
 
     public CommentAdapter(Context context) {
         postCommentList = new ArrayList<>();
         this.context = context;
         postCommentDataSource = PostCommentDataSourceImpl.getInstance(context);
         postCommentReactionDataSource = PostCommentReactionDataSourceImpl.getInstance(context);
+        inboxDataSource = InboxDataSourceImpl.getInstance(context);
+        inboxPostDataSource = InboxPostDataSourceImpl.getInstance(context);
     }
 
 
@@ -94,7 +119,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         });
 
         holder.imageViewProfileAvatar.setOnClickListener(view -> {
-            holder.textViewProfileName.performLongClick();
+            holder.textViewProfileName.performClick();
         });
 
         User postUser = comment.getPost().getUser();
@@ -120,6 +145,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                                         notifyItemRemoved(actualPosition);
                                         notifyItemRangeChanged(actualPosition, postCommentList.size());
                                         Toast.makeText(context, "Delete comment successfully!!", Toast.LENGTH_SHORT).show();
+
+                                        Set<PostComment> childSet = postCommentDataSource.getAllCommentByParent(comment);
+                                        Log.d(TAG, "childSet: " + childSet.size());
+                                        if (!childSet.isEmpty()) {
+                                            childSet.forEach(postComment -> {
+                                                if (postCommentDataSource.delete(postComment))
+                                                    Log.d(TAG, "Delete comment child successfully!!: ");
+                                                else Log.d(TAG, "Delete comment child failed!!: ");
+                                            });
+                                        }
                                     } else {
                                         Log.d(TAG, "delete: failed");
                                         Toast.makeText(context, "Delete comment failed!!", Toast.LENGTH_SHORT).show();
@@ -165,7 +200,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                                     if (postCommentDataSource.update(comment)) {
                                         Log.d(TAG, "update: success");
                                         Toast.makeText(context, "Update content successfully!!", Toast.LENGTH_SHORT).show();
-                                        notifyItemChanged(holder.getAdapterPosition());
+                                        notifyItemChanged(0);
                                         notifyItemRangeChanged(0 , holder.getAdapterPosition());
                                     } else {
                                         Log.d(TAG, "update: failed");
@@ -189,6 +224,17 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                                         notifyItemRemoved(actualPosition);
                                         notifyItemRangeChanged(actualPosition, postCommentList.size());
                                         Toast.makeText(context, "Delete comment successfully!!", Toast.LENGTH_SHORT).show();
+
+                                        Set<PostComment> childSet = postCommentDataSource.getAllCommentByParent(comment);
+                                        Log.d(TAG, "childSet: " + childSet.size());
+                                        if (!childSet.isEmpty()) {
+                                            childSet.forEach(postComment -> {
+                                                if (postCommentDataSource.delete(postComment))
+                                                    Log.d(TAG, "Delete comment child successfully!!: ");
+                                                else Log.d(TAG, "Delete comment child failed!!: ");
+                                            });
+                                        }
+
                                     } else {
                                         Log.d(TAG, "delete: failed");
                                         Toast.makeText(context, "Delete comment failed!!", Toast.LENGTH_SHORT).show();
@@ -240,6 +286,19 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                 if (postCommentReactionDataSource.create(like)) {
                     Log.d(TAG, "postCommentReactionDataSource: create success");
                     this.notifyItemChanged(holder.getAdapterPosition());
+
+                    if (!like.getUser().getId().equals(comment.getUser().getId())) {
+                        String message = Inbox.REACTION_COMMENT_MESSAGE.replace("{{senderName}}", like.getUser().getName());
+                        Inbox inbox = new Inbox(message, Inbox.InboxType.POST_MESSAGE, comment.getUser(), like.getUser());
+                        if (inboxDataSource.createInbox(inbox)) {
+                            InboxPost inboxPost = new InboxPost();
+                            inboxPost.setId(inbox.getId());
+                            inboxPost.setPost(like.getPostComment().getPost());
+                            inboxPostDataSource.create(inboxPost);
+                            Log.d("Create inbox reaction comment post", "onBindViewHolder: success");
+                        }
+                        else Log.d("Create inbox reaction comment post", "onBindViewHolder: failed");
+                    }
                 } else { Log.d(TAG, "postCommentReactionDataSource: create failed");}
             } else  { // the user has reaction
                 if (postCommentReaction.getType().equals(PostCommentReaction.CommentReactionType.LIKE.getType())) {
@@ -289,12 +348,146 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         // add reply comment
         List<PostComment> listCommentChild = new ArrayList<>();
         listCommentChild.addAll(postCommentDataSource.getAllCommentByParent(comment));
-        holder.textViewCommentChildSize.setText(listCommentChild.size() > 0 ? listCommentChild.size() + " replies" : "asdasd");
+
+        if (!listCommentChild.isEmpty()) {
+            holder.textViewCommentChildSize.setVisibility(View.VISIBLE);
+            holder.textViewCommentChildSize.setText(listCommentChild.size() + " replies");
+        }
+
+        if (isChild) {
+            holder.textViewCommentChildSize.setVisibility(View.GONE);
+            holder.btnCommentReply.setVisibility(View.GONE);
+        }
 
         holder.textViewCommentChildSize.setOnClickListener(view -> {
             View childLayout = LayoutInflater.from(context).inflate(R.layout.custom_post_comment_child, parent, false);
-            View parentComment = childLayout.findViewById(R.id.custom_post_comment_item);
-//            onBindViewHolder(test, holder.getAdapterPosition());
+
+            RecyclerView recyclerViewParent = childLayout.findViewById(R.id.recyclerViewParent);
+
+            recyclerViewParent.setLayoutManager(new LinearLayoutManager(context));
+
+            CommentAdapter commentAdapter = new CommentAdapter(context);
+
+            recyclerViewParent.setAdapter(commentAdapter);
+
+            List<PostComment> parent = new ArrayList<>();
+            parent.add(comment);
+
+            commentAdapter.setChild(true);
+            commentAdapter.setPostCommentList(parent);
+
+            Dialog dialog = new Dialog(context);
+            dialog.setContentView(childLayout);
+            dialog.show();
+
+            dialog.setOnDismissListener(dialogInterface -> {
+                notifyItemChanged(holder.getAdapterPosition());
+            });
+
+            Rect displayRectangle = new Rect();
+
+            Window window = dialog.getWindow();
+
+            window.getDecorView().getWindowVisibleDisplayFrame(displayRectangle);
+
+            dialog.getWindow().setLayout((int) (displayRectangle.width()), (int) (displayRectangle.height()));
+
+            ImageButton btnSend = childLayout.findViewById(R.id.btnSend);
+            btnSend.setEnabled(false);
+            TextInputEditText editTextComment = childLayout.findViewById(R.id.editTextComment);
+
+            editTextComment.setOnFocusChangeListener((v, b) -> {
+                if (b) {
+                    dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                }
+            });
+
+            editTextComment.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    String content = editTextComment.getText().toString().trim();
+                    if (content == null || content.isEmpty()) {
+                        btnSend.setEnabled(false);
+                        btnSend.setImageDrawable(context.getDrawable(R.drawable.baseline_send_not_active24));
+                    } else {
+                        btnSend.setEnabled(true);
+                        btnSend.setImageDrawable(context.getDrawable(R.drawable.baseline_send_active_24));
+                    }
+                }
+            });
+
+
+            // create comment child
+
+            RecyclerView recyclerViewComments = childLayout.findViewById(R.id.recyclerViewComments);
+
+            recyclerViewComments.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+
+            CommentAdapter childCommentsAdapter = new CommentAdapter(context);
+
+            childCommentsAdapter.setChild(true);
+            childCommentsAdapter.setPostCommentList(listCommentChild);
+
+            recyclerViewComments.setAdapter(childCommentsAdapter);
+
+            btnSend.setOnClickListener(view1 -> {
+                String content = editTextComment.getText().toString().trim();
+
+                if (content != null && !content.isEmpty()) {
+                    PostComment postComment = new PostComment(content, MyApp.getInstance().getCurrentUser(), comment.getPost());
+                    postComment.setParent(comment);
+                    if (postCommentDataSource.create(postComment)) {
+
+                        // hide keyboard
+                        InputMethodManager imm = (InputMethodManager) ((Activity)context).getSystemService(Activity.INPUT_METHOD_SERVICE);
+                        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+                        recyclerViewComments.scrollToPosition(0);
+
+                        Log.d("childCommentsAdapter", "create comment: success");
+                        editTextComment.setText("");
+                        editTextComment.clearFocus();
+                        childCommentsAdapter.addPostComment(postComment);
+
+                        if (!postComment.getUser().getId().equals(comment.getUser().getId())) {
+                            String message = Inbox.REPLY_COMMENT_MESSAGE.replace("{{senderName}}", postComment.getUser().getName());
+                            Inbox inbox = new Inbox(message, Inbox.InboxType.POST_MESSAGE, comment.getUser(), postComment.getUser());
+                            if (inboxDataSource.createInbox(inbox)) {
+                                InboxPost inboxPost = new InboxPost();
+                                inboxPost.setId(inbox.getId());
+                                inboxPost.setPost(postComment.getPost());
+                                inboxPostDataSource.create(inboxPost);
+                                Log.d("Create reaction comment post", "onBindViewHolder: success");
+                            }
+                            else Log.d("Create reaction comment post", "onBindViewHolder: failed");
+                        }
+
+                    } else { Log.d("childCommentsAdapter", "create comment: failed"); }
+                }
+
+            });
+
+            Toolbar toolbar = childLayout.findViewById(R.id.toolBar);
+            toolbar.setTitle("Replies");
+            toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
+            toolbar.setBackgroundColor(Color.parseColor("#FFFBFE"));
+            toolbar.setNavigationOnClickListener(view1 -> {
+                dialog.dismiss();
+            });
+
+        });
+
+        holder.btnCommentReply.setOnClickListener(view -> {
+            holder.textViewCommentChildSize.performClick();
         });
 
     }
@@ -326,9 +519,22 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
 
     public void setPostCommentList(List<PostComment> postCommentList) {
-        this.postCommentList = postCommentList;
 
-        Collections.sort(postCommentList, (post1, post2) -> {
+        // check if not child, then only display parent comments
+
+        if (!isChild) {
+            postCommentList.forEach(postComment -> {
+                if (postComment.getParent() == null) {
+                    Log.d(TAG, "setPostCommentList: X2 "+postComment.getContent()+"");
+                    this.postCommentList.add(postComment);
+                }
+            });
+        } else {
+            this.postCommentList = postCommentList;
+        }
+
+
+        Collections.sort(this.postCommentList, (post1, post2) -> {
             Date date1 = TextInputLayoutUtils.parseDateFromString(post1.getCreatedDate());
             Date date2 = TextInputLayoutUtils.parseDateFromString(post2.getCreatedDate());
 
@@ -336,6 +542,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             return date2.compareTo(date1);
         });
         this.notifyDataSetChanged();
+    }
+
+    public boolean isChild() {
+        return isChild;
+    }
+
+    public void setChild(boolean child) {
+        isChild = child;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -358,6 +572,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             btnAction = itemView.findViewById(R.id.btnAction);
             btnAction.setVisibility(View.GONE);
             btnAction.setEnabled(false);
+
+            textViewCommentChildSize.setVisibility(View.GONE);
         }
 
     }

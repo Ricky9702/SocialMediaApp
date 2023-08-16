@@ -21,6 +21,8 @@ import android.widget.Toast;
 
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.adapter.PostPreviewAdapter;
 import com.example.h2ak.adapter.SpinnerGenderAdapter;
 import com.example.h2ak.contract.CreatePostChooseContentFragmentContract;
@@ -28,6 +30,7 @@ import com.example.h2ak.model.Post;
 import com.example.h2ak.model.PostImages;
 import com.example.h2ak.presenter.CreatePostChooseContentFragmentPresenter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,22 +55,25 @@ public class CreatePostChooseContentFragment extends Fragment implements CreateP
         postAdapter = new PostPreviewAdapter(this.getContext());
         recyclerViewPreviewPost.setLayoutManager(new LinearLayoutManager(this.getContext()));
 
+
         post = new Post("", MyApp.getInstance().getCurrentUser(), Post.PostPrivacy.PUBLIC);
         postAdapter.setPost(post, true);
 
         ArrayList<String> imageUrls = getArguments().getStringArrayList("imageUrls");
 
         List<PostImages> postImagesList = new ArrayList<>();
+        int count = 0;
         for (String url : imageUrls) {
-            long currentTimeMillis = System.currentTimeMillis();
 
             PostImages postImages = new PostImages(url, post);
 
-            String newCreatedDate = postImages.getCreatedDate() + "_" + currentTimeMillis;
+            String newCreatedDate = postImages.getCreatedDate() + "_" + count;
 
             postImages.setCreatedDate(newCreatedDate);
 
             postImagesList.add(postImages);
+
+            ++count;
         }
 
         postAdapter.setPostImages(postImagesList);

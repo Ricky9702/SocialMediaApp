@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/relativeLayoutParent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:padding="5dp">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="15dp"
+        android:elevation="10dp"
+        android:clickable="false">
+        <ImageView
+            android:id="@+id/imageViewFriendAvatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/baseline_avatar_place_holder"
+            android:background="@color/not_active_icon"
+            android:scaleType="centerCrop"
+            android:clickable="false" />
+    </androidx.cardview.widget.CardView>
+    <TextView
+        android:id="@+id/textViewFriendName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/cardView"
+        android:layout_marginTop="5dp"
+        android:textColor="@color/black"
+        android:text="An Khuong"
+        android:textSize="15dp"
+        android:clickable="false"/>
+
+    <TextView
+        android:id="@+id/textViewMutualFriends"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textViewFriendName"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/facebook_not_active_color"
+        android:text="1 mutal friends"
+        android:textSize="13dp"
+        android:clickable="false"/>
+
+</RelativeLayout>

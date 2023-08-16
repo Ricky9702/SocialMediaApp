@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class InboxFragmentPresenter implements InboxFragmentContract.Presenter {
 
@@ -31,7 +33,7 @@ public class InboxFragmentPresenter implements InboxFragmentContract.Presenter {
     }
 
     @Override
-    public void getListInboxes() {
+    public void getListInboxes(Map<String, String> params) {
         List<Inbox> inboxList =
                 inboxDataSource.getAllInboxesByUserId(firebaseAuth.getCurrentUser().getUid());
         Log.d("InboxPresenter", inboxList.size() + "");
@@ -44,7 +46,20 @@ public class InboxFragmentPresenter implements InboxFragmentContract.Presenter {
             return date2.compareTo(date1);
         });
 
-        view.onListInboxesRecieved(inboxList);
+        if (params != null) {
+            String kw = params.get("kw");
+            if (kw != null && !kw.isEmpty()) {
+                if (kw.equals("ALL")) {
+                    view.onListInboxesRecieved(inboxList);
+                } else {
+                    view.onListInboxesRecieved(inboxList.stream()
+                            .filter(inbox -> inbox.getType().equals(kw)).collect(Collectors.toList()));
+                }
+            }
+        } else {
+            view.onListInboxesRecieved(inboxList);
+        }
+
     }
 
     private Date parseDateFromString(String dateString) {

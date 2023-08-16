@@ -56,58 +56,52 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
             firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
             firebaseDataSync = FirebaseDataSync.getInstance(this);
 
-            firebaseDataSync.syncUser(new FirebaseDataSync.OnDataChangeListener() {
-                @Override
-                public void onDataChange() {
-                    if (currentActivity instanceof BaseMenuActivity) {
+            firebaseDataSync.syncPostComment();
+            firebaseDataSync.syncInboxPost();
+            firebaseDataSync.syncPost();
+            firebaseDataSync.syncPostReaction();
 
-                        // if current fragment is friend list
-                        Fragment fragment = ((BaseMenuActivity) currentActivity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+            firebaseDataSync.syncUser(() -> {
+                if (currentActivity instanceof BaseMenuActivity) {
 
-                        // update current friend list ui
-                        if (fragment instanceof FriendFragment) {
-                            ((FriendFragment) fragment).getPresenter().getFriendList();
-                        }
+                    // if current fragment is friend list
+                    Fragment fragment = ((BaseMenuActivity) currentActivity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+
+                    // update current friend list ui
+                    if (fragment instanceof FriendFragment) {
+                        ((FriendFragment) fragment).getPresenter().getFriendList();
                     }
                 }
             });
 
-            firebaseDataSync.syncFriendShip(new FirebaseDataSync.OnDataChangeListener() {
-                @Override
-                public void onDataChange() {
-                    // update current friend fragment ui
-                    if (currentActivity instanceof BaseMenuActivity) {
+            firebaseDataSync.syncFriendShip(() -> {
+                // update current friend fragment ui
+                if (currentActivity instanceof BaseMenuActivity) {
 
-                        // if current fragment is friend list
-                        Fragment fragment = ((BaseMenuActivity) currentActivity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+                    // if current fragment is friend list
+                    Fragment fragment = ((BaseMenuActivity) currentActivity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
 
-                        // update current friend list ui
-                        if (fragment instanceof FriendFragment) {
-                            ((FriendFragment) fragment).getPresenter().getFriendList();
-                        }
+                    // update current friend list ui
+                    if (fragment instanceof FriendFragment) {
+                        ((FriendFragment) fragment).getPresenter().getFriendList();
                     }
                 }
             });
 
-            firebaseDataSync.syncInbox(new FirebaseDataSync.OnDataChangeListener() {
-                @Override
-                public void onDataChange() {
-                    if (currentActivity instanceof BaseMenuActivity) {
-                        ((BaseMenuActivity) currentActivity).getPresenter().loadingListInboxUnRead();
+            firebaseDataSync.syncInbox(() -> {
+                if (currentActivity instanceof BaseMenuActivity) {
+                    ((BaseMenuActivity) currentActivity).getPresenter().loadingListInboxUnRead();
 
-                        // if current fragment is inbox
-                        Fragment fragment = ((BaseMenuActivity) currentActivity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
+                    // if current fragment is inbox
+                    Fragment fragment = ((BaseMenuActivity) currentActivity).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
 
-                        // update current inbox ui
-                        if (fragment instanceof InboxFragment) {
-                            ((InboxFragment) fragment).getPresenter().getListInboxes();
-                        }
+                    // update current inbox ui
+                    if (fragment instanceof InboxFragment) {
+                        ((InboxFragment) fragment).getPresenter().getListInboxes(((InboxFragment) fragment).getParams());
                     }
                 }
             });
 
-            this.currentUserId = this.getCurrentUserId();
-            this.currentUser = userDataSource.getUserById(currentUserId);
         }
     }
 
@@ -119,6 +113,11 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     public void onActivityResumed(@NonNull Activity activity) {
         this.setCurrentActivity(activity);
         if (!(this.getCurrentActivity() instanceof LoginActivity) && !(this.getCurrentActivity() instanceof RegisterActivity)) {
+
+            if (getCurrentUser() == null) {
+                getCurrentUser();
+            }
+
             isAppInForeground = true;
             if (getCurrentUser() != null) {
                 offlineHandler.removeCallbacksAndMessages(null);
@@ -173,10 +172,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     }
 
     public User getCurrentUser() {
-        if (currentUser != null) {
-            Log.d("currentUser", currentUser.getName());
-        }
-        return currentUser;
+        return userDataSource.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid());
     }
 
     public void setCurrentUser(User currentUser) {

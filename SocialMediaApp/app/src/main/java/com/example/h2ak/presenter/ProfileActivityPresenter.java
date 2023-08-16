@@ -3,7 +3,9 @@ package com.example.h2ak.presenter;
 import android.content.Context;
 
 import com.example.h2ak.MyApp;
+import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSourceImpl;
 import com.example.h2ak.contract.ProfileActivityContract;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
@@ -20,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ProfileActivityPresenter implements ProfileActivityContract.Presenter {
 
@@ -27,6 +31,7 @@ public class ProfileActivityPresenter implements ProfileActivityContract.Present
     private UserDataSource userDataSource;
     private FirebaseAuth firebaseAuth;
     private PostDataSource postDataSource;
+    private FriendShipDataSource friendShipDataSource;
     Context context;
 
     public ProfileActivityPresenter(Context context, ProfileActivityContract.View view) {
@@ -35,6 +40,7 @@ public class ProfileActivityPresenter implements ProfileActivityContract.Present
         firebaseAuth = FirebaseAuth.getInstance();
         this.context = context;
         postDataSource = PostDataSourceImpl.getInstance(context);
+        friendShipDataSource = FriendShipDataSourceImpl.getInstance(context);
     }
 
 
@@ -56,5 +62,14 @@ public class ProfileActivityPresenter implements ProfileActivityContract.Present
             return date2.compareTo(date1);
         });
         view.onPostListRecieved(postList);
+    }
+
+    @Override
+    public void getFriends() {
+        User user = userDataSource.getUserById(MyApp.getInstance().getCurrentUserId());
+        Set<User> friends = friendShipDataSource.getFriendsByUser(user);
+
+        view.onSetFriendsReceived(friends.stream().filter(user1 -> !user1.getId().equals(user.getId())).collect(Collectors.toList()));
+
     }
 }

@@ -11,14 +11,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.h2ak.Firebase.FirebaseDataSync;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
+import com.example.h2ak.adapter.DisplayFriendAdapter;
 import com.example.h2ak.adapter.ProfileAdapter;
 import com.example.h2ak.adapter.ProfilePostDisplayAdapter;
 import com.example.h2ak.contract.UserProfileAcitivtyContract;
@@ -30,17 +33,20 @@ import com.example.h2ak.presenter.UserProfileAcitivtyPresenter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class UserProfileActivity extends AppCompatActivity implements UserProfileAcitivtyContract.View {
     Toolbar toolBar;
-    RecyclerView recyclerViewProfile, recyclerViewPostImage;
+    RecyclerView recyclerViewProfile, recyclerViewPostImage, recyclerViewFriends;
+    DisplayFriendAdapter friendAdapter;
     ProfileAdapter profileAdapter;
     ProfilePostDisplayAdapter profileDisplayPostAdapter;
+    TextView textViewPostPlaceHolder, textViewFriendsPlaceHolder, textViewFriendsCount, textViewPostCount;
     Button btnAddFriend;
     ProgressBar progressBar;
     private UserProfileAcitivtyContract.Presenter presenter;
     private String id;
-    private Map<String, String> params = new HashMap<>();
+    private Map<String, String> params;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +56,10 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
         // init views
         btnAddFriend = findViewById(R.id.btnAddFriend);
         progressBar = findViewById(R.id.progressBar);
+        textViewFriendsCount = findViewById(R.id.textViewFriendsCount);
+        textViewPostCount = findViewById(R.id.textViewPostCount);
+        textViewPostPlaceHolder = findViewById(R.id.textViewPostPlaceHolder);
+        textViewFriendsPlaceHolder = findViewById(R.id.textViewFriendsPlaceHolder);
 
 
         //Edit toolBar
@@ -76,8 +86,6 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
         recyclerViewPostImage.setLayoutManager(new GridLayoutManager(this, 3));
 
 
-
-
         profileDisplayPostAdapter.setPostActivityLauncher(registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
@@ -92,12 +100,20 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
             onBackPressed();
             finish();
         });
+
+        recyclerViewFriends = findViewById(R.id.recyclerViewFriends);
+        friendAdapter = new DisplayFriendAdapter(this);
+        recyclerViewFriends.setAdapter(friendAdapter);
+        recyclerViewFriends.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+
+        params = new HashMap<>();
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
         // Get the user id from previous activity
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("USER_ID")) {
@@ -107,12 +123,11 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
                 startActivity(new Intent(this, ProfileActivity.class));
                 finish();
             }
-
             params.put("id", id);
             params.put("privacy1", Post.PostPrivacy.PUBLIC.getPrivacy());
             getPresenter().getUserById(id);
-            presenter.getAllPostByUserId(id, Post.PostPrivacy.PUBLIC.getPrivacy(), null);
-            profileDisplayPostAdapter.setParams(params);
+            presenter.getFriendsByUserId(id);
+            presenter.getAllPostByUserId(id);
         }
     }
 
@@ -126,7 +141,6 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
                 Drawable drawableLeft = ContextCompat.getDrawable(this, R.drawable.baseline_schedule_send_24);
 
                 btnAddFriend.setCompoundDrawablesWithIntrinsicBounds(drawableLeft, null, null, null);
-
 
             } else if (status.equals(FriendShip.FriendShipStatus.DELETED.getStatus())) {
                 btnAddFriend.setText("Add Friend");
@@ -143,17 +157,13 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
                 btnAddFriend.setCompoundDrawablesWithIntrinsicBounds(drawableLeft, null, null, null);
 
                 params.put("privacy2", Post.PostPrivacy.FRIENDS.getPrivacy());
-
-                presenter.getAllPostByUserId(id, Post.PostPrivacy.PUBLIC.getPrivacy(), Post.PostPrivacy.FRIENDS.getPrivacy());
-
             }
         }
-        profileDisplayPostAdapter.setParams(params);
-
     }
 
     @Override
     public void onUserRecieved(User user) {
+        friendAdapter.setCurrentUser(user);
         profileAdapter.setCurrentUser(user);
         profileAdapter.onReload();
 
@@ -182,7 +192,44 @@ public class UserProfileActivity extends AppCompatActivity implements UserProfil
     @Override
     public void onListPostRecieved(List<Post> postList) {
         if (postList != null && !postList.isEmpty()) {
-            profileDisplayPostAdapter.setPostList(postList);
+
+            Log.d("USERPROFILEACTIVITY", "params: " + params.get("id"));
+            Log.d("USERPROFILEACTIVITY", "params: " + params.get("privacy1"));
+            Log.d("USERPROFILEACTIVITY", "params: " + params.get("privacy2"));
+
+            if (params.get("privacy2") != null) {
+                profileDisplayPostAdapter.setPostList(postList.stream()
+                        .filter(post -> !post.getPrivacy().equals(Post.PostPrivacy.ONLY_ME.getPrivacy())).collect(Collectors.toList()));
+            }  else {
+                profileDisplayPostAdapter.setPostList(postList.stream()
+                        .filter(post -> post.getPrivacy().equals(Post.PostPrivacy.PUBLIC.getPrivacy())).collect(Collectors.toList()));
+            }
+
+            profileDisplayPostAdapter.setParams(this.params);
+
+            Log.d("TAG", "onListPostRecieved: " + profileDisplayPostAdapter.getPostList().size());
+            textViewPostCount.setText("(" + profileDisplayPostAdapter.getPostList().size() + ")");
+
+            recyclerViewPostImage.setVisibility(View.VISIBLE);
+            textViewPostPlaceHolder.setVisibility(View.GONE);
+        } else {
+            textViewPostCount.setText("");
+            recyclerViewPostImage.setVisibility(View.GONE);
+            textViewPostPlaceHolder.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onSetFriendsReceived(List<User> friends) {
+        if (friends != null && !friends.isEmpty()) {
+            friendAdapter.setFriends(friends);
+            textViewFriendsCount.setText("(" + friends.size() + ")");
+            recyclerViewFriends.setVisibility(View.VISIBLE);
+            textViewFriendsPlaceHolder.setVisibility(View.GONE);
+        } else {
+            textViewFriendsCount.setText("");
+            recyclerViewFriends.setVisibility(View.GONE);
+            textViewFriendsPlaceHolder.setVisibility(View.VISIBLE);
         }
     }
 

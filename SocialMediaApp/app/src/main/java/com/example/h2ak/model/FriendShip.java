@@ -33,7 +33,14 @@ public class FriendShip {
 
     @Override
     public String toString() {
-        return String.format("%s%s%s", this.createdDate.trim(), this.user1.getId(), this.user2.getId()).trim();
+        return "FriendShip{" +
+                "id='" + id + '\'' +
+                ", user1=" + user1.getId() +
+                ", user2=" + user2.getId() +
+                ", createdDate='" + createdDate + '\'' +
+                ", status='" + status + '\'' +
+                ", friendShipStatus=" + friendShipStatus +
+                '}';
     }
 
     @Override
@@ -41,13 +48,14 @@ public class FriendShip {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FriendShip that = (FriendShip) o;
-        return id.equals(that.id) && user1.equals(that.user1) && user2.equals(that.user2) && createdDate.equals(that.createdDate) && status.equals(that.status) && friendShipStatus == that.friendShipStatus;
+        return id.equals(that.id) && user1.getId().equals(that.user1.getId()) && user2.getId().equals(that.user2.getId()) && createdDate.equals(that.createdDate) && status.equals(that.status) && friendShipStatus == that.friendShipStatus;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, user1, user2, createdDate, status, friendShipStatus);
     }
+
 
     public String getId() {
         return id;

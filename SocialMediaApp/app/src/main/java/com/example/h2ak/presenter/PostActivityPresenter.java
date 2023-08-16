@@ -65,6 +65,17 @@ public class PostActivityPresenter implements PostActivityContract.Presenter {
         view.onListPostRecieved(postList);
     }
 
+    @Override
+    public void getPostByListId(List<String> list) {
+        List<Post> postList = new ArrayList<>();
+        list.forEach(id -> {
+            if(postDataSource.findPost(id) != null) {
+                postList.add(postDataSource.findPost(id));
+            }
+        });
+        view.onListPostRecieved(postList);
+    }
+
     private Date parseDateFromString(String dateString) {
         try {
             return TextInputLayoutUtils.simpleDateFormat.parse(dateString);

@@ -148,16 +148,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/relativeLayoutParentPostContentImage"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="5dp"
         android:layout_marginEnd="5dp"
         android:layout_marginBottom="5dp"
-        android:padding="10dp">
+        android:paddingLeft="10dp"
+        android:clickable="false">
 
         <TextView
             android:id="@+id/textViewPostStatsLike"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:text="391 Likes"
             android:gravity="center"
             android:textColor="@color/black"
@@ -166,9 +165,10 @@
         <TextView
             android:id="@+id/textViewPostStatsComment"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="15dp"
             android:text="18 comments"
+            android:gravity="center"
             android:textColor="@color/black"
             android:textSize="15dp" />
     </LinearLayout>

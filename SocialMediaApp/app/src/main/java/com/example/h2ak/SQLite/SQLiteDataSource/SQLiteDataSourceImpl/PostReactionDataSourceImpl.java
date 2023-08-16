@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebasePostReactionDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebasePostReactionDataSource;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.DatabaseManager;
 import com.example.h2ak.SQLite.MySQLiteHelper;
@@ -28,12 +30,14 @@ public class PostReactionDataSourceImpl implements PostReactionDataSource {
     private String currentUserId;
     private UserDataSource userDataSource;
     private PostDataSource postDataSource;
+    private FirebasePostReactionDataSource firebasePostReactionDataSource;
 
     private PostReactionDataSourceImpl(Context context, String currentUserId) {
         databaseManager = DatabaseManager.getInstance(context);
         db = databaseManager.getDatabase();
         userDataSource = UserDataSourceImpl.getInstance(context);
         postDataSource = PostDataSourceImpl.getInstance(context);
+        firebasePostReactionDataSource = FirebasePostReactionDataSourceImpl.getInstance();
         this.currentUserId = currentUserId;
     }
 
@@ -49,7 +53,6 @@ public class PostReactionDataSourceImpl implements PostReactionDataSource {
         db.beginTransaction();
         boolean result = false;
         try {
-
             if (postReaction.getId() == null || postReaction.getId().isEmpty()) {
                 Log.d("PostReactionDataSourceImpl", "create: id is null");
                 return  false;
@@ -73,7 +76,12 @@ public class PostReactionDataSourceImpl implements PostReactionDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_POST_REACTION_USER_ID, postReaction.getUser().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_REACTION_POST_ID, postReaction.getPost().getId());
 
-                result  = db.insert(MySQLiteHelper.TABLE_POST_REACTION, null, contentValues) > 0;
+                if (find(postReaction.getPost(), postReaction.getUser().getId()) == null) {
+                    result  = db.insert(MySQLiteHelper.TABLE_POST_REACTION, null, contentValues) > 0;
+                    if (result) {
+                        firebasePostReactionDataSource.create(postReaction);
+                    }
+                }
             }
 
             db.setTransactionSuccessful();
@@ -107,9 +115,16 @@ public class PostReactionDataSourceImpl implements PostReactionDataSource {
                 return false;
             } else {
                 Log.d("PostReactionDataSourceImpl", "delete: " + postReaction.getId());
-                result  = db.delete(MySQLiteHelper.TABLE_POST_REACTION,
-                        MySQLiteHelper.COLUMN_POST_REACTION_ID + " = ? ",
-                        new String[]{postReaction.getId()}) > 0;
+
+                if (find(postReaction.getPost(), postReaction.getUser().getId()) != null) {
+                    result  = db.delete(MySQLiteHelper.TABLE_POST_REACTION,
+                            MySQLiteHelper.COLUMN_POST_REACTION_ID + " = ? ",
+                            new String[]{postReaction.getId()}) > 0;
+
+                    if (result) {
+                        firebasePostReactionDataSource.delete(postReaction);
+                    }
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {

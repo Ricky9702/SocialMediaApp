@@ -10,5 +10,6 @@ public interface PostActivityContract {
     }
     interface Presenter {
         void getAllPostByUserIdWithPrivacy(String id, String privacy1, String privacy2);
+        void getPostByListId(List<String> list);
     }
 }

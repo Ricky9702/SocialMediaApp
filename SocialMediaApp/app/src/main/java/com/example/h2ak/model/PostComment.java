@@ -36,7 +36,19 @@ public class PostComment {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PostComment that = (PostComment) o;
-        return id.equals(that.id) && user.equals(that.user) && post.equals(that.post) && createdDate.equals(that.createdDate) && content.equals(that.content);
+        return id.equals(that.id) && user.getId().equals(that.user.getId()) && post.getId().equals(that.post.getId()) && createdDate.equals(that.createdDate) && content.equals(that.content);
+    }
+
+    @Override
+    public String toString() {
+        return "PostComment{" +
+                "id='" + id + '\'' +
+                ", user=" + user +
+                ", post=" + post +
+                ", createdDate='" + createdDate + '\'' +
+                ", content='" + content + '\'' +
+                ", parent=" + parent +
+                '}';
     }
 
     @Override

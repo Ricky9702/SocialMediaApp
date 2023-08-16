@@ -7,7 +7,6 @@ import com.example.h2ak.model.User;
 import java.util.Set;
 
 public interface PostReactionDataSource {
-
     boolean create(PostReaction postReaction);
     boolean delete(PostReaction postReaction);
     Set<PostReaction> getAllReactionByPost(Post post);

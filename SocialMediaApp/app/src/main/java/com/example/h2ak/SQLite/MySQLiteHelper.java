@@ -78,7 +78,6 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String COLUMN_INBOX_USER_1 = COLUMN_SEARCH_USER_1;
     public static final String COLUMN_INBOX_USER_2 = COLUMN_SEARCH_USER_2;
     public static final String COLUMN_INBOX_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
-
     private static final String CREATE_TABLE_INBOX = "CREATE TABLE " + TABLE_INBOX
             + " (" + COLUMN_INBOX_ID + " TEXT PRIMARY KEY , "
             + COLUMN_INBOX_CONTENT + " TEXT NOT NULL, "
@@ -86,8 +85,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + COLUMN_INBOX_TYPE + " TEXT NOT NULL, "
             + COLUMN_INBOX_IS_READ + " INTEGER NOT NULL, "
             + COLUMN_INBOX_IS_ACTIVE + " INTEGER NOT NULL, "
-            + COLUMN_INBOX_USER_1 + " INTEGER, "
-            + COLUMN_INBOX_USER_2 + " INTEGER, "
+            + COLUMN_INBOX_USER_1 + " TEXT, "
+            + COLUMN_INBOX_USER_2 + " TEXT, "
             + "FOREIGN KEY (" + COLUMN_INBOX_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE, "
             + "FOREIGN KEY (" + COLUMN_INBOX_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE );";
 
@@ -103,8 +102,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + " ( " + COLUMN_FRIENDSHIP_ID + " TEXT  PRIMARY KEY, "
             + COLUMN_FRIENDSHIP_CREATED_DATE + " TEXT, "
             + COLUMN_FRIENDSHIP_STATUS + " TEXT, "
-            + COLUMN_FRIENDSHIP_USER_1 + " INTEGER, "
-            + COLUMN_FRIENDSHIP_USER_2 + " INTEGER, "
+            + COLUMN_FRIENDSHIP_USER_1 + " TEXT, "
+            + COLUMN_FRIENDSHIP_USER_2 + " TEXT, "
             + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE, "
             + "FOREIGN KEY (" + COLUMN_FRIENDSHIP_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE );";
 
@@ -122,11 +121,21 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             + COLUMN_POST_PRIVACY + " TEXT NOT NULL, "
             + " FOREIGN KEY ( " + COLUMN_POST_USER_ID + " ) REFERENCES " + TABLE_USER  + "( "+ COLUMN_USER_ID  +" )" +" ON DELETE CASCADE )";
 
+    // Inbox Post
+    public static final String TABLE_INBOX_POST = "inbox_post";
+    public static final String COLUMN_INBOX_POST_ID = "inbox_post_id";
+    public static final String COLUMN_INBOX_POST_POST_ID = "post_id";
+    private static final String CREATE_TABLE_INBOX_POST = (" CREATE TABLE " + TABLE_INBOX_POST + " (" +
+            " " + COLUMN_INBOX_POST_ID + " TEXT PRIMARY KEY, " +
+            " " + COLUMN_INBOX_POST_POST_ID + " TEXT, " +
+            " FOREIGN KEY (" + COLUMN_INBOX_POST_ID + " ) REFERENCES " + TABLE_INBOX + "( " + COLUMN_INBOX_ID + " ) ON DELETE CASCADE " + "," +
+            " FOREIGN KEY (" + COLUMN_INBOX_POST_POST_ID + ") REFERENCES " + TABLE_POST + "( " + COLUMN_POST_ID + " ) ON DELETE CASCADE " +  "  ) ");
+
     // Post Images
     public static final String TABLE_POST_IMAGES = "post_images";
     public static final String COLUMN_POST_IMAGES_ID = "post_images_id";
     public static final String COLUMN_POST_IMAGES_IMAGE_URL = "image_url";
-    public static final String COLUMN_POST_IMAGES_POST_ID = "post_id";
+    public static final String COLUMN_POST_IMAGES_POST_ID = COLUMN_INBOX_POST_ID;
     public static final String COLUMN_POST_IMAGES_CREATED_DATE = COLUMN_POST_REACTION_CREATED_DATE;
 
     private static final String CREATE_TABLE_POST_IMAGES = " CREATE TABLE " + TABLE_POST_IMAGES + " (" +
@@ -142,7 +151,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String TABLE_POST_REACTION = "post_reaction";
     public static final String COLUMN_POST_REACTION_ID = TABLE_POST_REACTION + "_id";
     public static final String COLUMN_POST_REACTION_USER_ID = TABLE_POST_REACTION + "_user_id";
-    public static final String COLUMN_POST_REACTION_POST_ID = TABLE_POST_REACTION + "_post_id";
+    public static final String COLUMN_POST_REACTION_POST_ID = TABLE_POST_REACTION + "_" + COLUMN_INBOX_POST_ID;
     private static final String CREATE_TABLE_POST_REACTION = " CREATE TABLE " + TABLE_POST_REACTION + " (" +
             " " + COLUMN_POST_REACTION_ID + " TEXT PRIMARY KEY, " +
             " " + COLUMN_POST_REACTION_TYPE + " TEXT NOT NULL, " +
@@ -157,7 +166,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String TABLE_POST_COMMENT = "post_comment";
     public static final String COLUMN_POST_COMMENT_ID = TABLE_POST_COMMENT + "_id";
     public static final String COLUMN_POST_COMMENT_USER_ID = TABLE_POST_COMMENT + "_user_id";
-    public static final String COLUMN_POST_COMMENT_POST_ID = TABLE_POST_COMMENT + "_post_id";
+    public static final String COLUMN_POST_COMMENT_POST_ID = TABLE_POST_COMMENT + "_" + COLUMN_INBOX_POST_ID;
     public static final String COLUMN_POST_COMMENT_PARENT_ID = TABLE_POST_COMMENT + "_parent_id";
     public static final String COLUMN_POST_COMMENT_CREATED_DATE = "created_date";
     public static final String COLUMN_POST_COMMENT_CONTENT = "content";
@@ -206,6 +215,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
         database.execSQL(CREATE_TABLE_USER);
         database.execSQL(CREATE_TABLE_FRIENDSHIP);
         database.execSQL(CREATE_TABLE_INBOX);
+        database.execSQL(CREATE_TABLE_INBOX_POST);
         database.execSQL(CREATE_TABLE_SEARCH_HISTORY);
         database.execSQL(CREATE_TABLE_POST);
         database.execSQL(CREATE_TABLE_POST_IMAGES);

@@ -53,12 +53,6 @@ public class User {
         this.isActive = isActive;
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        return String.format("ID: %d - Name: %s - Email: %s- Password: %s - Active: %s - Avatar: %s - Cover: %s - Bio: %s - createdDate: %s",
-                this.id, this.name, this.email, this.password, this.isActive, this.imageAvatar, this.imageCover, this.bio, this.createdDate);
-    }
 
 
     @Override

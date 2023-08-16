@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.h2ak.Firebase.FirebaseDataSource.FireBaseCommentDataSource;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FireBaseCommentDataSourceImpl;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.DatabaseManager;
 import com.example.h2ak.SQLite.MySQLiteHelper;
@@ -32,6 +34,7 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
     private String currentUserId;
     private UserDataSource userDataSource;
     private PostDataSource postDataSource;
+    private FireBaseCommentDataSource fireBaseCommentDataSource;
 
     private String TAG = "PostCommentDataSourceImpl";
 
@@ -41,6 +44,7 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
         this.currentUserId = currentUserId;
         userDataSource = UserDataSourceImpl.getInstance(context);
         postDataSource = PostDataSourceImpl.getInstance(context);
+        fireBaseCommentDataSource = FireBaseCommentDataSourceImpl.getInstance();
     }
 
     public static synchronized PostCommentDataSourceImpl getInstance(Context context) {
@@ -49,7 +53,6 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
         }
         return instance;
     }
-
 
 
     @Override
@@ -80,7 +83,14 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID, comment.getUser().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID, comment.getPost().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID, comment.getParent() == null ? "" : comment.getParent().getId());
-                result = db.insert(MySQLiteHelper.TABLE_POST_COMMENT, null, contentValues ) > 0;
+
+                if (getById(comment.getId()) == null) {
+                    result = db.insert(MySQLiteHelper.TABLE_POST_COMMENT, null, contentValues) > 0;
+                    if (result) {
+                        fireBaseCommentDataSource.create(comment);
+                    }
+                }
+
             }
 
             db.setTransactionSuccessful();
@@ -113,7 +123,13 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                 Log.d(TAG, "delete: post is null");
                 return false;
             } else {
-                result = db.delete(MySQLiteHelper.TABLE_POST_COMMENT, MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{comment.getId()} ) > 0;
+
+                if (getById(comment.getId()) != null) {
+                    result = db.delete(MySQLiteHelper.TABLE_POST_COMMENT, MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{comment.getId()}) > 0;
+                    if (result) {
+                        fireBaseCommentDataSource.delete(comment);
+                    }
+                }
             }
 
             db.setTransactionSuccessful();
@@ -149,9 +165,16 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_CONTENT, comment.getContent());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE, new PostComment().getCreatedDate());
-                result = db.update(MySQLiteHelper.TABLE_POST_COMMENT,
-                        contentValues,
-                        MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{comment.getId()}  ) > 0;
+
+                if (getById(comment.getId()) != null && !getById(comment.getId()).equals(comment)) {
+                    result = db.update(MySQLiteHelper.TABLE_POST_COMMENT,
+                            contentValues,
+                            MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{comment.getId()}) > 0;
+                    if (result) {
+                        fireBaseCommentDataSource.update(comment);
+                    }
+                }
+
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
@@ -165,10 +188,10 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
 
     @Override
     public Set<PostComment> getAllCommentByPost(Post post) {
-        Set<PostComment>  postCommentSet = new HashSet<>();
+        Set<PostComment> postCommentSet = new HashSet<>();
         if (post.getId() != null) {
             try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_COMMENT
-                    + " WHERE  " +  MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID + " = ? "
+                    + " WHERE  " + MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID + " = ? "
                     + " ORDER BY " + MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE + " DESC ", new String[]{post.getId()})) {
                 if (c != null) {
                     while (c.moveToNext()) {
@@ -185,10 +208,10 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
 
     @Override
     public Set<PostComment> getAllCommentByParent(PostComment comment) {
-        Set<PostComment>  postCommentSet = new HashSet<>();
+        Set<PostComment> postCommentSet = new HashSet<>();
         if (comment.getId() != null) {
             try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_COMMENT
-                    + " WHERE  " +  MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID + " = ? "
+                    + " WHERE  " + MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID + " = ? "
                     + " ORDER BY " + MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE + " DESC ", new String[]{comment.getId()})) {
                 if (c != null) {
                     while (c.moveToNext()) {
@@ -208,9 +231,23 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
         PostComment comment = null;
         if (id != null && !id.isEmpty()) {
             try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_COMMENT
-                    + " WHERE  " +  MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? "
-                    + " ORDER BY " + MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE + " DESC "
-                    + " LIMIT 1 ", new String[]{id})) {
+                    + " WHERE  " + MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{id})) {
+                if (c != null && c.moveToFirst()) {
+                    comment = getCommentByCursor(c);
+                }
+            }
+        }
+        return comment;
+    }
+
+    @Override
+    public PostComment getNewestComment(User user) {
+        PostComment comment = null;
+        if (user.getId() != null && !user.getId().isEmpty()) {
+            try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_COMMENT
+                    + " WHERE  " + MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID + " = ? "
+                    + " ORDER BY  " + MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE + " DESC "
+                    + " LIMIT 1 ", new String[]{user.getId()})) {
                 if (c != null && c.moveToFirst()) {
                     comment = getCommentByCursor(c);
                 }
@@ -248,6 +285,7 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
 
                 User user = userDataSource.getUserById(userId);
                 Post post = postDataSource.findPost(postId);
+                PostComment parent = getById(parentId);
 
                 if (user == null || post == null) {
                     Log.d(TAG, "getCommentByCursor: user or post is null");
@@ -256,18 +294,11 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                     postComment = new PostComment(content, user, post);
                     postComment.setId(id);
                     postComment.setCreatedDate(createdDate);
-
-                    if (parentId != null && parentId.isEmpty()) {
-                        postComment.setParent(this.getById(parentId));
-                    }
-
-
-
+                    postComment.setParent(parent);
                 }
-            }
 
+            }
         }
         return postComment;
     }
-
 }

@@ -16,6 +16,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FriendFragmentPresenter implements FriendFragmentContract.Presenter {
 
@@ -37,21 +38,6 @@ public class FriendFragmentPresenter implements FriendFragmentContract.Presenter
     public void getFriendList() {
         User currentUser = userDataSource.getUserById(firebaseAuth.getCurrentUser().getUid());
         Log.d("currentUser: ", currentUser.getEmail());
-        Set<FriendShip> friendShipSet = friendShipDataSource.getAllFriendShipByUser(currentUser);
-        Log.d("friendShipSet", friendShipSet.size()+"");
-        List<User> userList = new ArrayList<>();
-        if (!friendShipSet.isEmpty() && friendShipSet != null) {
-            friendShipSet.forEach(friendShip -> {
-                // choose which user is friend and display on ui
-                if (friendShip.getUser1().getId().equals(currentUser.getId())) {
-                    userList.add(friendShip.getUser2());
-                } else {
-                    userList.add(friendShip.getUser1());
-                }
-            });
-            view.onFriendListRecieved(userList);
-        } else {
-            Log.d("FriendFragmentPresenter", "getFriendList: size = 0");
-        }
+        view.onFriendListRecieved(new ArrayList<>(friendShipDataSource.getFriendsByUser(currentUser)));
     }
 }

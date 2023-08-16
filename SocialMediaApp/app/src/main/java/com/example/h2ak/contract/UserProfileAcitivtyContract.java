@@ -14,10 +14,13 @@ public interface UserProfileAcitivtyContract {
         void showProgressBar(boolean flag);
 
         void onListPostRecieved(List<Post> postList);
+
+        void onSetFriendsReceived(List<User> collect);
     }
     interface Presenter{
         void getUserById(String id);
         void createOrUpdateFriendRequest(User user2);
-        void getAllPostByUserId(String id, String privacy1, String privacy2);
+        void getAllPostByUserId(String id);
+        void getFriendsByUserId(String id);
     }
 }

@@ -11,10 +11,13 @@ public interface ProfileActivityContract {
         void loadUserInformation(User user);
 
         void onPostListRecieved(List<Post> postList);
+
+        void onSetFriendsReceived(List<User> collect);
     }
 
     interface Presenter {
         void getUser();
         void getAllPost();
+        void getFriends();
     }
 }
