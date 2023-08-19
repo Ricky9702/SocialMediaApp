@@ -63,8 +63,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
             COLUMN_SEARCH_ID + " TEXT PRIMARY KEY, " +
             COLUMN_SEARCH_USER_1 + " TEXT NOT NULL, " +
             COLUMN_SEARCH_USER_2 + " TEXT NOT NULL, " +
-            "FOREIGN KEY (" + COLUMN_SEARCH_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "), " +
-            "FOREIGN KEY (" + COLUMN_SEARCH_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + "));";
+            "FOREIGN KEY (" + COLUMN_SEARCH_USER_1 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE, " +
+            "FOREIGN KEY (" + COLUMN_SEARCH_USER_2 + ") REFERENCES " + TABLE_USER + "(" + COLUMN_USER_ID + ") ON DELETE CASCADE);";
 
     // Inbox
     public static final String TABLE_INBOX = "inbox";
@@ -212,6 +212,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
 //        database.execSQL("DROP TABLE IF EXISTS " + TABLE_FRIENDSHIP);
 //        database.execSQL("DROP TABLE IF EXISTS " + TABLE_INBOX);
 //        database.execSQL("DROP TABLE IF EXISTS " + TABLE_SEARCH_HISTORY);
+        database.execSQL(" PRAGMA foreign_keys = ON; ");
         database.execSQL(CREATE_TABLE_USER);
         database.execSQL(CREATE_TABLE_FRIENDSHIP);
         database.execSQL(CREATE_TABLE_INBOX);

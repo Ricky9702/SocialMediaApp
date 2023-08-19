@@ -1,5 +1,6 @@
 package com.example.h2ak.view.fragments;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -43,8 +44,9 @@ public class InboxFragment extends Fragment implements InboxFragmentContract.Vie
     LinearLayout linearLayoutFilter;
     private Map<String, String> params;
     SpinnerGenderAdapter spinnerGenderAdapter;
-    String[] items = new String[]{"ALL", "POST_MESSAGE", "FRIEND_REQUEST", "MESSAGE"};
+    String[] items = new String[]{"ALL", "POST_MESSAGE", "FRIEND_REQUEST", "MESSAGE", "UN_READ"};
     TextInputEditText editTextSearch;
+    TextView textViewClear;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,6 +128,8 @@ public class InboxFragment extends Fragment implements InboxFragmentContract.Vie
             }
         });
 
+        textViewClear = view.findViewById(R.id.textViewClear);
+
         return view;
     }
 
@@ -133,6 +137,14 @@ public class InboxFragment extends Fragment implements InboxFragmentContract.Vie
     public void onStart() {
         super.onStart();
 
+        textViewClear.setOnClickListener(view -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
+            builder.setTitle("Are you sure you want to delete all inboxes?")
+                    .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
+                    .setPositiveButton("Confirm", (dialogInterface, i) -> {
+                        presenter.deleteInbox();
+                    }).create().show();
+        });
 
     }
 

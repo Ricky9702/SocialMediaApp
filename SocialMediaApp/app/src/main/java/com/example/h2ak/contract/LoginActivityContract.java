@@ -5,6 +5,8 @@ public interface LoginActivityContract {
         void showProgressbar(boolean flag);
         void onLoginSuccess();
         void onLoginFailure(String errorMessage);
+
+        void onAdminLogin();
     }
 
     interface Presenter {

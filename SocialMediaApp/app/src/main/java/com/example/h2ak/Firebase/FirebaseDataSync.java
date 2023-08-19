@@ -12,13 +12,17 @@ import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxPostDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentReactionDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostImagesDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostReactionDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxPostDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentReactionDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostImagesDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostReactionDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
@@ -27,6 +31,8 @@ import com.example.h2ak.model.Inbox;
 import com.example.h2ak.model.InboxPost;
 import com.example.h2ak.model.Post;
 import com.example.h2ak.model.PostComment;
+import com.example.h2ak.model.PostCommentReaction;
+import com.example.h2ak.model.PostImages;
 import com.example.h2ak.model.PostReaction;
 import com.example.h2ak.model.User;
 import com.google.firebase.database.ChildEventListener;
@@ -60,6 +66,12 @@ public class FirebaseDataSync {
     private DatabaseReference postCommentRef;
     private PostCommentDataSource postCommentDataSource;
 
+    private DatabaseReference postCommentReactionRef;
+    private PostCommentReactionDataSource postCommentReactionDataSource;
+
+    private DatabaseReference postImagesRef;
+    private PostImagesDataSource postImagesDataSource;
+
     private Context context;
     private static FirebaseDataSync instance;
     private String currentUserId;
@@ -87,16 +99,213 @@ public class FirebaseDataSync {
         postCommentRef = FirebaseHelper.getDatabaseReferenceByPath("PostComment");
         postCommentDataSource = PostCommentDataSourceImpl.getInstance(context);
 
+        postCommentReactionRef = FirebaseHelper.getDatabaseReferenceByPath("PostCommentReaction");
+        postCommentReactionDataSource = PostCommentReactionDataSourceImpl.getInstance(context);
 
+        postImagesRef = FirebaseHelper.getDatabaseReferenceByPath("PostImages");
+        postImagesDataSource = PostImagesDataSourceImpl.getInstance(context);
 
         this.currentUserId = currentUserId;
     }
 
     public static FirebaseDataSync getInstance(Context context) {
         if (instance == null) {
-            instance = new FirebaseDataSync(context, MyApp.getInstance().getCurrentUserId());
+            instance = new FirebaseDataSync(context.getApplicationContext(), MyApp.getInstance().getCurrentUserId());
         }
         return instance;
+    }
+
+    public void syncPostCommentReaction() {
+        postCommentReactionRef.orderByChild(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (snapshot.exists()) {
+                    postCommentReactionRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            PostCommentReaction commentReaction = getPostCommentReactionBySnapShot(snapshot);
+                            if (commentReaction != null) {
+                                postCommentReactionDataSource.create(commentReaction);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (snapshot.exists()) {
+                    postCommentReactionRef.child(snapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            PostCommentReaction commentReaction = getPostCommentReactionBySnapShot(snapshot);
+                            if (commentReaction != null) {
+                                postCommentReactionDataSource.update(commentReaction);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    PostCommentReaction commentReaction = getPostCommentReactionBySnapShot(snapshot);
+                    if (commentReaction != null) {
+                        postCommentReactionDataSource.delete(commentReaction);
+                    }
+                }
+
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private PostCommentReaction getPostCommentReactionBySnapShot(DataSnapshot snapshot) {
+        String TAG = "getPostCommentReactionBySnapShot";
+        PostCommentReaction commentReaction = null;
+        if (snapshot.exists()) {
+
+            String id = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID).getValue(String.class);
+            String type = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_TYPE).getValue(String.class);
+            String createdDate = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE).getValue(String.class);
+            String userId = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_USER_ID).getValue(String.class);
+            String commentId = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_POST_COMMENT_ID).getValue(String.class);
+
+            if (id == null || id.isEmpty()) {
+                Log.d(TAG, "getPostReactionByCursor: id is null");
+                return null;
+            } else if (type == null || type.isEmpty()) {
+                Log.d(TAG, "getPostReactionByCursor: type is null");
+                return  null;
+            } else if (createdDate == null || createdDate.isEmpty()) {
+                Log.d(TAG, "getPostReactionByCursor: createdDate is null");
+                return  null;
+            } else if (userId == null || userId.isEmpty()) {
+                Log.d(TAG, "getPostReactionByCursor: user_id is null");
+                return  null;
+            } else if (commentId == null || commentId.isEmpty()) {
+                Log.d(TAG, "getPostReactionByCursor: comment_id is null");
+                return null;
+            } else {
+                User user = userDataSource.getUserById(userId);
+                PostComment comment = postCommentDataSource.getById(commentId);
+
+                if (user == null) {
+                    Log.d(TAG, "getPostReactionByCursor: user is null");
+                    return null;
+                }else if (comment == null) {
+                    Log.d(TAG, "getPostReactionByCursor: comment is null");
+                    return null;
+                } else {
+                    commentReaction = new PostCommentReaction(PostCommentReaction.CommentReactionType.valueOf(type), user,
+                            comment);
+                    commentReaction.setId(id);
+                    commentReaction.setCreatedDate(createdDate);
+                }
+            }
+        }
+        return commentReaction;
+    }
+
+
+    public void syncPostImages() {
+        postImagesRef.orderByChild(MySQLiteHelper.COLUMN_POST_IMAGES_CREATED_DATE).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (snapshot.exists()) {
+                    postImagesRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            PostImages postImages = getPostImagesBySnapShot(snapshot);
+                            if (postImages != null) {
+                                postImagesDataSource.createPostImages(postImages);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    PostImages postImages = getPostImagesBySnapShot(snapshot);
+                    if (postImages != null) {
+                        postImagesDataSource.deletePostImages(postImages);
+                    }
+                }
+
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private PostImages getPostImagesBySnapShot(DataSnapshot snapshot) {
+        PostImages postImages = null;
+        if (snapshot.exists()) {
+            String id = snapshot.child(MySQLiteHelper.COLUMN_POST_IMAGES_ID).getValue(String.class);
+            String url = snapshot.child(MySQLiteHelper.COLUMN_POST_IMAGES_IMAGE_URL).getValue(String.class);
+            String postId = snapshot.child(MySQLiteHelper.COLUMN_POST_IMAGES_POST_ID).getValue(String.class);
+            String createdDate = snapshot.child(MySQLiteHelper.COLUMN_POST_IMAGES_CREATED_DATE).getValue(String.class);
+
+            if (id == null || id.isEmpty()) {
+                return null;
+            } else if (url == null || url.isEmpty()) {
+                return null;
+            } else if (postId == null || postId.isEmpty()) {
+                return null;
+            } else if (createdDate == null || createdDate.isEmpty()) {
+                return null;
+            } else {
+                Post post = postDataSource.findPost(postId);
+                if (post != null) {
+                    postImages = new PostImages(url, post);
+                    postImages.setId(id);
+                    postImages.setCreatedDate(createdDate);
+                }
+            }
+        }
+        return postImages;
     }
 
     public void syncInboxPost() {
@@ -104,23 +313,34 @@ public class FirebaseDataSync {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 if (snapshot.exists()) {
-                    String id = snapshot.child(MySQLiteHelper.COLUMN_INBOX_POST_ID).getValue(String.class);
-                    String postId = snapshot.child(MySQLiteHelper.COLUMN_INBOX_POST_POST_ID).getValue(String.class);
-                    if (id == null || id.isEmpty()) {
-                        Log.d("syncInboxPost", "onChildAdded: id is null");
-                    } else if (postId == null || postId.isEmpty()) {
-                        Log.d("syncInboxPost", "onChildAdded: postId is null");
-                    } else {
-                        Post post = postDataSource.findPost(postId);
 
-                        if (post != null) {
-                            InboxPost inboxPost = new InboxPost();
-                            inboxPost.setId(id);
-                            inboxPost.setPost(post);
-                            inboxPostDataSource.create(inboxPost);
+                    inboxPostRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            String id = snapshot.child(MySQLiteHelper.COLUMN_INBOX_POST_ID).getValue(String.class);
+                            String postId = snapshot.child(MySQLiteHelper.COLUMN_INBOX_POST_POST_ID).getValue(String.class);
+                            if (id == null || id.isEmpty()) {
+                                Log.d("syncInboxPost", "onChildAdded: id is null");
+                            } else if (postId == null || postId.isEmpty()) {
+                                Log.d("syncInboxPost", "onChildAdded: postId is null");
+                            } else {
+                                Post post = postDataSource.findPost(postId);
+
+                                if (post != null) {
+                                    InboxPost inboxPost = new InboxPost();
+                                    inboxPost.setId(id);
+                                    inboxPost.setPost(post);
+                                    inboxPostDataSource.create(inboxPost);
+                                }
+                                Log.d("syncInboxPost", "onChildAdded: post  is null");
+                            }
                         }
-                        Log.d("syncInboxPost", "onChildAdded: post  is null");
-                    }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
                 }
             }
 
@@ -166,25 +386,52 @@ public class FirebaseDataSync {
         postCommentRef.orderByChild(MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                PostComment comment = getCommentBySnapShot(snapshot);
-                if (comment != null) {
-                    postCommentDataSource.create(comment);
+                if (snapshot.exists()) {
+                    postCommentRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            PostComment comment = getCommentBySnapShot(snapshot);
+                            if (comment != null) {
+                                postCommentDataSource.create(comment);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                PostComment comment = getCommentBySnapShot(snapshot);
-                if (comment != null) {
-                    postCommentDataSource.update(comment);
+                if (snapshot.exists()) {
+                    postCommentRef.child(snapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            PostComment comment = getCommentBySnapShot(snapshot);
+                            if (comment != null) {
+                                postCommentDataSource.update(comment);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                PostComment comment = getCommentBySnapShot(snapshot);
-                if (comment != null) {
-                    postCommentDataSource.delete(comment);
+                if (snapshot.exists()) {
+                    PostComment comment = getCommentBySnapShot(snapshot);
+                    if (comment != null) {
+                        postCommentDataSource.delete(comment);
+
+                    }
                 }
             }
 
@@ -202,13 +449,19 @@ public class FirebaseDataSync {
 
     private PostComment getCommentBySnapShot(DataSnapshot snapshot) {
         PostComment postComment = null;
+        PostComment parent = null;
         if (snapshot.exists()) {
             String id = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_ID).getValue(String.class);
             String createdDate = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE).getValue(String.class);
             String content = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_CONTENT).getValue(String.class);
             String userId = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID).getValue(String.class);
             String postId = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID).getValue(String.class);
+
             String parentId = snapshot.child(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID).getValue(String.class);
+
+            if (parentId != null && !parentId.isEmpty()) {
+                parent = postCommentDataSource.getById(parentId);
+            }
 
             if (id == null || id.isEmpty()) {
                 Log.d("getCommentBySnapShot", "getCommentByCursor: id is null");
@@ -229,16 +482,17 @@ public class FirebaseDataSync {
 
                 User user = userDataSource.getUserById(userId);
                 Post post = postDataSource.findPost(postId);
-                PostComment parent = postCommentDataSource.getById(parentId);
+
 
                 if (user == null || post == null) {
+
                     Log.d("getCommentBySnapShot", "getCommentByCursor: user or post is null");
                     return null;
                 } else {
                     postComment = new PostComment(content, user, post);
                     postComment.setId(id);
                     postComment.setCreatedDate(createdDate);
-                    postComment.setParent(parent);
+                    if (parent != null) postComment.setParent(parent);
                 }
 
             }
@@ -249,9 +503,21 @@ public class FirebaseDataSync {
         postReactionRef.orderByChild(MySQLiteHelper.COLUMN_POST_REACTION_CREATED_DATE).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                PostReaction postReaction = getPostReactionBySnapShot(snapshot);
-                if (postReaction != null) {
-                    postReactionDataSource.create(postReaction);
+                if (snapshot.exists()) {
+                    postReactionRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            PostReaction postReaction = getPostReactionBySnapShot(snapshot);
+                            if (postReaction != null) {
+                                postReactionDataSource.create(postReaction);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
@@ -262,10 +528,15 @@ public class FirebaseDataSync {
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                PostReaction postReaction = getPostReactionBySnapShot(snapshot);
-                if (postReaction != null) {
-                    postReactionDataSource.delete(postReaction);
+                if (snapshot.exists()) {
+
+                    PostReaction postReaction = getPostReactionBySnapShot(snapshot);
+                    if (postReaction != null) {
+                        postReactionDataSource.delete(postReaction);
+                    }
                 }
+
+
             }
 
             @Override
@@ -348,31 +619,60 @@ public class FirebaseDataSync {
         postRef.orderByChild(MySQLiteHelper.COLUMN_POST_CREATED_DATE).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                Post post = getPostBySnapShot(snapshot);
-                if (post != null) {
-                    if (!postDataSource.createPost(post)) {
-                        Log.d("SyncPost", "onDataChange: create post failed");
-                    } else  Log.d("SyncPost", "onDataChange: create post success");
+                if (snapshot.exists()) {
+                    postRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Post post = getPostBySnapShot(snapshot);
+                            if (post != null) {
+                                if (!postDataSource.createPost(post)) {
+                                    Log.d("SyncPost", "onDataChange: create post failed");
+                                } else  Log.d("SyncPost", "onDataChange: create post success");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                Post post = getPostBySnapShot(snapshot);
-                if (post != null) {
-                    if (postDataSource.updatePost(post))
-                        Log.d("SyncPost", "onDataChange: update post success");
-                    else
-                        Log.d("SyncPost", "onDataChange: update post failed");
+                if (snapshot.exists()) {
+                    postRef.child(snapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Post post = getPostBySnapShot(snapshot);
+                            if (post != null) {
+                                if (postDataSource.updatePost(post))
+                                    Log.d("SyncPost", "onDataChange: update post success");
+                                else
+                                    Log.d("SyncPost", "onDataChange: update post failed");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                Post post = getPostBySnapShot(snapshot);
-                if (post != null) {
-                    postDataSource.deletePost(post);
+                if (snapshot.exists()) {
+
+                    Post post = getPostBySnapShot(snapshot);
+                    if (post != null) {
+                        postDataSource.deletePost(post);
+                    }
                 }
+
+
             }
 
             @Override
@@ -464,15 +764,36 @@ public class FirebaseDataSync {
                         }
                     }
                 }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
 
-//                if (MyApp.getInstance().getCurrentActivity() instanceof BaseMenuActivity) {
-//                    Fragment currentFragment = ((BaseMenuActivity) MyApp.getInstance().getCurrentActivity()).getSupportFragmentManager().findFragmentById(R.id.frameLayout);
-//                    if (currentFragment instanceof FriendFragment) {
-//                        ((FriendFragment) currentFragment).getPresenter().getFriendList();
-//                    } else if (currentFragment instanceof HomeFragment) {
-//                        ((HomeFragment) currentFragment).getPresenter().loadCurrentUser();
-//                    }
-//                }
+            }
+        });
+
+        userRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (snapshot.exists()) {
+                    User user = userDataSource.getUserById(snapshot.getKey());
+                    if (user != null) {
+                        userDataSource.deleteUser(user);
+                    }
+                }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
 
             }
 
@@ -484,69 +805,97 @@ public class FirebaseDataSync {
     }
 
 
+    private User getUserBySnapShot(DataSnapshot snapshot) {
+        if (snapshot.exists()) {
+            User user = new User();
+            user.setId(snapshot.child(MySQLiteHelper.COLUMN_USER_ID).getValue(String.class));
+            user.setActive(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ACTIVE).getValue(Boolean.class)));
+            user.setOnline(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ONLINE).getValue(Boolean.class)));
+            user.setRole(snapshot.child(MySQLiteHelper.COLUMN_USER_USER_ROLE).getValue(String.class));
+            user.setBirthday(snapshot.child(MySQLiteHelper.COLUMN_USER_BIRTHDAY).getValue(String.class));
+            user.setBio(snapshot.child(MySQLiteHelper.COLUMN_USER_BIO).getValue(String.class));
+            user.setPassword(snapshot.child(MySQLiteHelper.COLUMN_USER_PASSWORD).getValue(String.class));
+            user.setEmail(snapshot.child(MySQLiteHelper.COLUMN_USER_EMAIL).getValue(String.class));
+            user.setGender(snapshot.child(MySQLiteHelper.COLUMN_USER_GENDER).getValue(String.class));
+            user.setName(snapshot.child(MySQLiteHelper.COLUMN_USER_NAME).getValue(String.class));
+            user.setCreatedDate(snapshot.child(MySQLiteHelper.COLUMN_USER_CREATED_DATE).getValue(String.class));
+            user.setImageCover(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_COVER).getValue(String.class));
+            user.setImageAvatar(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_AVATAR).getValue(String.class));
+
+            if (UserDataSourceImpl.checkValidFields(user)) {
+                return user;
+            }
+
+        }
+        return null;
+    }
+
+
     public void syncFriendShip(OnDataChangeListener listener) {
-//        friendShipRef.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                Log.d("SyncFriendShip: ", "There is some change here!!");
-//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//                    FriendShip friendShip = getFriendShipBySnapShot(snapshot);
-//
-//                    if (friendShip != null) {
-//                        if (friendShipDataSource.createFriendShip(friendShip)) {
-//                            Log.d("syncFriendShip", "syncFriendShip: create success");
-//                            listener.onDataChange();
-//                        } else {
-//                            // update
-//                            Log.d("syncFriendShip", "syncFriendShip: create failed");
-//                            if (friendShipDataSource.updateFriendShip(friendShip)) {
-//                                Log.d("syncFriendShip", "syncFriendShip: update success");
-//                                listener.onDataChange();
-//                            } else {
-//                                Log.d("syncFriendShip", "syncFriendShip: failed success");
-//                            }
-//                        }
-//                    }
-//
-//                }
-//            }
-//
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
         friendShipRef.orderByChild(MySQLiteHelper.COLUMN_FRIENDSHIP_CREATED_DATE).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                FriendShip friendShip = getFriendShipBySnapShot(snapshot);
-                if (friendShip != null) {
-                    if (friendShipDataSource.createFriendShip(friendShip)) {
-                        Log.d("syncFriendShip", "syncFriendShip: create success");
-                        listener.onDataChange();
-                    } else {
-                        Log.d("syncFriendShip", "syncFriendShip: create failed");
-                    }
+                if (snapshot.exists()) {
+                    friendShipRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            FriendShip friendShip = getFriendShipBySnapShot(snapshot);
+                            if (friendShip != null) {
+                                if (friendShipDataSource.createFriendShip(friendShip)) {
+                                    Log.d("syncFriendShip", "syncFriendShip: create success");
+                                    listener.onDataChange();
+                                } else {
+                                    Log.d("syncFriendShip", "syncFriendShip: create failed");
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                FriendShip friendShip = getFriendShipBySnapShot(snapshot);
-                if (friendShip != null) {
-                    if (friendShipDataSource.updateFriendShip(friendShip)) {
-                        Log.d("syncFriendShip", "syncFriendShip: update success");
-                        listener.onDataChange();
-                    } else {
-                        Log.d("syncFriendShip", "syncFriendShip: update failed");
-                    }
+                if (snapshot.exists()) {
+                    friendShipRef.child(snapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            FriendShip friendShip = getFriendShipBySnapShot(snapshot);
+                            if (friendShip != null) {
+                                if (friendShipDataSource.updateFriendShip(friendShip)) {
+                                    Log.d("syncFriendShip", "syncFriendShip: create success");
+                                    listener.onDataChange();
+                                } else {
+                                    Log.d("syncFriendShip", "syncFriendShip: create failed");
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
+                if (snapshot.exists()) {
+                    FriendShip friendShip = getFriendShipBySnapShot(snapshot);
+                    if (friendShip != null) {
+                        if (friendShipDataSource.delete(friendShip)) {
+                            Log.d("syncFriendShip: ", "delete success");
+                            listener.onDataChange();
+                        } else {
+                            Log.d("syncFriendShip: ", "delete failed");
+                        }
+                    }
+                }
             }
 
             @Override
@@ -639,30 +988,48 @@ public class FirebaseDataSync {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 if (snapshot.exists()) {
-                    Inbox inbox = getInboxBySnapShot(snapshot);
-                    if (inbox != null) {
-                        if (inboxDataSource.createInbox(inbox)) {
-                            Log.d("SyncInbox: ", "Create success");
-                            listener.onDataChange();
-                        } else {
-                            Log.d("SyncInbox: ", "Create failed");
+                    inboxRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Inbox inbox = getInboxBySnapShot(snapshot);
+                            if (inbox != null) {
+                                if (inboxDataSource.createInbox(inbox)) {
+                                    Log.d("SyncInbox: ", "Create success");
+                                    listener.onDataChange();
+                                } else {
+                                    Log.d("SyncInbox: ", "Create failed");
+                                }
+                            }
                         }
-                    }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 if (snapshot.exists()) {
-                    Inbox inbox = getInboxBySnapShot(snapshot);
-                    if (inbox != null) {
-                        if (inboxDataSource.updateInbox(inbox)) {
-                            Log.d("SyncInbox: ", "update success");
-                            listener.onDataChange();
-                        } else {
-                            Log.d("SyncInbox: ", "update failed");
+                    inboxRef.child(snapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Inbox inbox = getInboxBySnapShot(snapshot);
+                            if (inbox != null) {
+                                if (inboxDataSource.updateInbox(inbox)) {
+                                    Log.d("SyncInbox: ", "Create success");
+                                    listener.onDataChange();
+                                } else {
+                                    Log.d("SyncInbox: ", "Create failed");
+                                }
+                            }
                         }
-                    }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
                 }
             }
 
@@ -671,9 +1038,12 @@ public class FirebaseDataSync {
                 if (snapshot.exists()) {
                     Inbox inbox = getInboxBySnapShot(snapshot);
                     if (inbox != null) {
-                        if (inboxDataSource.deleteInbox(inbox))
-                            Log.d("inBoxRef", "onChildRemoved: success");
-                        else Log.d("inBoxRef", "onChildRemoved: failed");
+                        if (inboxDataSource.deleteInbox(inbox)) {
+                            Log.d("SyncInbox: ", "delete success");
+                            listener.onDataChange();
+                        } else {
+                            Log.d("SyncInbox: ", "delete failed");
+                        }
                     }
                 }
             }

@@ -343,6 +343,7 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
         this.notifyDataSetChanged();
     }
 
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         LinearLayout linearLayoutParent;

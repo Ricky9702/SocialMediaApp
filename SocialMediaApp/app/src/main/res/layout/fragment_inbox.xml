@@ -74,6 +74,17 @@
                 android:textAlignment="center"
                 android:visibility="invisible" />
 
+            <TextView
+                android:id="@+id/textViewClear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:text="Clear all"
+                android:textSize="20dp"
+                android:padding="10dp"
+                android:textColor="@color/active_icon"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textLayoutSearch"
                 android:layout_width="120dp"
@@ -96,6 +107,8 @@
                     android:singleLine="true" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
+
+
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewInbox"

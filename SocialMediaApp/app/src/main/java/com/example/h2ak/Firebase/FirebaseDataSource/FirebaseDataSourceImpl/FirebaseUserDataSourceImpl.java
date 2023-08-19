@@ -58,33 +58,18 @@ public class FirebaseUserDataSourceImpl implements FirebaseUserDataSource {
         userRef.child(currentUser.getUid()).child(MySQLiteHelper.COLUMN_USER_PASSWORD).setValue(user.getPassword());
     }
 
-    public void getAllUsers() {
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<User> userList = new ArrayList<>();
-                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
-                    User user = userSnapshot.getValue(User.class);
-                    Log.d("USER NULL?", user == null ? "NULL" : "PLEASE NULL");
-                    userList.add(user);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
-        });
-    }
-
     @Override
     public void updateOnlineField(User user) {
         userRef.child(user.getId()).child(MySQLiteHelper.COLUMN_USER_IS_ONLINE).setValue(user.isOnline());
     }
 
     @Override
-    public void updateUser(User user) {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    public boolean delete(User user) {
+        return userRef.child(user.getId()).removeValue().isSuccessful();
+    }
 
+    @Override
+    public void updateUser(User user) {
         HashMap<String, Object> updatedUserData = new HashMap<>();
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_NAME, user.getName());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_BIO, user.getBio());
@@ -97,7 +82,7 @@ public class FirebaseUserDataSourceImpl implements FirebaseUserDataSource {
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_IS_ONLINE, user.isOnline());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_IS_ACTIVE, user.isActive());
 
-        userRef.child(currentUser.getUid()).updateChildren(updatedUserData)
+        userRef.child(user.getId()).updateChildren(updatedUserData)
                 .addOnSuccessListener(runnable -> {
                     Log.d("FirebaseUpdateUser", "User data updated successfully!");
         }).addOnFailureListener(runnable -> {

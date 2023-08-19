@@ -50,9 +50,23 @@ public class DiscoverFragmentPresenter implements DiscoverFragmentContract.Prese
     @Override
     public void getRandomUser() {
         Set<User> suggestUser = new HashSet<>();
-        Log.d("TAG", "getRandomUser: userDataSOurce" + userDataSource.getAllUsers(null).size());
-        suggestUser.addAll(userDataSource.getAllUsers(null).stream().filter(user -> user.isActive() && !user.getId().equals(MyApp.getInstance().getCurrentUserId())).collect(Collectors.toList()));
-        suggestUser.removeAll(friendShipDataSource.getFriendsByUser(userDataSource.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid())));
-        view.onSuggestUserListReceived(suggestUser.stream().collect(Collectors.toList()));
+        Log.d("TAG", "getRandomUser: userDataSource" + userDataSource.getAllUsers(null).size());
+        Set<User> friends = friendShipDataSource.getFriendsByUser(MyApp.getInstance().getCurrentUser());
+
+        if (friends.isEmpty()) {
+            // friend is empty, so suggest random user
+            suggestUser.addAll(userDataSource.getAllUsers(null).stream().filter(user -> user.isActive() && !user.getId().equals(MyApp.getInstance().getCurrentUserId())).collect(Collectors.toList()));
+
+        } else {
+            // suggest mutual friend
+            suggestUser.removeAll(friendShipDataSource.getFriendsByUser(userDataSource.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid())));
+
+            friends.forEach(friend -> {
+                Set<User> mutual = friendShipDataSource.getMutualFriends(friend, MyApp.getInstance().getCurrentUser());
+                suggestUser.addAll(mutual);
+            });
+        }
+
+          view.onSuggestUserListReceived(suggestUser.stream().collect(Collectors.toList()));
     }
 }

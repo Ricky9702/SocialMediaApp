@@ -25,8 +25,12 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
         <activity
-            android:name=".view.activities.PostActivity"
+            android:name=".view.activities.AdminActivity"
             android:exported="false" />
+        <activity
+            android:name=".view.activities.PostActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".view.activities.CreatePostActivity"
             android:exported="false" />
@@ -59,7 +63,8 @@
             android:exported="true" />
         <activity
             android:name=".view.activities.BaseMenuActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

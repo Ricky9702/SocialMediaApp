@@ -6,4 +6,5 @@ public interface FireBaseCommentDataSource {
     boolean create(PostComment postComment);
     boolean delete(PostComment postComment);
     boolean update(PostComment postComment);
+    void updateParentComment(PostComment postComment, PostComment parent);
 }

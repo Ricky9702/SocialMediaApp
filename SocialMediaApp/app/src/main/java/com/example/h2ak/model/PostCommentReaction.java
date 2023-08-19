@@ -45,12 +45,12 @@ public class PostCommentReaction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PostCommentReaction that = (PostCommentReaction) o;
-        return id.equals(that.id) && createdDate.equals(that.createdDate) && type.equals(that.type) && user.equals(that.user) && Objects.equals(PostComment, that.PostComment);
+        return id.equals(that.id) && createdDate.equals(that.createdDate) && type.equals(that.type) && user.getId().equals(that.user.getId()) && Objects.equals(PostComment, that.PostComment);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, createdDate, type, user, PostComment);
+        return Objects.hash(id, createdDate, type, user.getId(), PostComment);
     }
 
     public String getId() {

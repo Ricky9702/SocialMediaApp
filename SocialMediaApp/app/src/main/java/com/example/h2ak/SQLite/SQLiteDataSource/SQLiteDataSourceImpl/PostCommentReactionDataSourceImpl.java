@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebasePostCommentReactionDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebasePostCommentReactionDataSource;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.DatabaseManager;
 import com.example.h2ak.SQLite.MySQLiteHelper;
@@ -27,6 +29,7 @@ public class PostCommentReactionDataSourceImpl implements PostCommentReactionDat
     private String currentUserId;
     private UserDataSource userDataSource;
     private PostCommentDataSource postCommentDataSource;
+    private FirebasePostCommentReactionDataSource firebasePostCommentReactionDataSource;
     private String TAG = "PostCommentReactionDataSourceImpl";
 
     private PostCommentReactionDataSourceImpl(Context context, String currentUserId) {
@@ -34,6 +37,7 @@ public class PostCommentReactionDataSourceImpl implements PostCommentReactionDat
         db = databaseManager.getDatabase();
         userDataSource = UserDataSourceImpl.getInstance(context);
         postCommentDataSource = PostCommentDataSourceImpl.getInstance(context);
+        firebasePostCommentReactionDataSource = FirebasePostCommentReactionDataSourceImpl.getInstance();
         this.currentUserId = currentUserId;
     }
 
@@ -66,15 +70,21 @@ public class PostCommentReactionDataSourceImpl implements PostCommentReactionDat
                 Log.d(TAG, "create: type is null");
                 return false;
             } else {
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID, commentReaction.getId());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_TYPE, commentReaction.getType());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE, commentReaction.getCreatedDate());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_USER_ID, commentReaction.getUser().getId());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_POST_COMMENT_ID, commentReaction.getPostComment().getId());
 
-                result  = db.insert(MySQLiteHelper.TABLE_POST_COMMENT_REACTION, null, contentValues) > 0;
-            }
+                if (find(commentReaction.getPostComment(), commentReaction.getUser().getId()) == null) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID, commentReaction.getId());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_TYPE, commentReaction.getType());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE, commentReaction.getCreatedDate());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_USER_ID, commentReaction.getUser().getId());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_POST_COMMENT_ID, commentReaction.getPostComment().getId());
+                    result  = db.insert(MySQLiteHelper.TABLE_POST_COMMENT_REACTION, null, contentValues) > 0;
+
+                    if (result) {
+                        firebasePostCommentReactionDataSource.create(commentReaction);
+                    }
+                }
+           }
 
             db.setTransactionSuccessful();
         } catch (Exception ex) {
@@ -107,9 +117,15 @@ public class PostCommentReactionDataSourceImpl implements PostCommentReactionDat
                 return false;
             } else {
                 Log.d(TAG, "delete: " + commentReaction.getId());
-                result  = db.delete(MySQLiteHelper.TABLE_POST_COMMENT_REACTION,
-                        MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID + " = ? ",
-                        new String[]{commentReaction.getId()}) > 0;
+
+                if (find(commentReaction.getPostComment(), commentReaction.getUser().getId()) != null) {
+                    result  = db.delete(MySQLiteHelper.TABLE_POST_COMMENT_REACTION,
+                            MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID + " = ? ",
+                            new String[]{commentReaction.getId()}) > 0;
+                    if (result) {
+                        firebasePostCommentReactionDataSource.delete(commentReaction);
+                    }
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {
@@ -126,30 +142,38 @@ public class PostCommentReactionDataSourceImpl implements PostCommentReactionDat
         boolean result = false;
         try {
             if (commentReaction.getId() == null || commentReaction.getId().isEmpty()) {
-                Log.d(TAG, "delete: id is null");
+                Log.d(TAG, "update: id is null");
                 return  false;
             } else if (commentReaction.getPostComment() == null) {
-                Log.d(TAG, "delete: post is null");
+                Log.d(TAG, "update: post is null");
                 return false;
             } else if (commentReaction.getCreatedDate() == null || commentReaction.getCreatedDate().isEmpty()) {
-                Log.d(TAG, "delete: createdDate is null");
+                Log.d(TAG, "update: createdDate is null");
                 return false;
             } else if (commentReaction.getUser() == null) {
-                Log.d(TAG, "delete: User is null");
+                Log.d(TAG, "update: User is null");
                 return false;
             } else if (commentReaction.getType() == null || commentReaction.getType().isEmpty()) {
-                Log.d(TAG, "delete: type is null");
+                Log.d(TAG, "update: type is null");
                 return false;
             } else {
                 Log.d(TAG, "update: " + commentReaction.getId());
-                
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_TYPE, commentReaction.getType());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE, commentReaction.getCreatedDate());
-                
-                result  = db.update(MySQLiteHelper.TABLE_POST_COMMENT_REACTION, contentValues ,
-                        MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID + " = ? ",
-                        new String[]{commentReaction.getId()}) > 0;
+                PostCommentReaction reaction = find(commentReaction.getPostComment(), commentReaction.getUser().getId());
+
+                if (reaction != null && !reaction.equals(commentReaction)) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_TYPE, commentReaction.getType());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE, commentReaction.getCreatedDate());
+
+                    result  = db.update(MySQLiteHelper.TABLE_POST_COMMENT_REACTION, contentValues ,
+                            MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_ID + " = ? ",
+                            new String[]{commentReaction.getId()}) > 0;
+                    if (result) {
+                        firebasePostCommentReactionDataSource.update(commentReaction);
+                    }
+                }
+
+
             }
             db.setTransactionSuccessful();
         } catch (Exception ex) {

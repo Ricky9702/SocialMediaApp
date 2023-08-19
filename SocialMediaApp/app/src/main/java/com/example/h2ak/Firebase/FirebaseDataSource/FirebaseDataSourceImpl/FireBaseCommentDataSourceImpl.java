@@ -48,12 +48,14 @@ public class FireBaseCommentDataSourceImpl implements FireBaseCommentDataSource 
             Log.d(TAG, "create: post is null");
             return false;
         } else {
+
+            Log.d(TAG, "create: "+ comment.getParent()+"");
+
             postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_ID).setValue(comment.getId());
             postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE).setValue(comment.getCreatedDate());
             postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_CONTENT).setValue(comment.getContent());
             postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID).setValue(comment.getUser().getId());
             postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID).setValue(comment.getPost().getId());
-            postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID).setValue(comment.getParent() == null ? "" : comment.getParent().getId());
             result = true;
         }
         return result;
@@ -93,7 +95,6 @@ public class FireBaseCommentDataSourceImpl implements FireBaseCommentDataSource 
             map.put(MySQLiteHelper.COLUMN_POST_COMMENT_CONTENT, comment.getContent());
             map.put(MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID, comment.getUser().getId());
             map.put(MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID, comment.getPost().getId());
-            map.put(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID, comment.getParent() == null ? "" : comment.getParent().getId());
 
             postCommentRef.child(comment.getId()).updateChildren(map).addOnCompleteListener(task -> {
                if (task.isSuccessful()) {
@@ -103,5 +104,11 @@ public class FireBaseCommentDataSourceImpl implements FireBaseCommentDataSource 
 
         }
         return result.get();
+    }
+
+    @Override
+    public void updateParentComment(PostComment comment, PostComment parent) {
+        Log.d(TAG, "updateParentComment: " +  comment.getParent().getId());
+        postCommentRef.child(comment.getId()).child(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID).setValue(parent.getId());
     }
 }

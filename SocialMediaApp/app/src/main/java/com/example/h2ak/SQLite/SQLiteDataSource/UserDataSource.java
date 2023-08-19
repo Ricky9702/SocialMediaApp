@@ -16,5 +16,5 @@ public interface UserDataSource {
     boolean updateCurrentUser(User user);
     boolean UpdateUserChangeOnFirebase(User user);
     //Delete User by id
-    void deleteUser(int userId);
+    boolean deleteUser(User user);
 }

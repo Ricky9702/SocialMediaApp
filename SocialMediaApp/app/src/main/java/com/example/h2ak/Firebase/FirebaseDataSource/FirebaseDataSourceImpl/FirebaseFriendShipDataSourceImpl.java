@@ -38,8 +38,13 @@ public class FirebaseFriendShipDataSourceImpl implements FirebaseFriendShipDataS
 
     @Override
     public void updateFriendShip(FriendShip friendShip) {
-        if (friendShip.getStatus() != null) {
+            friendShipRef.child(friendShip.getId()).child(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1).setValue(friendShip.getUser1().getId());
+            friendShipRef.child(friendShip.getId()).child(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2).setValue(friendShip.getUser2().getId());
             friendShipRef.child(friendShip.getId()).child(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS).setValue(friendShip.getStatus());
-        }
+    }
+
+    @Override
+    public void deleteFriendShip(FriendShip friendShip) {
+        friendShipRef.child(friendShip.getId()).removeValue().isSuccessful();
     }
 }

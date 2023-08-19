@@ -1,6 +1,7 @@
 package com.example.h2ak;
 import android.app.Activity;
 import android.app.Application;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -15,6 +16,7 @@ import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseUserDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.model.User;
+import com.example.h2ak.view.activities.AdminActivity;
 import com.example.h2ak.view.activities.BaseMenuActivity;
 import com.example.h2ak.view.activities.LoginActivity;
 import com.example.h2ak.view.activities.ProfileActivity;
@@ -56,10 +58,13 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
             firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
             firebaseDataSync = FirebaseDataSync.getInstance(this);
 
-            firebaseDataSync.syncPostComment();
             firebaseDataSync.syncInboxPost();
             firebaseDataSync.syncPost();
             firebaseDataSync.syncPostReaction();
+            firebaseDataSync.syncPostImages();
+            firebaseDataSync.syncPostComment();
+            firebaseDataSync.syncPostCommentReaction();
+
 
             firebaseDataSync.syncUser(() -> {
                 if (currentActivity instanceof BaseMenuActivity) {
@@ -107,41 +112,51 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
 
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
+        if (activity instanceof LoginActivity) {
+            firebaseDataSync = FirebaseDataSync.getInstance(this);
+            firebaseDataSync.syncUser(() -> {});
+        }
     }
 
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
         this.setCurrentActivity(activity);
-        if (!(this.getCurrentActivity() instanceof LoginActivity) && !(this.getCurrentActivity() instanceof RegisterActivity)) {
+        if (!(this.getCurrentActivity() instanceof LoginActivity)
+                && !(this.getCurrentActivity() instanceof AdminActivity)
+                && !(this.getCurrentActivity() instanceof RegisterActivity)) {
 
             if (getCurrentUser() == null) {
                 getCurrentUser();
+
+//            } else {
+//                activity.startActivity(new Intent(activity, AdminActivity.class));
+//                activity.finish();
             }
 
-            isAppInForeground = true;
-            if (getCurrentUser() != null) {
-                offlineHandler.removeCallbacksAndMessages(null);
-                getCurrentUser().setOnline(true);
-                firebaseUserDataSource.updateOnlineField(getCurrentUser());
-                Log.d("FirebaseUpdateUser", "update resumed");
-            }
+//            isAppInForeground = true;
+//            if (getCurrentUser() != null) {
+//                offlineHandler.removeCallbacksAndMessages(null);
+//                getCurrentUser().setOnline(true);
+//                firebaseUserDataSource.updateOnlineField(getCurrentUser());
+//                Log.d("FirebaseUpdateUser", "update resumed");
+//            }
         }
     }
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
-        isAppInForeground = false;
-        // Use a Handler to delay setting the user offline by 2 minutes
-        offlineHandler.postDelayed(() -> {
-            if (!isAppInForeground) {
-                User currentUser = getCurrentUser();
-                if (currentUser != null) {
-                    currentUser.setOnline(false);
-                    firebaseUserDataSource.updateOnlineField(currentUser);
-                    Log.d("FirebaseUpdateUser", "User is offline now");
-                }
-            }
-        }, OFFLINE_DELAY);
+//        isAppInForeground = false;
+//        // Use a Handler to delay setting the user offline by 2 minutes
+//        offlineHandler.postDelayed(() -> {
+//            if (!isAppInForeground) {
+//                User currentUser = getCurrentUser();
+//                if (currentUser != null) {
+//                    currentUser.setOnline(false);
+//                    firebaseUserDataSource.updateOnlineField(currentUser);
+//                    Log.d("FirebaseUpdateUser", "User is offline now");
+//                }
+//            }
+//        }, OFFLINE_DELAY);
     }
 
     @Override
@@ -172,25 +187,32 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     }
 
     public User getCurrentUser() {
-        return userDataSource.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        if (FirebaseAuth.getInstance().getCurrentUser().getUid() != null) {
+            return userDataSource.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        } else {
+            return null;
+        }
     }
 
     public void setCurrentUser(User currentUser) {
-        this.currentUser = currentUser;
+        if (currentUser != null) this.currentUser = currentUser;
     }
 
     public String getCurrentUserId() {
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) return FirebaseAuth.getInstance().getCurrentUser().getUid();
-        else return null;
+        String id = "";
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            id =  FirebaseAuth.getInstance().getCurrentUser().getUid();
+        }
+        return id;
     }
 
     public void setUserOffline() {
-        User currentUser = getCurrentUser();
-        if (currentUser != null) {
-            currentUser.setOnline(false);
-            firebaseUserDataSource.updateOnlineField(currentUser);
-            Log.d("FirebaseUpdateUser", "User is offline now");
-        }
+//        User currentUser = getCurrentUser();
+//        if (currentUser != null) {
+//            currentUser.setOnline(false);
+//            firebaseUserDataSource.updateOnlineField(currentUser);
+//            Log.d("FirebaseUpdateUser", "User is offline now");
+//        }
     }
 
     public void setCurrentUserId(String currentUserId) {

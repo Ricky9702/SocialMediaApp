@@ -14,6 +14,8 @@ import com.example.h2ak.SQLite.MySQLiteHelper;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.PasswordHashing;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
@@ -30,8 +32,6 @@ public class UserDataSourceImpl implements UserDataSource {
     private static UserDataSourceImpl instance;
     private String currentUserId;
 
-    private static AtomicInteger count = new AtomicInteger(0);
-
     private UserDataSourceImpl(Context context, String currentUserId) {
         firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
         databaseManager = DatabaseManager.getInstance(context);
@@ -41,7 +41,6 @@ public class UserDataSourceImpl implements UserDataSource {
 
     public static synchronized UserDataSourceImpl getInstance(Context context) {
         if (instance == null) {
-            Log.d("count X2", count.incrementAndGet() + "");
             instance = new UserDataSourceImpl(context.getApplicationContext(), MyApp.getInstance().getCurrentUserId());
         }
         return instance;
@@ -86,12 +85,14 @@ public class UserDataSourceImpl implements UserDataSource {
     @Override
     public User getUserById(String id) {
         User user = null;
-        try (Cursor cursor = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_USER
-                        + " WHERE " + MySQLiteHelper.COLUMN_USER_ID + " = ?",
-                new String[]{id})) {
-            //if user is exists
-            if (cursor.moveToFirst()) {
-                user = getUserByCursor(cursor);
+        if (id != null && !id.isEmpty()) {
+            try (Cursor cursor = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_USER
+                            + " WHERE " + MySQLiteHelper.COLUMN_USER_ID + " = ?",
+                    new String[]{id})) {
+                //if user is exists
+                if (cursor.moveToFirst()) {
+                    user = getUserByCursor(cursor);
+                }
             }
         }
         return user;
@@ -166,6 +167,7 @@ public class UserDataSourceImpl implements UserDataSource {
         db.beginTransaction();
         try {
             User currentUser = this.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid());
+            Log.d("FirebaseUpdateUser: user", currentUser.getEmail() + "");
             if (user.getId().equals(currentUser.getId())) {
 
                 User firebaseUser = currentUser;
@@ -202,11 +204,20 @@ public class UserDataSourceImpl implements UserDataSource {
                         firebaseUser.setGender(user.getGender());
                     }
 
-                    if (user.getPassword() != null && currentUser.getPassword() != null && !user.getPassword().equals(currentUser.getPassword()) && !PasswordHashing.verifyPassword(user.getPassword(), currentUser.getPassword())) {
+                    if (user.getPassword() != null && currentUser.getPassword() != null
+                            && !user.getPassword().equals(currentUser.getPassword())
+                            && !PasswordHashing.verifyPassword(user.getPassword(), currentUser.getPassword())) {
+
                         String password = PasswordHashing.hashPassword(user.getPassword());
                         Log.d("password", password);
                         contentValues.put(MySQLiteHelper.COLUMN_USER_PASSWORD, password);
                         firebaseUser.setPassword(password);
+
+                        FirebaseAuth.getInstance().getCurrentUser().updatePassword(user.getPassword()).addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Log.d("updateCurrentUser", "updateCurrentUser: update password success" );
+                            } else  Log.d("updateCurrentUser", "updateCurrentUser: update failed success" );
+                        });
                     }
 
                     if (user.getRole() != null && !currentUser.getRole().equals(user.getRole())) {
@@ -217,7 +228,6 @@ public class UserDataSourceImpl implements UserDataSource {
                     if (user.isActive() != currentUser.isActive()) {
                         contentValues.put(MySQLiteHelper.COLUMN_USER_IS_ACTIVE, user.isActive());
                     }
-                    Log.d("Sqlite transaction", "Update current user");
 
                     firebaseUserDataSource.updateUser(firebaseUser);
                     return db.update(MySQLiteHelper.TABLE_USER, contentValues, MySQLiteHelper.COLUMN_USER_ID + "= ?",
@@ -240,7 +250,7 @@ public class UserDataSourceImpl implements UserDataSource {
         db.beginTransaction();
         boolean result = false;
         try {
-            if (found != null) {
+            if (found != null && !found.equals(user)) {
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(MySQLiteHelper.COLUMN_USER_NAME, user.getName());
                 contentValues.put(MySQLiteHelper.COLUMN_USER_BIO, user.getBio());
@@ -266,8 +276,57 @@ public class UserDataSourceImpl implements UserDataSource {
 
 
     @Override
-    public void deleteUser(int userId) {
+    public boolean deleteUser(User user) {
+        db.beginTransaction();
+        boolean result = false;
+        try {
+            if (getUserById(user.getId()) != null) {
+                result = db.delete(MySQLiteHelper.TABLE_USER,
+                        MySQLiteHelper.COLUMN_USER_ID + " = ? " ,
+                        new String[]{user.getId()}) > 0;
+                if (result) {
+                    if (firebaseUserDataSource.delete(user)) {
+                        Log.d("deleteUserFirebase: ", "success");
+                    } else {
+                        Log.d("deleteUserFirebase: ", "failed");
+                    }
+                }
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            db.endTransaction();
+        }
+        return result;
+    }
 
+    public static boolean checkValidFields(User user) {
+        if (user.getId() == null || user.getId().isEmpty()) {
+            return false;
+        } else if (user.getName() == null || user.getName().isEmpty()) {
+            return false;
+        } else if (user.getGender() == null || user.getGender().isEmpty()) {
+            return false;
+        } else if (user.getBirthday() == null || user.getBirthday().isEmpty()) {
+            return false;
+        } else if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            return false;
+        } else if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            return false;
+        } else if (user.getRole() == null || user.getRole().isEmpty()) {
+            return false;
+        } else if (user.getCreatedDate() == null || user.getCreatedDate().isEmpty()) {
+            return false;
+        } else if (user.getImageAvatar() == null ) {
+            return false;
+        } else if (user.getImageCover() == null) {
+            return false;
+        } else if (user.getBio() == null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
 

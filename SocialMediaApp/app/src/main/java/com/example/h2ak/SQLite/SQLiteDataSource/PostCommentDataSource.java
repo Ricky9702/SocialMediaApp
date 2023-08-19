@@ -12,6 +12,7 @@ public interface PostCommentDataSource {
     boolean create(PostComment comment);
     boolean delete(PostComment comment);
     boolean update(PostComment comment);
+    boolean updateParentField(PostComment comment);
     Set<PostComment> getAllCommentByPost(Post post);
     Set<PostComment> getAllCommentByParent(PostComment comment);
     PostComment getById(String id);

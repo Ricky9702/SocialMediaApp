@@ -29,6 +29,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.h2ak.Firebase.FirebaseDataSource.FireBaseCommentDataSource;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FireBaseCommentDataSourceImpl;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
@@ -47,6 +49,7 @@ import com.example.h2ak.model.User;
 import com.example.h2ak.utils.TextInputLayoutUtils;
 import com.example.h2ak.view.activities.UserProfileActivity;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.util.ArrayList;
@@ -68,6 +71,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     private InboxPostDataSource inboxPostDataSource;
     private ViewGroup parent;
     private boolean isChild = false;
+    private OnChildCommentDeleteListener listener;
+    private PostAdapter postAdapter;
+    private FireBaseCommentDataSource fireBaseCommentDataSource;
 
     public CommentAdapter(Context context) {
         postCommentList = new ArrayList<>();
@@ -76,8 +82,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         postCommentReactionDataSource = PostCommentReactionDataSourceImpl.getInstance(context);
         inboxDataSource = InboxDataSourceImpl.getInstance(context);
         inboxPostDataSource = InboxPostDataSourceImpl.getInstance(context);
+        fireBaseCommentDataSource = FireBaseCommentDataSourceImpl.getInstance();
     }
-
 
     @NonNull
     @Override
@@ -154,6 +160,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                                                     Log.d(TAG, "Delete comment child successfully!!: ");
                                                 else Log.d(TAG, "Delete comment child failed!!: ");
                                             });
+                                            if (listener != null) listener.onDeleteSuccess(true, actualPosition);
                                         }
                                     } else {
                                         Log.d(TAG, "delete: failed");
@@ -229,10 +236,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                                         Log.d(TAG, "childSet: " + childSet.size());
                                         if (!childSet.isEmpty()) {
                                             childSet.forEach(postComment -> {
-                                                if (postCommentDataSource.delete(postComment))
+                                                if (postCommentDataSource.delete(postComment)) {
                                                     Log.d(TAG, "Delete comment child successfully!!: ");
+                                                }
                                                 else Log.d(TAG, "Delete comment child failed!!: ");
                                             });
+                                            if (listener != null) listener.onDeleteSuccess(true, actualPosition);
                                         }
 
                                     } else {
@@ -445,8 +454,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
                 if (content != null && !content.isEmpty()) {
                     PostComment postComment = new PostComment(content, MyApp.getInstance().getCurrentUser(), comment.getPost());
+                    Log.d(TAG, "parnet comment: " + commentAdapter.getPostCommentList().get(0).getId());
                     postComment.setParent(comment);
                     if (postCommentDataSource.create(postComment)) {
+                        fireBaseCommentDataSource.updateParentComment(postComment, comment);
+                        Log.d(TAG, "parnet comment X2: " + postComment.getParent().getId());
 
                         // hide keyboard
                         InputMethodManager imm = (InputMethodManager) ((Activity)context).getSystemService(Activity.INPUT_METHOD_SERVICE);
@@ -482,6 +494,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             toolbar.setBackgroundColor(Color.parseColor("#FFFBFE"));
             toolbar.setNavigationOnClickListener(view1 -> {
                 dialog.dismiss();
+            });
+
+            commentAdapter.setListener(new OnChildCommentDeleteListener() {
+                @Override
+                public void onDeleteSuccess(boolean flag, int position) {
+                    if (flag) {
+                        if (postAdapter != null ) postAdapter.onChildCommentDelete(true);
+                        dialog.dismiss();
+                    }
+                }
             });
 
         });
@@ -552,6 +574,22 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         isChild = child;
     }
 
+    public OnChildCommentDeleteListener getListener() {
+        return listener;
+    }
+
+    public void setListener(OnChildCommentDeleteListener listener) {
+        this.listener = listener;
+    }
+
+    public PostAdapter getPostAdapter() {
+        return postAdapter;
+    }
+
+    public void setPostAdapter(PostAdapter postAdapter) {
+        this.postAdapter = postAdapter;
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         CircularImageView imageViewProfileAvatar;
         TextView textViewProfileName, textViewContent, textViewCommentCreatedDate, textViewCommentLikeSize, textViewCommentChildSize;
@@ -575,6 +613,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
             textViewCommentChildSize.setVisibility(View.GONE);
         }
-
     }
+
+    public interface OnChildCommentDeleteListener {
+        void onDeleteSuccess(boolean flag, int position);
+    }
+
 }

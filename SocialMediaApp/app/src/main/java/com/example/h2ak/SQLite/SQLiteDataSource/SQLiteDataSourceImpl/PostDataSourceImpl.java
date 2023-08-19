@@ -199,18 +199,24 @@ public class PostDataSourceImpl implements PostDataSource {
     }
 
     @Override
-    public Post getNewestPost(User user) {
-        Post post = null;
+    public Set<Post> getAllPost() {
+        Set<Post> postSet = new HashSet<>();
         try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST
-                + " WHERE " + MySQLiteHelper.COLUMN_POST_USER_ID + " = ? "
-                + " ORDER BY " + MySQLiteHelper.COLUMN_POST_CREATED_DATE + " DESC "
-                + " LIMIT 1 ", new String[]{user.getId()})) {
-            if (c != null && c.moveToFirst()) {
-                post = getPostByCursor(c);
+                + " ORDER BY  " + MySQLiteHelper.COLUMN_POST_CREATED_DATE + " DESC ",
+               null)) {
+            if (c != null) {
+                while (c.moveToNext()) {
+                    Post post = getPostByCursor(c);
+                    if (post != null) {
+                        postSet.add(post);
+                    }
+                }
             }
         }
-        return post;
+        return postSet;
     }
+
+
 
     Post getPostByCursor(Cursor c) {
         Post post = null;

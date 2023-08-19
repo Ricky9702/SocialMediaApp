@@ -41,14 +41,22 @@ public class LoginActivtyPresenter implements LoginActivityContract.Presenter{
             return;
         }
 
+        if (email.equals("admin") && password.equals("123456")) {
+            firebaseAuth.signInWithEmailAndPassword("admin@gmail.com", "123456").addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    view.onAdminLogin();
+                }
+            });
+        }
+
         firebaseAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
                 Log.d("USER NOT FOUND??2", firebaseUser.getUid());
-                User user = userDataSource.getUserById(MyApp.getInstance().getCurrentUserId());
+                User user = userDataSource.getUserById(firebaseUser.getUid());
                 listener.onEmailVerified(firebaseUser.isEmailVerified());
-                if (firebaseUser != null) {
-                    if (firebaseUser.isEmailVerified()) {
+                if (firebaseUser != null && user != null) {
+                    if (firebaseUser.isEmailVerified() || user.isActive()) {
                         // User is active, notify success
                         view.onLoginSuccess();
                     } else {

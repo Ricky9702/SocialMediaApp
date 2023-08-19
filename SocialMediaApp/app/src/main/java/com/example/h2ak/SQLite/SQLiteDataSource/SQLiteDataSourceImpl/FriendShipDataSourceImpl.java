@@ -19,6 +19,7 @@ import com.example.h2ak.model.User;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -120,6 +121,7 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 if (findFriendShip(friendShip) == null) {
                     result = db.insert(MySQLiteHelper.TABLE_FRIENDSHIP, null, contentValues) > 0;
                     if (result) {
+                        Log.d("createFriendShip", "create to firebase");
                         firebaseFriendShipDataSource.createFriendShip(friendShip);
                     }
                 }
@@ -217,10 +219,18 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
                 return false;
             } else {
                 Log.d("updateFriendShip : ", "LOCAL");
-                ContentValues contentValues = new ContentValues();
-                contentValues.put("status", friendShip.getStatus());
+                FriendShip found = findFriendShip(friendShip);
+                if (found != null && !found.equals(friendShip)) {
+                    ContentValues contentValues = new ContentValues();
 
-                if (findFriendShip(friendShip) != null && !findFriendShip(friendShip).equals(friendShip)) {
+                    if (!friendShip.getUser1().getId().equals(found.getUser1().getId())) {
+                        contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_1, friendShip.getUser1().getId());
+                    } else if (!friendShip.getUser2().getId().equals(found.getUser2().getId())) {
+                        contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_USER_2, friendShip.getUser2().getId());
+                    }
+
+                    contentValues.put(MySQLiteHelper.COLUMN_FRIENDSHIP_STATUS, friendShip.getStatus());
+
                     result = db.update(MySQLiteHelper.TABLE_FRIENDSHIP, contentValues, MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? ",
                             new String[]{String.valueOf(friendShip.getId())}) > 0;
                 }
@@ -297,5 +307,54 @@ public class FriendShipDataSourceImpl implements FriendShipDataSource {
     @Override
     public void close() {
         databaseManager.closeDatabase();
+    }
+
+    @Override
+    public boolean delete(FriendShip friendShip) {
+        db.beginTransaction();
+        boolean result = false;
+        try {
+            if (findFriendShip(friendShip) != null) {
+                result = db.delete(MySQLiteHelper.TABLE_FRIENDSHIP,
+                        MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " = ? ",
+                        new String[]{friendShip.getId()}) > 0;
+                if (result) {
+                    firebaseFriendShipDataSource.deleteFriendShip(friendShip);
+                }
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            db.endTransaction();
+        }
+        return result;
+    }
+
+    @Override
+    public List<FriendShip> getAllFriendShip() {
+        Set<FriendShip> friendShipSet = new HashSet<>();
+        try (Cursor c = db.rawQuery(
+                "SELECT * FROM " + MySQLiteHelper.TABLE_FRIENDSHIP
+                        + " ORDER BY " + MySQLiteHelper.COLUMN_FRIENDSHIP_ID + " DESC", null)) {
+            while (c.moveToNext()) {
+                Log.d("FriendShipId?", c.getString(0));
+                User user1 = userDataSource.getUserById(c.getString(3));
+                User user2 = userDataSource.getUserById(c.getString(4));
+
+                FriendShip friendShip1 = new FriendShip();
+                friendShip1.setId(c.getString(0));
+                friendShip1.setCreatedDate(c.getString(1));
+                friendShip1.setStatus(c.getString(2));
+                friendShip1.setUser1(user1);
+                friendShip1.setUser2(user2);
+                friendShip1.setFriendShipStatus(FriendShip.FriendShipStatus.valueOf(friendShip1.getStatus()));
+
+                friendShipSet.add(friendShip1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return friendShipSet.stream().collect(Collectors.toList());
     }
 }

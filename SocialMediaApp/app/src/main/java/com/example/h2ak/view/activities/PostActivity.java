@@ -77,7 +77,13 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
             String privacy2 = getIntent().getStringExtra("privacy2");
             Log.d("params2", "onBindViewHolder: "+ privacy2);
 
-            if (id != null && !id.isEmpty()) {
+            ArrayList<String> imageUrls = getIntent().getStringArrayListExtra("listPostId");
+
+            if (imageUrls != null && !imageUrls.isEmpty()) {
+                List<String> listPostId = new ArrayList<>();
+                listPostId.addAll(imageUrls);
+                presenter.getPostByListId(listPostId);
+            } else if (id != null && !id.isEmpty()) {
                 // the user is stranger
                 if (privacy2 == null || privacy2.isEmpty()) {
                     presenter.getAllPostByUserIdWithPrivacy(id, privacy1, null);
@@ -85,17 +91,8 @@ public class PostActivity extends AppCompatActivity implements PostActivityContr
                     // the user is friends
                     presenter.getAllPostByUserIdWithPrivacy(id, privacy1, privacy2);
                 }
-                postDisplayAdapter.setEnableAction(false);
             } else {
-                ArrayList<String> imageUrls = getIntent().getStringArrayListExtra("listPostId");
-                if (imageUrls != null && !imageUrls.isEmpty()) {
-                    List<String> listPostId = new ArrayList<>();
-                    listPostId.addAll(imageUrls);
-                    presenter.getPostByListId(listPostId);
-                } else {
-                    presenter.getAllPostByUserIdWithPrivacy(null, null, null);
-                    postDisplayAdapter.setEnableAction(true);
-                }
+                presenter.getAllPostByUserIdWithPrivacy(null, null, null);
             }
         }
 

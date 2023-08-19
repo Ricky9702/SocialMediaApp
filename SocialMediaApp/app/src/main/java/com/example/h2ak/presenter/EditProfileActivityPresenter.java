@@ -24,6 +24,7 @@ public class EditProfileActivityPresenter implements EditProfileActivityContract
     private User currentUser;
     private Context context;
     private EditProfileActivityContract.UpdatedProfileListener listener;
+    private OnUpdatePasswordListener onUpdatePasswordListener;
 
     public EditProfileActivityPresenter(EditProfileActivityContract.View view, Context context) {
         this.context = context;
@@ -69,20 +70,49 @@ public class EditProfileActivityPresenter implements EditProfileActivityContract
         if (user.getPassword() != null && !user.getPassword().isEmpty() && !currentUser.getPassword().equals(user.getPassword())) {
             currentUser.setPassword(user.getPassword().trim());
             firebaseAuth.getCurrentUser().updatePassword(user.getPassword()).addOnSuccessListener(task -> {
+                onUpdatePasswordListener.updateStatus(true);
+
             }).addOnFailureListener(runnable -> {
                 Log.d("Update firebase password", runnable.getMessage());
                 view.showMessage(runnable.getMessage());
             });
         }
 
+        this.setOnUpdatePasswordListener(new OnUpdatePasswordListener() {
+            @Override
+            public void updateStatus(boolean flag) {
+                if (flag) {
+                    currentUser.setPassword(PasswordHashing.hashPassword(user.getPassword()));
+                    if (userDataSource.updateCurrentUser(currentUser)) {
+                        Log.d("Listener is null?", listener == null ? "NULL" : "NOT NULL");
+                        if (listener != null)
+                            listener.onProfileUpdated();
+                    }
+                }
+            }
+        });
+
         if (userDataSource.updateCurrentUser(currentUser)) {
             Log.d("Listener is null?", listener == null ? "NULL" : "NOT NULL");
             if (listener != null)
                 listener.onProfileUpdated();
-        } else {
         }
+
         view.showProgressbar(false);
     }
+
+    public OnUpdatePasswordListener getOnUpdatePasswordListener() {
+        return onUpdatePasswordListener;
+    }
+
+    public void setOnUpdatePasswordListener(OnUpdatePasswordListener onUpdatePasswordListener) {
+        this.onUpdatePasswordListener = onUpdatePasswordListener;
+    }
+
+    public interface OnUpdatePasswordListener {
+        void updateStatus(boolean flag);
+    }
+
 
     @Override
     /**

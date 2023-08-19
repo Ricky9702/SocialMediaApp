@@ -38,12 +38,14 @@ import com.example.h2ak.R;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.InboxPostDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentReactionDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostImagesDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.PostReactionDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxPostDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentReactionDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostImagesDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostReactionDataSourceImpl;
@@ -82,8 +84,10 @@ public class PostAdapter extends PostPreviewAdapter {
     private PostDataSource postDataSource;
     private PostReactionDataSource postReactionDataSource;
     private PostCommentDataSource postCommentDataSource;
+    private PostCommentReactionDataSource postCommentReactionDataSource;
     private InboxDataSource inboxDataSource;
     private InboxPostDataSource inboxPostDataSource;
+    private TabLayout tabLayout;
 
     public PostAdapter(Context context, OnChangePostListener listener) {
         super(context);
@@ -96,6 +100,7 @@ public class PostAdapter extends PostPreviewAdapter {
         postDataSource = PostDataSourceImpl.getInstance(context);
         inboxDataSource = InboxDataSourceImpl.getInstance(context);
         inboxPostDataSource = InboxPostDataSourceImpl.getInstance(context);
+        postCommentReactionDataSource = PostCommentReactionDataSourceImpl.getInstance(context);
     }
 
     @NonNull
@@ -281,11 +286,10 @@ public class PostAdapter extends PostPreviewAdapter {
                                     b.setTitle("Edit content")
                                             .setView(linearLayout)
                                             .setPositiveButton("Change", (d, pos) -> {
+                                                post.setContent(content.getText().toString().trim());
                                                 if (postDataSource.updatePost(post)) {
-                                                    post.setContent(content.getText().toString().trim());
                                                     this.setPost(post, true);
                                                     Toast.makeText(context, "Update post successfully!!", Toast.LENGTH_SHORT).show();
-                                                    postDataSource.updatePost(post);
                                                 } else {
                                                     Toast.makeText(context, "Update post failed!!", Toast.LENGTH_SHORT).show();
 
@@ -317,11 +321,10 @@ public class PostAdapter extends PostPreviewAdapter {
                                     b.setTitle("Edit privacy")
                                             .setView(linearLayout)
                                             .setPositiveButton("Change", (d, pos) -> {
+                                                post.setPrivacy(spinner.getSelectedItem().toString());
                                                 if (postDataSource.updatePost(post)) {
-                                                    post.setPrivacy(spinner.getSelectedItem().toString());
                                                     this.setPost(post, true);
                                                     Toast.makeText(context, "Update post successfully!!", Toast.LENGTH_SHORT).show();
-                                                    postDataSource.updatePost(post);
                                                 } else {
                                                     Toast.makeText(context, "Update post failed!!", Toast.LENGTH_SHORT).show();
                                                 }
@@ -490,15 +493,23 @@ public class PostAdapter extends PostPreviewAdapter {
                             .setMessage("Are you sure want to delete this post?")
                             .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
                             .setPositiveButton("Confirm", (dialogInterface, i) -> {
+
+                                postImagesDataSource.getAllPostImagesByPost(post).forEach(images -> {
+                                    if (images != null) postImagesDataSource.deletePostImages(images);
+                                });
+
+                                postCommentDataSource.getAllCommentByPost(post).forEach(comment -> {
+                                    if (comment != null) {
+                                        postCommentReactionDataSource.getAllReactionByComment(comment).forEach(postCommentReaction -> {
+                                            if (postCommentReaction != null) postCommentReactionDataSource.delete(postCommentReaction);
+                                            postCommentDataSource.delete(comment);
+                                        });
+                                    }});
+
+                                postReactionDataSource.getAllReactionByPost(post).forEach(postReaction -> {
+                                    if (postReaction != null) postReactionDataSource.delete(postReaction);
+                                });
                                 if (postDataSource.deletePost(post)) {
-
-                                    // delete post images inside the post
-                                    postImages.forEach(postImages1 -> postImagesDataSource.deletePostImages(postImages1));
-
-                                    // delete post like inside the post
-                                    postReactionSet.forEach(postReaction -> postReactionDataSource.delete(postReaction));
-
-                                    postCommentSet.forEach(postComment -> postCommentDataSource.delete(postComment));
 
 
                                     int actualPosition = holder.getAdapterPosition();
@@ -520,6 +531,26 @@ public class PostAdapter extends PostPreviewAdapter {
 
     }
 
+    public void onChildCommentDelete(boolean flag) {
+        Log.d("PostAdapter", "onChildCommentDelete: ");
+        if (flag) {
+            if (getTabLayout() != null) {
+                getTabLayout().setVisibility(View.GONE);
+                getTabLayout().getTabAt(0).select();
+                getTabLayout().getTabAt(1).select();
+                getTabLayout().setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    public TabLayout getTabLayout() {
+        return tabLayout;
+    }
+
+    public void setTabLayout(TabLayout tabLayout) {
+        this.tabLayout = tabLayout;
+    }
+
     public interface CommentChangeListener {
         void onChange(boolean flag);
     }
@@ -531,7 +562,7 @@ public class PostAdapter extends PostPreviewAdapter {
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        params.setMargins(0, 10, 0, 0);
+        params.setMargins(0, 10, 0, 10);
 
         View v = LayoutInflater.from(context).inflate(R.layout.custom_post_tab, null, false);
 
@@ -539,9 +570,9 @@ public class PostAdapter extends PostPreviewAdapter {
 
         tab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
-            public void onTabSelected(TabLayout.Tab tab) {
+            public void onTabSelected(TabLayout.Tab t) {
                 // likes
-                if (tab.getPosition() == 0) {
+                if (t.getPosition() == 0) {
 
                     if (linearLayoutParent.getChildCount() > 1) {
                         linearLayoutParent.removeViewAt(1);
@@ -588,6 +619,7 @@ public class PostAdapter extends PostPreviewAdapter {
 
                         if (content != null && !content.isEmpty()) {
                             PostComment postComment = new PostComment(content, MyApp.getInstance().getCurrentUser(), post);
+                            postComment.setParent(null);
                             if (postCommentDataSource.create(postComment)) {
                                 // Hide keyboard
                                 InputMethodManager imm = (InputMethodManager) ((Activity)context).getSystemService(Activity.INPUT_METHOD_SERVICE);
@@ -614,10 +646,8 @@ public class PostAdapter extends PostPreviewAdapter {
                                 Log.d("PostAdapter", "create comment: failed");
                             }
                         }
-
-
+                        commentAdapter.setPostAdapter(PostAdapter.this);
                     });
-
 
                     editTextComment.setOnFocusChangeListener((view, b) -> {
                         if (b) {
@@ -668,6 +698,8 @@ public class PostAdapter extends PostPreviewAdapter {
         linearLayoutParent.addView(v, params);
 
         tabLayout.setView(linearLayoutParent);
+
+        setTabLayout(tab);
 
         if (selected == 0) {
             tab.getTabAt(1).select();
@@ -742,15 +774,6 @@ public class PostAdapter extends PostPreviewAdapter {
     public void setInsertPostImagesList(List<PostImages> insertPostImagesList) {
         this.insertPostImagesList = insertPostImagesList;
     }
-
-    public Boolean getEnableAction() {
-        return isEnableAction;
-    }
-
-    public void setEnableAction(Boolean enableAction) {
-        isEnableAction = enableAction;
-    }
-
 
     public interface OnChangePostListener {
         void onChange(boolean flag);

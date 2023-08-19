@@ -36,7 +36,7 @@ public class FriendFragmentPresenter implements FriendFragmentContract.Presenter
 
     @Override
     public void getFriendList() {
-        User currentUser = userDataSource.getUserById(firebaseAuth.getCurrentUser().getUid());
+        User currentUser = userDataSource.getUserById(MyApp.getInstance().getCurrentUser().getId());
         Log.d("currentUser: ", currentUser.getEmail());
         view.onFriendListRecieved(new ArrayList<>(friendShipDataSource.getFriendsByUser(currentUser)));
     }

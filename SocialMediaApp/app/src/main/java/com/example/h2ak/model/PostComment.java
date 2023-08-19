@@ -31,6 +31,7 @@ public class PostComment {
         this.post = post;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.activities.AdminActivity">
+
+    <include layout="@layout/app_bar_layout"/>
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="64dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_margin="5dp"
+        android:backgroundTint="@color/active_icon"
+        android:drawableLeft="@drawable/baseline_logout_24"
+        android:gravity="center"
+        android:text="" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayoutParent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_below="@+id/appBar"
+        app:tabTextColor="@color/facebook_not_active_color"
+        app:tabSelectedTextColor="@color/active_icon"
+        app:tabIndicatorColor="@color/active_icon">
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Users"/>
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FriendShips"/>
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Posts"/>
+    </com.google.android.material.tabs.TabLayout>
+
+        <FrameLayout
+            android:id="@+id/frameLayoutAdmin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tabLayoutParent">
+        </FrameLayout>
+
+</RelativeLayout>

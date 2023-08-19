@@ -82,17 +82,25 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_CONTENT, comment.getContent());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID, comment.getUser().getId());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_POST_ID, comment.getPost().getId());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID, comment.getParent() == null ? "" : comment.getParent().getId());
+
+                Log.d(TAG, "create: "+ comment.getParent()+ MyApp.getInstance().getCurrentUser().getEmail());
 
                 if (getById(comment.getId()) == null) {
+
+                    if (comment.getParent() != null) {
+                        contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID, comment.getParent().getId());
+                    } else {
+                        contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID, "");
+                    }
+
                     result = db.insert(MySQLiteHelper.TABLE_POST_COMMENT, null, contentValues) > 0;
+
                     if (result) {
+                        Log.d(TAG, "create: X2 "+ comment.getParent()+ MyApp.getInstance().getCurrentUser().getEmail());
                         fireBaseCommentDataSource.create(comment);
                     }
                 }
-
             }
-
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -123,7 +131,6 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                 Log.d(TAG, "delete: post is null");
                 return false;
             } else {
-
                 if (getById(comment.getId()) != null) {
                     result = db.delete(MySQLiteHelper.TABLE_POST_COMMENT, MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{comment.getId()}) > 0;
                     if (result) {
@@ -131,7 +138,6 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                     }
                 }
             }
-
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -166,6 +172,10 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_CONTENT, comment.getContent());
                 contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE, new PostComment().getCreatedDate());
 
+                if (comment.getParent() != null) {
+                    this.updateParentField(comment);
+                 }
+
                 if (getById(comment.getId()) != null && !getById(comment.getId()).equals(comment)) {
                     result = db.update(MySQLiteHelper.TABLE_POST_COMMENT,
                             contentValues,
@@ -174,6 +184,43 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                         fireBaseCommentDataSource.update(comment);
                     }
                 }
+
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            db.endTransaction();
+        }
+        return result;
+    }
+
+    @Override
+    public boolean updateParentField(PostComment comment) {
+        db.beginTransaction();
+        boolean result = false;
+        try {
+            if (comment.getId() == null || comment.getId().isEmpty()) {
+                Log.d(TAG, "update: id is null");
+                return false;
+            } else if (comment.getCreatedDate() == null || comment.getCreatedDate().isEmpty()) {
+                Log.d(TAG, "update: createdDate is null");
+                return false;
+            } else if (comment.getContent() == null || comment.getContent().isEmpty()) {
+                Log.d(TAG, "update: content is null");
+                return false;
+            } else if (comment.getUser() == null) {
+                Log.d(TAG, "update: user is null");
+                return false;
+            } else if (comment.getPost() == null) {
+                Log.d(TAG, "update: post is null");
+                return false;
+            } else {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MySQLiteHelper.COLUMN_POST_COMMENT_PARENT_ID, comment.getParent().getId());
+                result = db.update(MySQLiteHelper.TABLE_POST_COMMENT,
+                        contentValues,
+                        MySQLiteHelper.COLUMN_POST_COMMENT_ID + " = ? ", new String[]{comment.getId()}) > 0;
 
             }
             db.setTransactionSuccessful();
@@ -285,7 +332,6 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
 
                 User user = userDataSource.getUserById(userId);
                 Post post = postDataSource.findPost(postId);
-                PostComment parent = getById(parentId);
 
                 if (user == null || post == null) {
                     Log.d(TAG, "getCommentByCursor: user or post is null");
@@ -294,7 +340,11 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
                     postComment = new PostComment(content, user, post);
                     postComment.setId(id);
                     postComment.setCreatedDate(createdDate);
-                    postComment.setParent(parent);
+
+                    if (parentId != null && !parentId.isEmpty()) {
+                        PostComment parent = getById(parentId);
+                        if (parent != null) postComment.setParent(parent);
+                    }
                 }
 
             }

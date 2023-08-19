@@ -109,4 +109,11 @@ public class LoginActivity extends AppCompatActivity implements LoginActivityCon
     public void onLoginFailure(String errorMessage) {
         Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
     }
+
+    @Override
+    public void onAdminLogin() {
+        Toast.makeText(this, "Welcome back admin", Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(this, AdminActivity.class));
+        finish();
+    }
 }

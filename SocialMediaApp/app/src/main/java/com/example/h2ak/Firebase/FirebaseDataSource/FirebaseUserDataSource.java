@@ -7,6 +7,7 @@ import java.util.List;
 public interface FirebaseUserDataSource {
     void createUser(User user);
     void updateUser(User user);
-    void getAllUsers();
     void updateOnlineField(User user);
+
+    boolean delete(User user);
 }

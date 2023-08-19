@@ -15,5 +15,6 @@ public interface InboxFragmentContract {
 
     interface Presenter{
         void getListInboxes(Map<String, String> params);
+        void deleteInbox();
     }
 }

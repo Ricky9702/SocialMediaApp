@@ -1,8 +1,10 @@
 package com.example.h2ak.view.activities;
 
+import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
 import com.example.h2ak.contract.BaseMenuActivityContract;
 import com.example.h2ak.databinding.ActivityBaseMenuBinding;
+import com.example.h2ak.model.User;
 import com.example.h2ak.presenter.BaseMenuActivityPresenter;
 import com.example.h2ak.view.fragments.DiscoverFragment;
 import com.example.h2ak.view.fragments.HomeFragment;
@@ -69,8 +71,18 @@ public class BaseMenuActivity extends AppCompatActivity implements BaseMenuActiv
         addButtonInfo(R.id.btnInbox, R.drawable.baseline_notifications_none_24, R.drawable.baseline_notifications_none_24_active, R.id.textViewInbox);
 
         linearLayoutHome.setOnClickListener(view -> {
-            replaceFragment(new HomeFragment());
-            setActiveButton(R.id.btnHome);
+            if (MyApp.getInstance().getCurrentUser() != null) {
+                if (MyApp.getInstance().getCurrentUser().getRole().equals(User.UserRole.ROLE_ADMIN.getRole())) {
+                    startActivity(new Intent(this, AdminActivity.class));
+                    finish();
+                } else {
+                    replaceFragment(new HomeFragment());
+                    setActiveButton(R.id.btnHome);
+                }
+            } else {
+                startActivity(new Intent(this, AdminActivity.class));
+                finish();
+            }
         });
 
         linearLayoutDiscover.setOnClickListener(view -> {

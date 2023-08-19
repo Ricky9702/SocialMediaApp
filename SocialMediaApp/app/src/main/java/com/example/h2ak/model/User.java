@@ -4,6 +4,8 @@ package com.example.h2ak.model;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.h2ak.utils.TextInputLayoutUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -19,23 +21,20 @@ public class User {
     private String imageCover = "";
     private String bio = "";
     private String createdDate;
-    String dateFormat;
     private boolean isActive;
     private UserRole userRole;
     private String role;
     private boolean isOnline;
 
     {
-        Date date = new Date();
-        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+        this.createdDate = TextInputLayoutUtils.simpleDateFormat.format(new Date());
+        this.isOnline = false;
+        this.userRole = UserRole.ROLE_USER;
+        this.role = userRole.getRole();
     }
 
 
     public User() {
-        this.createdDate = dateFormat;
-        this.userRole = UserRole.ROLE_USER;
-        this.role = userRole.getRole();
-        this.isOnline = false;
     }
 
     public User(String id, String name, String email, String gender, String birthday, String password, String imageAvatar, String imageCover, String bio, String createdDate, String dateFormat, boolean isActive) {
@@ -49,18 +48,15 @@ public class User {
         this.imageCover = imageCover;
         this.bio = bio;
         this.createdDate = createdDate;
-        this.dateFormat = dateFormat;
         this.isActive = isActive;
     }
-
-
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return isActive == user.isActive &&  isOnline == user.isOnline && id.equals(user.id) && name.equals(user.name) && email.equals(user.email) && gender.equals(user.gender) && birthday.equals(user.birthday) && imageAvatar.equals(user.imageAvatar) && imageCover.equals(user.imageCover) && bio.equals(user.bio) && createdDate.equals(user.createdDate) && dateFormat.equals(user.dateFormat) && role.equals(user.role);
+        return isActive == user.isActive && isOnline == user.isOnline && id.equals(user.id) && name.equals(user.name) && email.equals(user.email) && gender.equals(user.gender) && birthday.equals(user.birthday) && password.equals(user.password) && imageAvatar.equals(user.imageAvatar) && imageCover.equals(user.imageCover) && bio.equals(user.bio) && createdDate.equals(user.createdDate) && role.equals(user.role);
     }
 
     @Override

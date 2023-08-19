@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebasePostImagesDataSourceImpl;
+import com.example.h2ak.Firebase.FirebaseDataSource.FirebasePostImagesDataSource;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.SQLite.DatabaseManager;
 import com.example.h2ak.SQLite.MySQLiteHelper;
@@ -24,12 +26,14 @@ public class PostImagesDataSourceImpl implements PostImagesDataSource {
     private DatabaseManager databaseManager;
     private String currentUserId;
     private PostDataSource postDataSource;
+    private FirebasePostImagesDataSource firebasePostImagesDataSource;
 
     private PostImagesDataSourceImpl(Context context, String currentUserId) {
         databaseManager = DatabaseManager.getInstance(context);
         db = databaseManager.getDatabase();
         this.currentUserId = currentUserId;
         postDataSource = PostDataSourceImpl.getInstance(context);
+        firebasePostImagesDataSource = FirebasePostImagesDataSourceImpl.getInstance();
     }
 
     public static synchronized PostImagesDataSourceImpl getInstance(Context context) {
@@ -43,7 +47,6 @@ public class PostImagesDataSourceImpl implements PostImagesDataSource {
         db.beginTransaction();
         boolean result = false;
         try {
-
             if (postImages.getId() == null || postImages.getId().isEmpty()) {
                 Log.d("createPostImages", "is null");
                 return false;
@@ -57,16 +60,20 @@ public class PostImagesDataSourceImpl implements PostImagesDataSource {
                 Log.d("createPostImages", "createdDate  null");
                 return false;
             } else {
+                if (getPostImagesById(postImages.getId()) == null) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_IMAGES_ID, postImages.getId());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_IMAGES_IMAGE_URL, postImages.getImageUrl());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_IMAGES_POST_ID, postImages.getPost().getId());
+                    contentValues.put(MySQLiteHelper.COLUMN_POST_CREATED_DATE, postImages.getCreatedDate());
 
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MySQLiteHelper.COLUMN_POST_IMAGES_ID, postImages.getId());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_IMAGES_IMAGE_URL, postImages.getImageUrl());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_IMAGES_POST_ID, postImages.getPost().getId());
-                contentValues.put(MySQLiteHelper.COLUMN_POST_CREATED_DATE, postImages.getCreatedDate());
+                    result = db.insert(MySQLiteHelper.TABLE_POST_IMAGES, null, contentValues) > 0;
 
-                result = db.insert(MySQLiteHelper.TABLE_POST_IMAGES, null, contentValues) > 0;
+                    if (result) {
+                        firebasePostImagesDataSource.create(postImages);
+                    }
+                }
             }
-
             db.setTransactionSuccessful();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -94,10 +101,16 @@ public class PostImagesDataSourceImpl implements PostImagesDataSource {
                 Log.d("createPostImages", "createdDate  null");
                 return false;
             } else {
-                result = db.delete(MySQLiteHelper.TABLE_POST_IMAGES, MySQLiteHelper.COLUMN_POST_IMAGES_ID + " = ? ",
-                        new String[]{postImages.getId()}) > 0;
-            }
+                if (getPostImagesById(postImages.getId()) != null) {
+                    result = db.delete(MySQLiteHelper.TABLE_POST_IMAGES,
+                            MySQLiteHelper.COLUMN_POST_IMAGES_ID + " = ? ",
+                            new String[]{postImages.getId()}) > 0;
+                    if (result) {
+                        firebasePostImagesDataSource.delete(postImages);
+                    }
+                }
 
+            }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -108,8 +121,15 @@ public class PostImagesDataSourceImpl implements PostImagesDataSource {
     }
 
     @Override
-    public boolean updatePostImages(PostImages postImages) {
-        return false;
+    public PostImages getPostImagesById(String id) {
+        PostImages postImages = null;
+        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_IMAGES
+                + " WHERE " + MySQLiteHelper.COLUMN_POST_IMAGES_ID + " = ? ", new String[] {id})) {
+            if (c != null && c.moveToFirst()) {
+                postImages = getPostImagesByCursor(c);
+            }
+        }
+        return postImages;
     }
 
     @Override
@@ -153,14 +173,27 @@ public class PostImagesDataSourceImpl implements PostImagesDataSource {
         int postIdColumnIndex = c.getColumnIndex(MySQLiteHelper.COLUMN_POST_IMAGES_POST_ID);
         int createdDateColumnIndex = c.getColumnIndex(MySQLiteHelper.COLUMN_POST_IMAGES_CREATED_DATE);
 
+        String id = c.getString(idColumnIndex);
+        String url = c.getString(imageUrlColumnIndex);
         String postId = c.getString(postIdColumnIndex);
-        Post post = postDataSource.findPost(postId);
-        if (post != null) {
-            postImages = new PostImages(c.getString(imageUrlColumnIndex), post);
-            postImages.setId(c.getString(idColumnIndex));
-            postImages.setCreatedDate(c.getString(createdDateColumnIndex));
-        }
+        String createdDate = c.getString(createdDateColumnIndex);
 
+        if (id == null || id.isEmpty()) {
+            return null;
+        } else if (url == null || url.isEmpty()) {
+            return null;
+        } else if (postId == null || postId.isEmpty()) {
+            return null;
+        } else if (createdDate == null || createdDate.isEmpty()) {
+            return null;
+        } else {
+            Post post = postDataSource.findPost(postId);
+            if (post != null) {
+                postImages = new PostImages(url, post);
+                postImages.setId(id);
+                postImages.setCreatedDate(createdDate);
+            }
+        }
         return postImages;
     }
 

@@ -8,7 +8,7 @@ import java.util.Set;
 public interface PostImagesDataSource {
     boolean createPostImages(PostImages postImages);
     boolean deletePostImages(PostImages postImages);
-    boolean updatePostImages(PostImages postImages);
+    PostImages getPostImagesById(String id);
     Set<PostImages> getAllPostImagesByPost(Post post);
     PostImages getFirstPostImages(Post post);
 }
