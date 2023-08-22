@@ -20,6 +20,17 @@
             android:adjustViewBounds="true"
             android:src="@drawable/baseline_avatar_place_holder" />
 
+        <TextView
+            android:id="@+id/textViewPostPlaceHolder"
+            android:layout_width="wrap_content"
+            android:layout_height="250dp"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:text="No Friends Posts yet"
+            android:textColor="@color/facebook_not_active_color"
+            android:textSize="32dp"
+            android:visibility="visible" />
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,7 +41,8 @@
                 android:id="@+id/recyclerViewPosts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:animationCache="true" />
+                android:animationCache="true"
+                android:visibility="gone"/>
         </RelativeLayout>
     </RelativeLayout>
 </FrameLayout>

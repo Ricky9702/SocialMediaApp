@@ -502,8 +502,8 @@ public class PostAdapter extends PostPreviewAdapter {
                                     if (comment != null) {
                                         postCommentReactionDataSource.getAllReactionByComment(comment).forEach(postCommentReaction -> {
                                             if (postCommentReaction != null) postCommentReactionDataSource.delete(postCommentReaction);
-                                            postCommentDataSource.delete(comment);
                                         });
+                                        postCommentDataSource.delete(comment);
                                     }});
 
                                 postReactionDataSource.getAllReactionByPost(post).forEach(postReaction -> {

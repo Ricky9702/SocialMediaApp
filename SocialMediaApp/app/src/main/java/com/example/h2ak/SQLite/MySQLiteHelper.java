@@ -39,16 +39,16 @@ public class MySQLiteHelper extends SQLiteOpenHelper{
     public static final String COLUMN_USER_IS_ONLINE = "is_online";
     private static final String CREATE_TABLE_USER = "CREATE TABLE " + TABLE_USER + "("
             + COLUMN_USER_ID + " TEXT PRIMARY KEY NOT NULL, "
-            + COLUMN_USER_NAME + " TEXT NOT NULL, "
-            + COLUMN_USER_GENDER + " TEXT NOT NULL, "
-            + COLUMN_USER_BIRTHDAY + " TEXT NOT NULL, "
-            + COLUMN_USER_EMAIL + " TEXT NOT NULL, "
+            + COLUMN_USER_NAME + " TEXT , "
+            + COLUMN_USER_GENDER + " TEXT , "
+            + COLUMN_USER_BIRTHDAY + " TEXT , "
+            + COLUMN_USER_EMAIL + " TEXT , "
             + COLUMN_USER_IMAGE_AVATAR +" TEXT , "
             + COLUMN_USER_IMAGE_COVER + " TEXT, "
             + COLUMN_USER_BIO +  " " + "TEXT, "
             + COLUMN_USER_CREATED_DATE + " " + "TEXT, "
-            + COLUMN_USER_PASSWORD + " TEXT NOT NULL, "
-            + COLUMN_USER_USER_ROLE + " TEXT NOT NULL, "
+            + COLUMN_USER_PASSWORD + " TEXT , "
+            + COLUMN_USER_USER_ROLE + " TEXT , "
             + COLUMN_USER_IS_ONLINE + " INTEGER, "
             + COLUMN_USER_IS_ACTIVE + " INTEGER);";
 

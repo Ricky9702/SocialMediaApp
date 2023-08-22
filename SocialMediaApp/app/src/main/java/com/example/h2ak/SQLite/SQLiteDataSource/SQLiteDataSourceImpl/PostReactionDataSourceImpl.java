@@ -155,6 +155,26 @@ public class PostReactionDataSourceImpl implements PostReactionDataSource {
         return postReactionSet;
     }
 
+    @Override
+    public Set<PostReaction> getAllReactionByUser(User user) {
+        Set<PostReaction> postReactionSet = new HashSet<>();
+        if (user.getId() != null) {
+            try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_REACTION
+                    + " WHERE  " +  MySQLiteHelper.COLUMN_POST_REACTION_USER_ID + " = ? "
+                    + " ORDER BY " + MySQLiteHelper.COLUMN_POST_REACTION_CREATED_DATE + " DESC ", new String[]{user.getId()})) {
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        PostReaction postReaction = getPostReactionByCursor(c);
+                        if (postReaction != null) {
+                            postReactionSet.add(postReaction);
+                        }
+                    }
+                }
+            }
+        }
+        return postReactionSet;
+    }
+
     public PostReaction getPostReactionByCursor(Cursor c) {
 
         if (c != null) {

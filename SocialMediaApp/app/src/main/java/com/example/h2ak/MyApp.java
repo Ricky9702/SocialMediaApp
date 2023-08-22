@@ -35,7 +35,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     private Activity currentActivity;
     private FirebaseDataSync firebaseDataSync;
     private String currentUserId;
-    private static final long OFFLINE_DELAY = 120000; // 2 minutes
+    private static final long OFFLINE_DELAY = 120000/2 + 30000; // 1 minutes 30s
     private Handler offlineHandler = new Handler();
 
     @Override
@@ -53,7 +53,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
 
     @Override
     public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
-        if (activity instanceof BaseMenuActivity) {
+        if (activity instanceof BaseMenuActivity || activity instanceof AdminActivity) {
             userDataSource = UserDataSourceImpl.getInstance(this);
             firebaseUserDataSource = FirebaseUserDataSourceImpl.getInstance();
             firebaseDataSync = FirebaseDataSync.getInstance(this);
@@ -112,6 +112,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
 
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
+        this.setCurrentActivity(activity);
         if (activity instanceof LoginActivity) {
             firebaseDataSync = FirebaseDataSync.getInstance(this);
             firebaseDataSync.syncUser(() -> {});
@@ -128,35 +129,34 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
             if (getCurrentUser() == null) {
                 getCurrentUser();
 
-//            } else {
-//                activity.startActivity(new Intent(activity, AdminActivity.class));
-//                activity.finish();
             }
 
-//            isAppInForeground = true;
-//            if (getCurrentUser() != null) {
-//                offlineHandler.removeCallbacksAndMessages(null);
-//                getCurrentUser().setOnline(true);
-//                firebaseUserDataSource.updateOnlineField(getCurrentUser());
-//                Log.d("FirebaseUpdateUser", "update resumed");
-//            }
+            isAppInForeground = true;
+            if (getCurrentUser() != null) {
+                offlineHandler.removeCallbacksAndMessages(null);
+                User user = getCurrentUser();
+                user.setOnline(true);
+                firebaseUserDataSource.updateOnlineField(user);
+                Log.d("FirebaseUpdateUser", "update resumed");
+            }
         }
     }
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
-//        isAppInForeground = false;
-//        // Use a Handler to delay setting the user offline by 2 minutes
-//        offlineHandler.postDelayed(() -> {
-//            if (!isAppInForeground) {
-//                User currentUser = getCurrentUser();
-//                if (currentUser != null) {
-//                    currentUser.setOnline(false);
-//                    firebaseUserDataSource.updateOnlineField(currentUser);
-//                    Log.d("FirebaseUpdateUser", "User is offline now");
-//                }
-//            }
-//        }, OFFLINE_DELAY);
+        isAppInForeground = false;
+        // Use a Handler to delay setting the user offline by 2 minutes
+        offlineHandler.postDelayed(() -> {
+            if (!isAppInForeground) {
+                User currentUser = getCurrentUser();
+                if (currentUser != null) {
+                    User user = currentUser;
+                    user.setOnline(false);
+                    firebaseUserDataSource.updateOnlineField(user);
+                    Log.d("FirebaseUpdateUser", "User is offline now");
+                }
+            }
+        }, OFFLINE_DELAY);
     }
 
     @Override
@@ -170,12 +170,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
-        if (activity instanceof ProfileActivity) {
-//            if(((ProfileActivity) activity).getButtonLogout().isPressed()) {
-//                getCurrentUser().setOnline(false);
-//                firebaseUserDataSource.updateOnlineField(getCurrentUser());
-//            }
-        }
+
     }
 
     public Activity getCurrentActivity() {
@@ -187,7 +182,7 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     }
 
     public User getCurrentUser() {
-        if (FirebaseAuth.getInstance().getCurrentUser().getUid() != null) {
+        if (FirebaseAuth.getInstance().getCurrentUser() != null && userDataSource != null) {
             return userDataSource.getUserById(FirebaseAuth.getInstance().getCurrentUser().getUid());
         } else {
             return null;
@@ -207,12 +202,12 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
     }
 
     public void setUserOffline() {
-//        User currentUser = getCurrentUser();
-//        if (currentUser != null) {
-//            currentUser.setOnline(false);
-//            firebaseUserDataSource.updateOnlineField(currentUser);
-//            Log.d("FirebaseUpdateUser", "User is offline now");
-//        }
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            currentUser.setOnline(false);
+            firebaseUserDataSource.updateOnlineField(currentUser);
+            Log.d("FirebaseUpdateUser", "User is offline now");
+        }
     }
 
     public void setCurrentUserId(String currentUserId) {

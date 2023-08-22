@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -34,6 +35,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     private HomeFragmentPresenter presenter;
     RecyclerView recyclerViewPosts;
     PostAdapter postAdapter;
+    TextView textViewPostPlaceHolder;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -43,6 +45,7 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
 
         // Init views
         imageViewProfileAvatar = view.findViewById(R.id.imageViewProfileAvatar);
+        textViewPostPlaceHolder = view.findViewById(R.id.textViewPostPlaceHolder);
 
         // Edit toolBar
         toolbar = view.findViewById(R.id.toolBar);
@@ -109,8 +112,10 @@ public class HomeFragment extends Fragment implements HomeFragmentContract.View 
     public void onListPostReceived(List<Post> postList) {
         if (!postList.isEmpty()) {
             postAdapter.setPostList(postList);
+            textViewPostPlaceHolder.setVisibility(View.GONE);
         } else {
             Log.d("TAG", "onMapPostRecieved: empty ");
+            textViewPostPlaceHolder.setVisibility(View.VISIBLE);
         }
     }
 

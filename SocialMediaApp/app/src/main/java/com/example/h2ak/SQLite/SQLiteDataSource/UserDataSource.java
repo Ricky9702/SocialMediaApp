@@ -4,7 +4,6 @@ import com.example.h2ak.model.User;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public interface UserDataSource {
     //Add User
@@ -14,7 +13,7 @@ public interface UserDataSource {
     List<User> getAllUsers(Map<String, String> params);
     //Update User by id
     boolean updateCurrentUser(User user);
-    boolean UpdateUserChangeOnFirebase(User user);
+    boolean updateUserChangeOnFirebase(User user);
     //Delete User by id
     boolean deleteUser(User user);
 }

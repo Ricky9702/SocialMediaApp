@@ -52,6 +52,21 @@ public class ResetPasswordActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        buttonResetPassword.setOnClickListener(view -> {
+            String email = editTextEmailResetPassword.getText().toString();
+            if (email != null && !email.isEmpty()) {
+                resetPassword(editTextEmailResetPassword.getText().toString());
+            } else {
+                Toast.makeText(this, "Email is not valid", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
     private void resetPassword(String email) {
         progressBar.setVisibility(View.VISIBLE);
         firebaseAuth.sendPasswordResetEmail(email).addOnCompleteListener(this, task -> {

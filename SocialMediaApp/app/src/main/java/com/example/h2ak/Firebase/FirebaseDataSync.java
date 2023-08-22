@@ -731,65 +731,57 @@ public class FirebaseDataSync {
 
     public void syncUser(OnDataChangeListener listener) {
 
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d("SyncUser: ", "There is some change here!!");
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    if (snapshot.exists()) {
-                        String id = snapshot.getKey();
-                        User existingUser = userDataSource.getUserById(id);
-
-                        User user = new User();
-                        user.setId(snapshot.child(MySQLiteHelper.COLUMN_USER_ID).getValue(String.class));
-                        user.setActive(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ACTIVE).getValue(Boolean.class)));
-                        user.setOnline(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ONLINE).getValue(Boolean.class)));
-                        user.setRole(snapshot.child(MySQLiteHelper.COLUMN_USER_USER_ROLE).getValue(String.class));
-                        user.setBirthday(snapshot.child(MySQLiteHelper.COLUMN_USER_BIRTHDAY).getValue(String.class));
-                        user.setBio(snapshot.child(MySQLiteHelper.COLUMN_USER_BIO).getValue(String.class));
-                        user.setPassword(snapshot.child(MySQLiteHelper.COLUMN_USER_PASSWORD).getValue(String.class));
-                        user.setEmail(snapshot.child(MySQLiteHelper.COLUMN_USER_EMAIL).getValue(String.class));
-                        user.setGender(snapshot.child(MySQLiteHelper.COLUMN_USER_GENDER).getValue(String.class));
-                        user.setName(snapshot.child(MySQLiteHelper.COLUMN_USER_NAME).getValue(String.class));
-                        user.setCreatedDate(snapshot.child(MySQLiteHelper.COLUMN_USER_CREATED_DATE).getValue(String.class));
-                        user.setImageCover(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_COVER).getValue(String.class));
-                        user.setImageAvatar(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_AVATAR).getValue(String.class));
-
-                        if (existingUser == null) {
-                            userDataSource.createUser(user);
-                            listener.onDataChange();
-                        } else {
-                            userDataSource.UpdateUserChangeOnFirebase(user);
-                            listener.onDataChange();
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
         userRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (snapshot.exists()) {
+                    userRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            User user = getUserBySnapShot(snapshot);
+                            if (user != null) {
+                                Log.d("syncUser", "onDataChange: " + userDataSource.createUser(user));
+                                listener.onDataChange();
+                            }
+                        }
 
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (snapshot.exists()) {
+                    userRef.child(snapshot.getKey()).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            User user = getUserBySnapShot(snapshot);
+                            if (user != null) {
+                                userDataSource.updateUserChangeOnFirebase(user);
+                                listener.onDataChange();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     User user = userDataSource.getUserById(snapshot.getKey());
                     if (user != null) {
                         userDataSource.deleteUser(user);
                     }
                 }
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
             }
 
             @Override
@@ -808,24 +800,30 @@ public class FirebaseDataSync {
     private User getUserBySnapShot(DataSnapshot snapshot) {
         if (snapshot.exists()) {
             User user = new User();
-            user.setId(snapshot.child(MySQLiteHelper.COLUMN_USER_ID).getValue(String.class));
-            user.setActive(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ACTIVE).getValue(Boolean.class)));
-            user.setOnline(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ONLINE).getValue(Boolean.class)));
-            user.setRole(snapshot.child(MySQLiteHelper.COLUMN_USER_USER_ROLE).getValue(String.class));
-            user.setBirthday(snapshot.child(MySQLiteHelper.COLUMN_USER_BIRTHDAY).getValue(String.class));
-            user.setBio(snapshot.child(MySQLiteHelper.COLUMN_USER_BIO).getValue(String.class));
-            user.setPassword(snapshot.child(MySQLiteHelper.COLUMN_USER_PASSWORD).getValue(String.class));
-            user.setEmail(snapshot.child(MySQLiteHelper.COLUMN_USER_EMAIL).getValue(String.class));
-            user.setGender(snapshot.child(MySQLiteHelper.COLUMN_USER_GENDER).getValue(String.class));
-            user.setName(snapshot.child(MySQLiteHelper.COLUMN_USER_NAME).getValue(String.class));
-            user.setCreatedDate(snapshot.child(MySQLiteHelper.COLUMN_USER_CREATED_DATE).getValue(String.class));
-            user.setImageCover(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_COVER).getValue(String.class));
-            user.setImageAvatar(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_AVATAR).getValue(String.class));
-
-            if (UserDataSourceImpl.checkValidFields(user)) {
+            String id = (snapshot.child(MySQLiteHelper.COLUMN_USER_ID).getValue(String.class));
+            String password = snapshot.child(MySQLiteHelper.COLUMN_USER_PASSWORD).getValue(String.class);
+            if (id == null || id.isEmpty()) {
+                Log.d("getUserBySnapShot", "getUserBySnapShot: id is empty");
+                return null;
+            } else if (password == null || password.isEmpty()) {
+                Log.d("getUserBySnapShot", "getUserBySnapShot: password is empty");
+                return null;
+            } else {
+                user.setId(id);
+                user.setPassword(password);
+                user.setActive(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ACTIVE).getValue(Boolean.class)));
+                user.setOnline(Boolean.TRUE.equals(snapshot.child(MySQLiteHelper.COLUMN_USER_IS_ONLINE).getValue(Boolean.class)));
+                user.setRole(snapshot.child(MySQLiteHelper.COLUMN_USER_USER_ROLE).getValue(String.class));
+                user.setBirthday(snapshot.child(MySQLiteHelper.COLUMN_USER_BIRTHDAY).getValue(String.class));
+                user.setBio(snapshot.child(MySQLiteHelper.COLUMN_USER_BIO).getValue(String.class));
+                user.setEmail(snapshot.child(MySQLiteHelper.COLUMN_USER_EMAIL).getValue(String.class));
+                user.setGender(snapshot.child(MySQLiteHelper.COLUMN_USER_GENDER).getValue(String.class));
+                user.setName(snapshot.child(MySQLiteHelper.COLUMN_USER_NAME).getValue(String.class));
+                user.setCreatedDate(snapshot.child(MySQLiteHelper.COLUMN_USER_CREATED_DATE).getValue(String.class));
+                user.setImageCover(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_COVER).getValue(String.class));
+                user.setImageAvatar(snapshot.child(MySQLiteHelper.COLUMN_USER_IMAGE_AVATAR).getValue(String.class));
                 return user;
             }
-
         }
         return null;
     }

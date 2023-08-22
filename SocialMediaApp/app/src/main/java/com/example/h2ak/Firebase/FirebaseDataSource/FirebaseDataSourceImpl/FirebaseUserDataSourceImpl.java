@@ -71,10 +71,13 @@ public class FirebaseUserDataSourceImpl implements FirebaseUserDataSource {
     @Override
     public void updateUser(User user) {
         HashMap<String, Object> updatedUserData = new HashMap<>();
+        updatedUserData.put(MySQLiteHelper.COLUMN_USER_ID, user.getId());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_NAME, user.getName());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_BIO, user.getBio());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_BIRTHDAY, user.getBirthday());
+        updatedUserData.put(MySQLiteHelper.COLUMN_USER_CREATED_DATE, user.getCreatedDate());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_GENDER, user.getGender());
+        updatedUserData.put(MySQLiteHelper.COLUMN_USER_EMAIL, user.getEmail());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_IMAGE_AVATAR, user.getImageAvatar());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_IMAGE_COVER, user.getImageCover());
         updatedUserData.put(MySQLiteHelper.COLUMN_USER_PASSWORD, user.getPassword());

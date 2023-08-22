@@ -95,6 +95,26 @@ public class InboxDataSourceImpl implements InboxDataSource {
         return result;
     }
 
+    @Override
+    public List<Inbox> getInboxByUser(User user) {
+        Set<Inbox> inboxSet = new HashSet<>();
+        try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_INBOX
+                + " WHERE " + MySQLiteHelper.COLUMN_INBOX_USER_1 + "  = ? "
+                + " OR " + MySQLiteHelper.COLUMN_INBOX_USER_2 + " = ? ", new String[]{user.getId(), user.getId()})) {
+            if (c != null) {
+                while (c.moveToNext()) {
+                    Inbox inbox = getInboxByCursor(c);
+                    if (inbox != null) {
+                        inboxSet.add(inbox);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return inboxSet.stream().collect(Collectors.toList());
+    }
+
     public boolean createInboxOnFirebaseChange(Inbox inbox) {
         db.beginTransaction();
         boolean result = false;

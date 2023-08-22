@@ -5,6 +5,10 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,6 +39,7 @@ import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSou
 import com.example.h2ak.contract.InboxFragmentContract;
 import com.example.h2ak.model.FriendShip;
 import com.example.h2ak.model.Inbox;
+import com.example.h2ak.model.InboxPost;
 import com.example.h2ak.model.Post;
 import com.example.h2ak.model.PostComment;
 import com.example.h2ak.model.User;
@@ -89,9 +94,16 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
         else {
             holder.imageViewUserSentRequest.setImageResource(R.drawable.baseline_avatar_place_holder);
         }
+        String userSentName = inbox.getContent().substring(0, inbox.getUserSentRequest().getName().length());
 
-        holder.textViewContent.setText(inbox.getContent());
-        holder.textViewInboxCreatedDate.setText(TextInputLayoutUtils.covertTimeToText(inbox.getCreatedDate()));
+        SpannableString str = new SpannableString(inbox.getContent());
+        str.setSpan(new StyleSpan(Typeface.BOLD), 0, userSentName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        holder.textViewContent.setText(str);
+        String createdDate = inbox.getCreatedDate();
+        String dateConvert = TextInputLayoutUtils.convertToJoinedMonthYear(createdDate).substring(6);
+        String timeConvert = TextInputLayoutUtils.covertToHourMinutes(createdDate);
+        holder.textViewInboxCreatedDate.setText(dateConvert + " " + timeConvert);
         holder.linearLayoutParent.setEnabled(true);
 
         holder.btnInboxAction.setOnClickListener(view -> {
@@ -106,12 +118,12 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                             .setMessage("Are you sure you want to delete this inbox?")
                             .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
                             .setPositiveButton("Confirm", (dialogInterface, i) -> {
+                                inboxPostDataSource.delete(inbox.getId());
                                 if(inboxDataSource.deleteInbox(inbox)) {
                                     inboxList.remove(position);
                                     notifyItemChanged(position);
                                     this.view.onReadInbox(true);
                                     Toast.makeText(context, "Delete inbox successfully!", Toast.LENGTH_SHORT).show();
-                                    inboxPostDataSource.delete(inbox.getId());
                                 }
                             }).create().show();
 
@@ -123,9 +135,10 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
 
         // change color for inbox which has been read
         if (inbox.isRead()) {
-            holder.textViewContent.setTextColor(Color.GRAY);
-            holder.textViewInboxCreatedDate.setTextColor(Color.GRAY);
-            holder.imageViewUserSentRequest.setAlpha(Float.parseFloat("0.5"));
+            holder.linearLayoutParent.setBackgroundColor(Color.parseColor("#f3f2f7"));
+//            holder.textViewContent.setTextColor(Color.GRAY);
+//            holder.textViewInboxCreatedDate.setTextColor(Color.GRAY);
+//            holder.imageViewUserSentRequest.setAlpha(Float.parseFloat("0.5"));
         }
 
         if (!inbox.isActive()) {
@@ -155,12 +168,13 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
                 inboxDataSource.updateInbox(inbox);
                 this.view.onReadInbox(true);
                 // get the newest post from the user sent request
-                Post post = inboxPostDataSource.find(inbox.getId()).getPost();
-                if (post != null) {
+                InboxPost inboxPost = inboxPostDataSource.find(inbox.getId());
+                if (inboxPost != null) {
+                    Post post =  inboxPost.getPost();
                     Intent intent = new Intent(context, PostActivity.class);
-                    List<String> listPostId = new ArrayList<>();
+                    ArrayList<String> listPostId = new ArrayList<>();
                     listPostId.add(post.getId());
-                    intent.putStringArrayListExtra("listPostId", (ArrayList<String>) listPostId);
+                    intent.putStringArrayListExtra("listPostId", listPostId);
                     context.startActivity(intent);
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(context);

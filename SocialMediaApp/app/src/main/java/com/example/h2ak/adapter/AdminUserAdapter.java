@@ -1,8 +1,8 @@
 package com.example.h2ak.adapter;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.text.TextUtils;
@@ -10,33 +10,46 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseDataSourceImpl.FirebaseUserDataSourceImpl;
 import com.example.h2ak.Firebase.FirebaseDataSource.FirebaseUserDataSource;
 import com.example.h2ak.MyApp;
 import com.example.h2ak.R;
+import com.example.h2ak.SQLite.SQLiteDataSource.FriendShipDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.InboxDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.InboxPostDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostCommentReactionDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostImagesDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.PostReactionDataSource;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.FriendShipDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.InboxPostDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostCommentReactionDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostImagesDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.PostReactionDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.SearchHistoryDataSourceImpl;
 import com.example.h2ak.SQLite.SQLiteDataSource.SQLiteDataSourceImpl.UserDataSourceImpl;
+import com.example.h2ak.SQLite.SQLiteDataSource.SearchHistoryDataSource;
 import com.example.h2ak.SQLite.SQLiteDataSource.UserDataSource;
 import com.example.h2ak.model.User;
 import com.example.h2ak.utils.PasswordHashing;
-import com.example.h2ak.view.activities.EditProfileActivity;
-import com.example.h2ak.view.fragments.DatePickerFragment;
+import com.example.h2ak.view.activities.AdminActivity;
+import com.example.h2ak.view.activities.LoginActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AdminUserAdapter extends AdminBaseAdapter {
@@ -167,12 +180,12 @@ public class AdminUserAdapter extends AdminBaseAdapter {
             name.getEditText().setFocusableInTouchMode(true);
             gender.getEditText().setFocusableInTouchMode(true);
             birthday.getEditText().setFocusableInTouchMode(true);
-            email.getEditText().setFocusableInTouchMode(true);
+            email.getEditText().setFocusable(false);
             imageAvatar.getEditText().setFocusableInTouchMode(true);
             imageCover.getEditText().setFocusableInTouchMode(true);
             bio.getEditText().setFocusableInTouchMode(true);
             createdDate.getEditText().setFocusableInTouchMode(true);
-            password.getEditText().setFocusableInTouchMode(true);
+            password.getEditText().setFocusable(false);
             isActive.getEditText().setFocusableInTouchMode(true);
             isOnline.getEditText().setFocusableInTouchMode(true);
 
@@ -220,7 +233,7 @@ public class AdminUserAdapter extends AdminBaseAdapter {
                             user.setOnline(isOnline.getEditText().getText().toString().equals("true"));
                             user.setActive(isActive.getEditText().getText().toString().equals("true"));
                             user.setRole(userRole.getEditText().getText().toString().trim());
-                            if (userDataSource.UpdateUserChangeOnFirebase(user)) {
+                            if (userDataSource.updateUserChangeOnFirebase(user)) {
                                 dialog.dismiss();
                                 Toast.makeText(view.getContext(), "Update successfully!", Toast.LENGTH_SHORT).show();
                                 firebaseUserDataSource.updateUser(user);
@@ -240,10 +253,100 @@ public class AdminUserAdapter extends AdminBaseAdapter {
                     .setMessage("Are you sure you want to delete this user?\n All posts, friend list, will be deleted which lead to delete everything")
                     .setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss())
                     .setPositiveButton("Confirm", (dialogInterface, i) -> {
+
+                        // delete all search history
+                        SearchHistoryDataSource searchHistoryDataSource = SearchHistoryDataSourceImpl.getInstance(context);
+                        searchHistoryDataSource.getAllSearchHistoryByUser(user).forEach(searchHistory -> {
+                            if (searchHistory != null) searchHistoryDataSource.deleteSearchHistory(searchHistory, false);
+                        });
+
+                        // delete all friend ship belong to this user
+                        FriendShipDataSource friendShipDataSource = FriendShipDataSourceImpl.getInstance(context);
+                        friendShipDataSource.getAllFriendShipByUser(user).forEach(friendShip -> {
+                            if (friendShip != null) friendShipDataSource.delete(friendShip);
+                        });
+
+
+                        PostDataSource postDataSource = PostDataSourceImpl.getInstance(context);
+                        PostImagesDataSource postImagesDataSource = PostImagesDataSourceImpl.getInstance(context);
+                        PostReactionDataSource postReactionDataSource = PostReactionDataSourceImpl.getInstance(context);
+                        PostCommentDataSource postCommentDataSource = PostCommentDataSourceImpl.getInstance(context);
+                        PostCommentReactionDataSource postCommentReactionDataSource = PostCommentReactionDataSourceImpl.getInstance(context);
+
+                        // delete all comment by user
+                        postCommentDataSource.getAllCommentByUser(user).forEach(comment -> {
+                            // delete all comment, reaction inside comment
+                            if (comment != null) {
+                                postCommentDataSource.getAllCommentByParent(comment).forEach(child -> {
+                                    if (child != null) postCommentDataSource.delete(child);
+                                });
+
+                                postCommentReactionDataSource.getAllReactionByComment(comment).forEach(postCommentReaction -> {
+                                    if (postCommentReaction != null) postCommentReactionDataSource.delete(postCommentReaction);
+                                });
+
+                                postCommentDataSource.delete(comment);
+                            }
+                        });
+
+                        // delete all post
+                        postDataSource.getAllPostByUserId(user.getId()).forEach(post -> {
+                            if (post != null) {
+                                // delete all comment, comment reaction, post reaction inside post
+                                postCommentDataSource.getAllCommentByPost(post).forEach(comment -> {
+                                    if (comment != null) {
+                                        postCommentReactionDataSource.getAllReactionByComment(comment).forEach(postCommentReaction -> {
+                                            if (postCommentReaction != null) postCommentReactionDataSource.delete(postCommentReaction);
+                                        });
+                                        postCommentDataSource.delete(comment);
+                                    }
+                                });
+
+                                // delete all reaction to post
+                                postReactionDataSource.getAllReactionByPost(post).forEach(postReaction -> {
+                                    if (postReaction != null) postReactionDataSource.delete(postReaction);
+                                });
+
+                                // delete all images to post
+                                postImagesDataSource.getAllPostImagesByPost(post).forEach(postImages -> {
+                                    if (postImages != null) postImagesDataSource.deletePostImages(postImages);
+                                });
+
+                                postDataSource.deletePost(post);
+                            }
+                        });
+
+                        // delete all reaction by user
+                        postReactionDataSource.getAllReactionByUser(user).forEach(postReaction -> {
+                            if (postReaction != null) postReactionDataSource.delete(postReaction);
+                        });
+
+
+                        // delete all comment reaction by user
+                        postCommentReactionDataSource.getAllReactionByUser(user).forEach(postCommentReaction -> {
+                            if (postCommentReaction != null) postCommentReactionDataSource.delete(postCommentReaction);
+                        });
+
+                        // delete all inbox
+                        InboxPostDataSource inboxPostDataSource = InboxPostDataSourceImpl.getInstance(context);
+                        InboxDataSource inboxDataSource = InboxDataSourceImpl.getInstance(context);
+                        inboxDataSource.getInboxByUser(user).forEach(inbox -> {
+                            if (inbox != null) {
+                                inboxPostDataSource.delete(inbox.getId());
+                                inboxDataSource.deleteInbox(inbox);
+                            }
+                        });
+
+
                         if (userDataSource.deleteUser(user)) {
                             Toast.makeText(view.getContext(), "Delete successfully!", Toast.LENGTH_SHORT).show();
                             this.userList.remove(user);
                             this.notifyItemRemoved(holder.getAdapterPosition());
+                            if (!(MyApp.getInstance().getCurrentActivity() instanceof AdminActivity)) {
+                                FirebaseAuth.getInstance().signOut();
+                                MyApp.getInstance().getCurrentActivity().startActivity(new Intent(MyApp.getInstance().getCurrentActivity(), LoginActivity.class));
+                                MyApp.getInstance().getCurrentActivity().finish();
+                            }
                         } else {
                             Toast.makeText(view.getContext(), "Delete failed!", Toast.LENGTH_SHORT).show();
                         }

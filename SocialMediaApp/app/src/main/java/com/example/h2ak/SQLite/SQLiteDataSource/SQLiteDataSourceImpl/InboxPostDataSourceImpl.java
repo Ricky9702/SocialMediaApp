@@ -77,7 +77,7 @@ public class InboxPostDataSourceImpl implements InboxPostDataSource {
     @Override
     public boolean delete(String id) {
         boolean result = false;
-        if (find(id) != null) {
+        {
             db.beginTransaction();
             try {
                 result = db.delete(MySQLiteHelper.TABLE_INBOX_POST, MySQLiteHelper.COLUMN_INBOX_POST_ID + " = ? ",
@@ -105,9 +105,7 @@ public class InboxPostDataSourceImpl implements InboxPostDataSource {
                     String inboxId = c.getString(0);
                     String postId = c.getString(1);
 
-                    if (id == null || id.isEmpty()) {
-                        return null;
-                    } else if (postId == null || postId.isEmpty()) {
+                    if (postId == null || postId.isEmpty()) {
                         return null;
                     } else {
                         Post post = postDataSource.findPost(postId);
@@ -117,7 +115,7 @@ public class InboxPostDataSourceImpl implements InboxPostDataSource {
                         }
 
                         InboxPost inboxPost = new InboxPost();
-                        inboxPost.setId(id);
+                        inboxPost.setId(inboxId);
                         inboxPost.setPost(post);
 
                         return inboxPost;

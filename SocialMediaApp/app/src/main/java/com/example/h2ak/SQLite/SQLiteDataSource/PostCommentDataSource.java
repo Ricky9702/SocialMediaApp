@@ -14,6 +14,7 @@ public interface PostCommentDataSource {
     boolean update(PostComment comment);
     boolean updateParentField(PostComment comment);
     Set<PostComment> getAllCommentByPost(Post post);
+    Set<PostComment> getAllCommentByUser(User user);
     Set<PostComment> getAllCommentByParent(PostComment comment);
     PostComment getById(String id);
     PostComment getNewestComment(User user);

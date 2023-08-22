@@ -123,6 +123,7 @@ public class CreatePostChooseContentFragment extends Fragment implements CreateP
                             .setView(linearLayout)
                             .setPositiveButton("Change", (d, pos) -> {
                                 post.setContent(content.getText().toString().trim());
+                                post.setCreatedDate(new Post().getCreatedDate());
                                 postAdapter.setPost(post,true);
                             })
                             .setNegativeButton("Cancel", (d, pos) -> dialogInterface.dismiss())
@@ -153,6 +154,7 @@ public class CreatePostChooseContentFragment extends Fragment implements CreateP
                             .setView(linearLayout)
                             .setPositiveButton("Change", (d, pos) -> {
                                 post.setPrivacy(spinner.getSelectedItem().toString());
+                                post.setCreatedDate(new Post().getCreatedDate());
                                 postAdapter.setPost(post,true);
                             })
                             .setNegativeButton("Cancel", (d, pos) -> dialogInterface.dismiss())

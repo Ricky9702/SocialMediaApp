@@ -205,6 +205,26 @@ public class PostCommentReactionDataSourceImpl implements PostCommentReactionDat
     }
 
     @Override
+    public Set<PostCommentReaction> getAllReactionByUser(User user) {
+        Set<PostCommentReaction> postReactionSet = new HashSet<>();
+        if (user.getId() != null) {
+            try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_COMMENT_REACTION
+                    + " WHERE  " +  MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_USER_ID + " = ? "
+                    + " ORDER BY " + MySQLiteHelper.COLUMN_POST_COMMENT_REACTION_CREATED_DATE + " DESC ", new String[]{user.getId()})) {
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        PostCommentReaction commentReaction = getPostReactionByCursor(c);
+                        if (commentReaction != null) {
+                            postReactionSet.add(commentReaction);
+                        }
+                    }
+                }
+            }
+        }
+        return postReactionSet;
+    }
+
+    @Override
     public PostCommentReaction find(PostComment comment, String currentUserId) {
         PostCommentReaction postReactionSet = null;
         if (comment.getId() != null) {

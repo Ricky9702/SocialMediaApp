@@ -36,7 +36,8 @@
                     android:layout_height="wrap_content"
                     android:text="An Khuong"
                     android:textSize="17dp"
-                    android:textColor="@color/black"/>
+                    android:textColor="@color/black"
+                    android:textStyle="bold"/>
 
                 <LinearLayout
                     android:layout_width="wrap_content"

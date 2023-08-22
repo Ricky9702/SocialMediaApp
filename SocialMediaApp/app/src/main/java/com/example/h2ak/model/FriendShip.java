@@ -48,7 +48,7 @@ public class FriendShip {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FriendShip that = (FriendShip) o;
-        return id.equals(that.id) && user1.getId().equals(that.user1.getId()) && user2.getId().equals(that.user2.getId()) && createdDate.equals(that.createdDate) && status.equals(that.status) && friendShipStatus == that.friendShipStatus;
+        return id.equals(that.id) && user1.getId().equals(that.user1.getId()) && user2.getId().equals(that.user2.getId()) && createdDate.equals(that.createdDate) && status.equals(that.status);
     }
 
     @Override

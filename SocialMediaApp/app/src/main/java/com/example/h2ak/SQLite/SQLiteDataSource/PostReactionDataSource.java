@@ -10,5 +10,6 @@ public interface PostReactionDataSource {
     boolean create(PostReaction postReaction);
     boolean delete(PostReaction postReaction);
     Set<PostReaction> getAllReactionByPost(Post post);
+    Set<PostReaction> getAllReactionByUser(User user);
     PostReaction find(Post post, String currentUserId);
 }

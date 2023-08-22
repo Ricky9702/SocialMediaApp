@@ -223,6 +223,8 @@ public class AdminPostAdapter extends AdminBaseAdapter {
                             String newPostPrivacy = privacy.getEditText().getText().toString().trim();
 
                             if (!newPostPrivacy.equals(post.getPrivacy()) || !newPostContent.equals(post.getContent())) {
+                                post.setPrivacy(newPostPrivacy);
+                                post.setContent(newPostContent);
                                 if (postDataSource.updatePost(post)) {
                                     dialog.dismiss();
                                     Toast.makeText(view.getContext(), "Update successfully!", Toast.LENGTH_SHORT).show();
@@ -292,8 +294,8 @@ public class AdminPostAdapter extends AdminBaseAdapter {
                                 postCommentReactionDataSource.getAllReactionByComment(comment).forEach(postCommentReaction -> {
                                     if (postCommentReaction != null)
                                         postCommentReactionDataSource.delete(postCommentReaction);
-                                    postCommentDataSource.delete(comment);
                                 });
+                                postCommentDataSource.delete(comment);
                             }
                         });
 

@@ -159,6 +159,20 @@ public class TextInputLayoutUtils {
         return "";
     }
 
+    public static String covertToHourMinutes(String dateTimeString) {
+        SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm");
+        try {
+            Date date = TextInputLayoutUtils.simpleDateFormat.parse(dateTimeString);
+            String hourMinutes = outputFormat.format(date);
+            return " at " + hourMinutes;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+
     public static Date parseDateFromString(String dateString) {
         try {
             return TextInputLayoutUtils.simpleDateFormat.parse(dateString);

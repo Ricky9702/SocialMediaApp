@@ -254,6 +254,26 @@ public class PostCommentDataSourceImpl implements PostCommentDataSource {
     }
 
     @Override
+    public Set<PostComment> getAllCommentByUser(User user) {
+        Set<PostComment> postCommentSet = new HashSet<>();
+        if (user.getId() != null) {
+            try (Cursor c = db.rawQuery("SELECT * FROM " + MySQLiteHelper.TABLE_POST_COMMENT
+                    + " WHERE  " + MySQLiteHelper.COLUMN_POST_COMMENT_USER_ID + " = ? "
+                    + " ORDER BY " + MySQLiteHelper.COLUMN_POST_COMMENT_CREATED_DATE + " DESC ", new String[]{user.getId()})) {
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        PostComment postComment = getCommentByCursor(c);
+                        if (postComment != null) {
+                            postCommentSet.add(postComment);
+                        }
+                    }
+                }
+            }
+        }
+        return postCommentSet;
+    }
+
+    @Override
     public Set<PostComment> getAllCommentByParent(PostComment comment) {
         Set<PostComment> postCommentSet = new HashSet<>();
         if (comment.getId() != null) {

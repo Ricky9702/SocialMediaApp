@@ -72,7 +72,10 @@ public class UserDataSourceImpl implements UserDataSource {
             values.put(MySQLiteHelper.COLUMN_USER_IS_ACTIVE, user.isActive());
             values.put(MySQLiteHelper.COLUMN_USER_IS_ONLINE, user.isOnline());
             values.put(MySQLiteHelper.COLUMN_USER_USER_ROLE, user.getRole());
-            result = db.insert(MySQLiteHelper.TABLE_USER, null, values) > 0;
+
+            if (getUserById(user.getId()) == null) {
+                result = db.insert(MySQLiteHelper.TABLE_USER, null, values) > 0;
+            }
             db.setTransactionSuccessful();
         } catch (Exception exception) {
             Log.d("CreateUser", exception.getMessage());
@@ -244,7 +247,7 @@ public class UserDataSourceImpl implements UserDataSource {
     }
 
     @Override
-    public boolean UpdateUserChangeOnFirebase(User user) {
+    public boolean updateUserChangeOnFirebase(User user) {
         User found = this.getUserById(user.getId());
         Log.d("updateUser : ", "LOCAL FIREBASE");
         db.beginTransaction();
